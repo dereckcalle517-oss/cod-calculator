@@ -31,11 +31,19 @@ function Slider({ label, sublabel, value, onChange, color = C.accent }) {
         </div>
         <div style={{ background: `${color}20`, border: `1px solid ${color}40`, borderRadius: 8, padding: "3px 12px", fontSize: 14, fontWeight: 700, color, whiteSpace: "nowrap", flexShrink: 0 }}>{value}%</div>
       </div>
-      <div style={{ position: "relative", height: 6, borderRadius: 99, background: C.border }}>
-        <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${value}%`, borderRadius: 99, background: `linear-gradient(90deg,${color}80,${color})`, boxShadow: `0 0 10px ${color}60` }} />
-        <input type="range" min={1} max={100} value={value} onChange={e => onChange(Number(e.target.value))}
-          style={{ position: "absolute", inset: 0, opacity: 0, width: "100%", margin: 0, height: "100%", cursor: "pointer" }} />
-        <div style={{ position: "absolute", top: "50%", transform: "translate(-50%,-50%)", left: `${value}%`, width: 16, height: 16, borderRadius: "50%", background: color, border: `2px solid ${C.bg}`, boxShadow: `0 0 12px ${color}`, pointerEvents: "none" }} />
+      <div style={{ position: "relative", height: 24, display: "flex", alignItems: "center" }}>
+        {/* Track background */}
+        <div style={{ position: "absolute", left: 0, right: 0, height: 6, borderRadius: 99, background: C.border }} />
+        {/* Track fill */}
+        <div style={{ position: "absolute", left: 0, height: 6, width: `${value}%`, borderRadius: 99, background: `linear-gradient(90deg,${color}80,${color})`, boxShadow: `0 0 10px ${color}60`, pointerEvents: "none" }} />
+        {/* Thumb visual */}
+        <div style={{ position: "absolute", left: `${value}%`, transform: "translateX(-50%)", width: 18, height: 18, borderRadius: "50%", background: color, border: `2px solid ${C.bg}`, boxShadow: `0 0 12px ${color}`, pointerEvents: "none", zIndex: 1 }} />
+        {/* Actual input — full area, on top */}
+        <input
+          type="range" min={1} max={100} value={value}
+          onChange={e => onChange(Number(e.target.value))}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0, cursor: "pointer", margin: 0, zIndex: 2, WebkitAppearance: "none", appearance: "none" }}
+        />
       </div>
     </div>
   );
@@ -395,8 +403,9 @@ export default function App() {
       <style>{`
         * { box-sizing: border-box; }
         body { margin: 0; background: ${C.bg}; }
-        input[type=range] { -webkit-appearance: none; appearance: none; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; }
+        input[type=range] { -webkit-appearance: none; appearance: none; background: transparent; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 1px; height: 1px; }
+        input[type=range]::-moz-range-thumb { width: 1px; height: 1px; border: none; background: transparent; }
         input[type=number]::-webkit-inner-spin-button,
         input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 
