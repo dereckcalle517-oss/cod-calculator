@@ -7,36 +7,37 @@ import { getFirestore, doc, getDoc, setDoc, collection, addDoc, getDocs, deleteD
 
 // ─── THEME ────────────────────────────────────────────────────────────────────
 const C = {
-  bg: "#050810", surface: "#090E18", card: "#0D1520", cardHover: "#111D2C",
-  border: "#162030", borderBright: "#1E2E45",
-  accent: "#3B82F6", accentGlow: "rgba(59,130,246,0.2)", accentDim: "rgba(59,130,246,0.08)",
-  green: "#10B981", greenGlow: "rgba(16,185,129,0.18)",
-  red: "#EF4444", redGlow: "rgba(239,68,68,0.18)",
-  amber: "#F59E0B", amberGlow: "rgba(245,158,11,0.18)",
-  purple: "#A78BFA", purpleGlow: "rgba(167,139,250,0.18)",
-  cyan: "#06B6D4", cyanGlow: "rgba(6,182,212,0.18)",
-  gold: "#F59E0B",
-  text: "#EFF6FF", textMuted: "#4A6580", textDim: "#7A9CC0",
+  bg: "#F3F4F6", surface: "#FFFFFF", card: "#FFFFFF", cardHover: "#F8F9FB",
+  border: "#E2E5EA", borderBright: "#CBD0D8",
+  accent: "#0F7B8A", accentGlow: "rgba(15,123,138,0.16)", accentDim: "rgba(15,123,138,0.06)",
+  green: "#15803D", greenGlow: "rgba(21,128,61,0.14)",
+  red: "#CF2A2A", redGlow: "rgba(207,42,42,0.14)",
+  amber: "#B45309", amberGlow: "rgba(180,83,9,0.14)",
+  purple: "#6B5BD2", purpleGlow: "rgba(107,91,210,0.14)",
+  cyan: "#3A7CB8", cyanGlow: "rgba(58,124,184,0.14)",
+  gold: "#14171C",
+  text: "#14171C", textMuted: "#6B7482", textDim: "#444C58",
 };
+const DISPLAY = "'Bricolage Grotesque','Instrument Sans',system-ui,sans-serif";
 
 // ─── CURRENCIES ───────────────────────────────────────────────────────────────
 const CURRENCIES = [
-  { code: "USD", symbol: "$", name: "Dólar (USD)", flag: "🇺🇸", countries: "Ecuador · Panamá" },
-  { code: "COP", symbol: "$", name: "Peso Colombiano (COP)", flag: "🇨🇴", countries: "Colombia" },
-  { code: "MXN", symbol: "$", name: "Peso Mexicano (MXN)", flag: "🇲🇽", countries: "México" },
-  { code: "PEN", symbol: "S/", name: "Sol Peruano (PEN)", flag: "🇵🇪", countries: "Perú" },
-  { code: "ARS", symbol: "$", name: "Peso Argentino (ARS)", flag: "🇦🇷", countries: "Argentina" },
-  { code: "CLP", symbol: "$", name: "Peso Chileno (CLP)", flag: "🇨🇱", countries: "Chile" },
-  { code: "BRL", symbol: "R$", name: "Real Brasileño (BRL)", flag: "🇧🇷", countries: "Brasil" },
-  { code: "BOB", symbol: "Bs.", name: "Boliviano (BOB)", flag: "🇧🇴", countries: "Bolivia" },
-  { code: "PYG", symbol: "₲", name: "Guaraní (PYG)", flag: "🇵🇾", countries: "Paraguay" },
-  { code: "UYU", symbol: "$U", name: "Peso Uruguayo (UYU)", flag: "🇺🇾", countries: "Uruguay" },
-  { code: "GTQ", symbol: "Q", name: "Quetzal (GTQ)", flag: "🇬🇹", countries: "Guatemala" },
-  { code: "DOP", symbol: "RD$", name: "Peso Dominicano (DOP)", flag: "🇩🇴", countries: "Rep. Dominicana" },
-  { code: "CRC", symbol: "₡", name: "Colón (CRC)", flag: "🇨🇷", countries: "Costa Rica" },
-  { code: "HNL", symbol: "L", name: "Lempira (HNL)", flag: "🇭🇳", countries: "Honduras" },
-  { code: "NIO", symbol: "C$", name: "Córdoba (NIO)", flag: "🇳🇮", countries: "Nicaragua" },
-  { code: "VES", symbol: "Bs.D", name: "Bolívar (VES)", flag: "🇻🇪", countries: "Venezuela" },
+  { code: "USD", symbol: "$", name: "Dólar (USD)", countries: "Ecuador · Panamá" },
+  { code: "COP", symbol: "$", name: "Peso Colombiano (COP)", countries: "Colombia" },
+  { code: "MXN", symbol: "$", name: "Peso Mexicano (MXN)", countries: "México" },
+  { code: "PEN", symbol: "S/", name: "Sol Peruano (PEN)", countries: "Perú" },
+  { code: "ARS", symbol: "$", name: "Peso Argentino (ARS)", countries: "Argentina" },
+  { code: "CLP", symbol: "$", name: "Peso Chileno (CLP)", countries: "Chile" },
+  { code: "BRL", symbol: "R$", name: "Real Brasileño (BRL)", countries: "Brasil" },
+  { code: "BOB", symbol: "Bs.", name: "Boliviano (BOB)", countries: "Bolivia" },
+  { code: "PYG", symbol: "₲", name: "Guaraní (PYG)", countries: "Paraguay" },
+  { code: "UYU", symbol: "$U", name: "Peso Uruguayo (UYU)", countries: "Uruguay" },
+  { code: "GTQ", symbol: "Q", name: "Quetzal (GTQ)", countries: "Guatemala" },
+  { code: "DOP", symbol: "RD$", name: "Peso Dominicano (DOP)", countries: "Rep. Dominicana" },
+  { code: "CRC", symbol: "₡", name: "Colón (CRC)", countries: "Costa Rica" },
+  { code: "HNL", symbol: "L", name: "Lempira (HNL)", countries: "Honduras" },
+  { code: "NIO", symbol: "C$", name: "Córdoba (NIO)", countries: "Nicaragua" },
+  { code: "VES", symbol: "Bs.D", name: "Bolívar (VES)", countries: "Venezuela" },
 ];
 
 const BENCH = {
@@ -49,9 +50,9 @@ const BENCH = {
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 const makeFmt = (sym) => (n, dec = 2) => {
   if (n === undefined || isNaN(n)) return `${sym}0`;
-  return `${sym}${Math.abs(n).toLocaleString("es-ES", { minimumFractionDigits: dec, maximumFractionDigits: dec })}`;
+  return `${sym}${Math.abs(n).toLocaleString("de-DE", { minimumFractionDigits: dec, maximumFractionDigits: dec })}`;
 };
-const fmtNum = (n) => Math.round(n ?? 0).toLocaleString("es-ES");
+const fmtNum = (n) => Math.round(n ?? 0).toLocaleString("de-DE");
 const fmtPct = (n) => `${(n ?? 0).toFixed(1)}%`;
 
 // ─── HEALTH SCORE ─────────────────────────────────────────────────────────────
@@ -82,9 +83,9 @@ function calcRisk(inputs, R) {
   if (R.roas < R.roasBreakEven) riskPoints += 3;
   if (R.gananciaNet < 0) riskPoints += 3;
   if (inputs.pctConfirmados < 60) riskPoints += 2;
-  if (riskPoints >= 6) return { level: "Peligroso", emoji: "🔴", color: C.red, desc: "Alto riesgo de pérdida. No escales." };
-  if (riskPoints >= 3) return { level: "Riesgoso", emoji: "🟡", color: C.amber, desc: "Campaña inestable. Optimiza antes de escalar." };
-  return { level: "Seguro", emoji: "🟢", color: C.green, desc: "Campaña saludable. Puedes escalar con confianza." };
+  if (riskPoints >= 6) return { level: "Peligroso", emoji: "", color: C.red, desc: "Alto riesgo de pérdida. No escales." };
+  if (riskPoints >= 3) return { level: "Riesgoso", emoji: "", color: C.amber, desc: "Campaña inestable. Optimiza antes de escalar." };
+  return { level: "Seguro", emoji: "", color: C.green, desc: "Campaña saludable. Puedes escalar con confianza." };
 }
 
 // ─── INVISIBLE LOSSES ─────────────────────────────────────────────────────────
@@ -148,12 +149,12 @@ function Slider({ label, sublabel, value, onChange, color = C.accent }) {
           <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{label}</div>
           {sublabel && <div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>{sublabel}</div>}
         </div>
-        <div style={{ background: `${color}22`, border: `1px solid ${color}44`, borderRadius: 8, padding: "3px 12px", fontSize: 14, fontWeight: 700, color, whiteSpace: "nowrap", flexShrink: 0 }}>{value}%</div>
+        <div style={{ background: `${color}22`, border: `1px solid ${color}44`, borderRadius: 6, padding: "3px 12px", fontSize: 14, fontWeight: 700, color, whiteSpace: "nowrap", flexShrink: 0 }}>{value}%</div>
       </div>
       <div style={{ position: "relative", height: 24, display: "flex", alignItems: "center" }}>
         <div style={{ position: "absolute", left: 0, right: 0, height: 6, borderRadius: 99, background: C.border }} />
-        <div style={{ position: "absolute", left: 0, height: 6, width: `${value}%`, borderRadius: 99, background: `linear-gradient(90deg,${color}70,${color})`, pointerEvents: "none" }} />
-        <div style={{ position: "absolute", left: `${value}%`, transform: "translateX(-50%)", width: 20, height: 20, borderRadius: "50%", background: color, border: `3px solid ${C.bg}`, boxShadow: `0 0 12px ${color}`, pointerEvents: "none", zIndex: 1 }} />
+        <div style={{ position: "absolute", left: 0, height: 6, width: `${value}%`, borderRadius: 99, background: `${color}`, pointerEvents: "none" }} />
+        <div style={{ position: "absolute", left: `${value}%`, transform: "translateX(-50%)", width: 20, height: 20, borderRadius: "50%", background: color, border: `3px solid ${C.bg}`, boxShadow: "0 1px 3px rgba(0,0,0,0.25)", pointerEvents: "none", zIndex: 1 }} />
         <input type="range" min={1} max={100} value={value} onChange={e => onChange(Number(e.target.value))}
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0, cursor: "pointer", margin: 0, zIndex: 2, WebkitAppearance: "none" }} />
       </div>
@@ -168,8 +169,8 @@ function NumInput({ label, value, onChange, prefix = "$", icon, sublabel }) {
       <div style={{ fontSize: 12, fontWeight: 600, color: C.textDim, marginBottom: 5, display: "flex", alignItems: "center", gap: 5 }}>
         {icon && <span>{icon}</span>}{label}
       </div>
-      {sublabel && <div style={{ fontSize: 10, color: C.textMuted, marginBottom: 5 }}>{sublabel}</div>}
-      <div style={{ display: "flex", alignItems: "center", background: focused ? C.accentDim : C.surface, border: `1px solid ${focused ? C.accent : C.border}`, borderRadius: 10, overflow: "hidden", transition: "all 0.2s", boxShadow: focused ? `0 0 0 3px ${C.accentGlow}` : "none" }}>
+      {sublabel && <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 5 }}>{sublabel}</div>}
+      <div style={{ display: "flex", alignItems: "center", background: focused ? C.accentDim : C.surface, border: `1px solid ${focused ? C.accent : C.border}`, borderRadius: 7, overflow: "hidden", transition: "all 0.2s", boxShadow: focused ? `0 0 0 3px ${C.accentGlow}` : "none" }}>
         <span style={{ padding: "0 12px", color: focused ? C.accent : C.textMuted, fontSize: 13, fontWeight: 700, flexShrink: 0 }}>{prefix}</span>
         <input type="number" value={value} onChange={e => onChange(e.target.value === "" ? "" : Number(e.target.value))}
           onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} min={0}
@@ -181,8 +182,8 @@ function NumInput({ label, value, onChange, prefix = "$", icon, sublabel }) {
 
 function Toggle({ value, onChange }) {
   return (
-    <div style={{ display: "flex", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, overflow: "hidden" }}>
-      {[{ label: "✓ Sí recupero", val: true, c: C.green }, { label: "✗ No recupero", val: false, c: C.red }].map(opt => (
+    <div style={{ display: "flex", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden" }}>
+      {[{ label: "Sí recupero", val: true, c: C.green }, { label: "No recupero", val: false, c: C.red }].map(opt => (
         <button key={String(opt.val)} onClick={() => onChange(opt.val)} style={{ flex: 1, padding: "10px 6px", border: "none", cursor: "pointer", background: value === opt.val ? `${opt.c}18` : "transparent", color: value === opt.val ? opt.c : C.textMuted, fontWeight: value === opt.val ? 700 : 500, fontSize: 12, fontFamily: "inherit", borderBottom: value === opt.val ? `2px solid ${opt.c}` : "2px solid transparent", transition: "all 0.2s" }}>{opt.label}</button>
       ))}
     </div>
@@ -194,30 +195,30 @@ function CurrencySelector({ value, onChange }) {
   const cur = CURRENCIES.find(c => c.code === value) || CURRENCIES[0];
   return (
     <div style={{ position: "relative", marginBottom: 14 }}>
-      <div style={{ fontSize: 12, fontWeight: 600, color: C.textDim, marginBottom: 5 }}>🌎 Moneda</div>
-      <button onClick={() => setOpen(!open)} style={{ width: "100%", background: C.surface, border: `1px solid ${open ? C.accent : C.border}`, borderRadius: 10, padding: "9px 14px", color: C.text, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, transition: "all 0.2s" }}>
+      <div style={{ fontSize: 12, fontWeight: 600, color: C.textDim, marginBottom: 5 }}>Moneda</div>
+      <button onClick={() => setOpen(!open)} style={{ width: "100%", background: C.surface, border: `1px solid ${open ? C.accent : C.border}`, borderRadius: 7, padding: "9px 14px", color: C.text, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, transition: "all 0.2s" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 16 }}>{cur.flag}</span>
+          
           <div style={{ textAlign: "left" }}>
             <div style={{ fontSize: 12, fontWeight: 700 }}>{cur.name}</div>
-            <div style={{ fontSize: 10, color: C.textMuted }}>{cur.countries}</div>
+            <div style={{ fontSize: 11, color: C.textMuted }}>{cur.countries}</div>
           </div>
         </div>
-        <span style={{ color: C.textMuted, fontSize: 10, transition: "transform 0.2s", display: "inline-block", transform: open ? "rotate(180deg)" : "none" }}>▼</span>
+        <span style={{ color: C.textMuted, fontSize: 11, transition: "transform 0.2s", display: "inline-block", transform: open ? "rotate(180deg)" : "none" }}>▼</span>
       </button>
       <AnimatePresence>
         {open && (
           <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.15 }}
-            style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, zIndex: 300, overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.6)", maxHeight: 240, overflowY: "auto" }}>
+            style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, zIndex: 300, overflow: "hidden", boxShadow: "0 8px 24px rgba(20,23,28,0.12)", maxHeight: 240, overflowY: "auto" }}>
             {CURRENCIES.map(c => (
               <button key={c.code} onClick={() => { onChange(c.code); setOpen(false); }}
                 style={{ width: "100%", background: c.code === value ? `${C.accent}12` : "transparent", border: "none", borderBottom: `1px solid ${C.border}`, padding: "8px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: 10, fontFamily: "inherit" }}>
-                <span style={{ fontSize: 14 }}>{c.flag}</span>
+                
                 <div style={{ flex: 1, textAlign: "left" }}>
                   <div style={{ fontSize: 11, fontWeight: 600, color: c.code === value ? C.accent : C.text }}>{c.name}</div>
-                  <div style={{ fontSize: 9, color: C.textMuted }}>{c.countries}</div>
+                  <div style={{ fontSize: 11, color: C.textMuted }}>{c.countries}</div>
                 </div>
-                {c.code === value && <span style={{ color: C.accent, fontSize: 12 }}>✓</span>}
+                {c.code === value && <span style={{ color: C.accent, fontSize: 12 }}></span>}
               </button>
             ))}
           </motion.div>
@@ -230,17 +231,16 @@ function CurrencySelector({ value, onChange }) {
 // ─── PRO LOCKED CARD ──────────────────────────────────────────────────────────
 function ProLocked({ title, desc, icon, onUpgrade }) {
   return (
-    <div style={{ position: "relative", borderRadius: 16, overflow: "hidden", marginBottom: 14 }}>
-      <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: "20px", filter: "blur(2px)", pointerEvents: "none", userSelect: "none", opacity: 0.5 }}>
+    <div style={{ position: "relative", borderRadius: 10, overflow: "hidden", marginBottom: 14 }}>
+      <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "20px", filter: "blur(2px)", pointerEvents: "none", userSelect: "none", opacity: 0.5 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 8 }}>{icon} {title}</div>
-        <div style={{ height: 60, background: C.border, borderRadius: 8 }} />
+        <div style={{ height: 60, background: C.border, borderRadius: 6 }} />
       </div>
-      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "rgba(5,8,16,0.7)", borderRadius: 16, backdropFilter: "blur(2px)" }}>
-        <div style={{ background: `linear-gradient(135deg,${C.gold}20,${C.purple}15)`, border: `1px solid ${C.gold}40`, borderRadius: 12, padding: "14px 20px", textAlign: "center", maxWidth: 260 }}>
-          <div style={{ fontSize: 18, marginBottom: 6 }}>⭐</div>
+      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "rgba(5,8,16,0.7)", borderRadius: 10, backdropFilter: "blur(2px)" }}>
+        <div style={{ background: `${C.gold}20`, border: `1px solid ${C.gold}40`, borderRadius: 8, padding: "14px 20px", textAlign: "center", maxWidth: 260 }}>
           <div style={{ fontSize: 13, fontWeight: 800, color: C.gold, marginBottom: 4 }}>Disponible en PRO</div>
           <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 12, lineHeight: 1.5 }}>{desc}</div>
-          <button onClick={onUpgrade} style={{ background: `linear-gradient(135deg,${C.accent},#6366F1)`, border: "none", borderRadius: 8, padding: "8px 18px", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+          <button onClick={onUpgrade} style={{ background: `${C.accent}`, border: "none", borderRadius: 6, padding: "8px 18px", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
             Activar PRO — $4.99/mes
           </button>
         </div>
@@ -255,9 +255,9 @@ function TrialBanner({ daysLeft, onUpgrade }) {
   const urgent = daysLeft === 1;
   return (
     <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-      style={{ background: urgent ? `${C.red}15` : `${C.gold}10`, border: `1px solid ${urgent ? C.red : C.gold}40`, borderRadius: 12, padding: "10px 16px", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+      style={{ background: urgent ? `${C.red}15` : `${C.gold}10`, border: `1px solid ${urgent ? C.red : C.gold}40`, borderRadius: 8, padding: "10px 16px", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <span style={{ fontSize: 18 }}>{urgent ? "⚠️" : "⭐"}</span>
+        <span style={{ fontSize: 18, fontFamily: DISPLAY }}>{urgent ? "" : ""}</span>
         <div>
           <div style={{ fontSize: 12, fontWeight: 800, color: urgent ? C.red : C.gold }}>
             {urgent ? "¡Último día de PRO!" : `Te quedan ${daysLeft} días de PRO gratis`}
@@ -265,7 +265,7 @@ function TrialBanner({ daysLeft, onUpgrade }) {
           <div style={{ fontSize: 11, color: C.textMuted }}>Después vuelves al plan gratis automáticamente</div>
         </div>
       </div>
-      <button onClick={onUpgrade} style={{ background: `linear-gradient(135deg,${C.accent},#6366F1)`, border: "none", borderRadius: 8, padding: "7px 14px", color: "#fff", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>
+      <button onClick={onUpgrade} style={{ background: `${C.accent}`, border: "none", borderRadius: 6, padding: "7px 14px", color: "#fff", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>
         Mantener PRO
       </button>
     </motion.div>
@@ -283,16 +283,16 @@ function BenchmarkBar({ label, value, bench, suffix = "%" }) {
         <div style={{ fontSize: 12, fontWeight: 600, color: C.textDim }}>{label}</div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 14, fontWeight: 800, color }}>{suffix === "x" ? value.toFixed(2) + "x" : fmtPct(value)}</span>
-          <span style={{ background: `${color}18`, color, fontSize: 9, fontWeight: 700, borderRadius: 6, padding: "2px 7px" }}>{status === "optimo" ? "✓ Óptimo" : status === "ok" ? "Aceptable" : "✗ Bajo"}</span>
+          <span style={{ background: `${color}18`, color, fontSize: 11, fontWeight: 700, borderRadius: 5, padding: "2px 7px" }}>{status === "optimo" ? "Óptimo" : status === "ok" ? "Aceptable" : "Bajo"}</span>
         </div>
       </div>
       <div style={{ position: "relative", height: 7, borderRadius: 99, background: C.border }}>
         <div style={{ position: "absolute", left: `${(bench.min / bench.max) * 100}%`, top: -3, width: 2, height: 13, background: C.amber + "60", borderRadius: 1 }} />
         <div style={{ position: "absolute", left: `${(bench.optimo / bench.max) * 100}%`, top: -3, width: 2, height: 13, background: C.green + "60", borderRadius: 1 }} />
         <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.8, ease: "easeOut" }}
-          style={{ position: "absolute", left: 0, top: 0, height: "100%", borderRadius: 99, background: `linear-gradient(90deg,${color}70,${color})` }} />
+          style={{ position: "absolute", left: 0, top: 0, height: "100%", borderRadius: 99, background: `${color}` }} />
       </div>
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: C.textMuted, marginTop: 4 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: C.textMuted, marginTop: 4 }}>
         <span>Mín: {bench.min}{suffix === "x" ? "x" : "%"}</span>
         <span>Óptimo: {bench.optimo}{suffix === "x" ? "x" : "%"}</span>
         <span>Máx: {bench.max}{suffix === "x" ? "x" : "%"}</span>
@@ -307,7 +307,7 @@ function FAQItem({ q, a }) {
   return (
     <div style={{ borderBottom: `1px solid ${C.border}`, padding: "14px 0" }}>
       <button onClick={() => setOpen(!open)} style={{ width: "100%", background: "none", border: "none", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", color: C.text, fontSize: 14, fontWeight: 600, fontFamily: "inherit", textAlign: "left", gap: 10 }}>
-        {q}<span style={{ color: C.accent, fontSize: 18, flexShrink: 0, transition: "transform 0.2s", display: "inline-block", transform: open ? "rotate(45deg)" : "none" }}>+</span>
+        {q}<span style={{ color: C.accent, fontSize: 18, fontFamily: DISPLAY, flexShrink: 0, transition: "transform 0.2s", display: "inline-block", transform: open ? "rotate(45deg)" : "none" }}>+</span>
       </button>
       <AnimatePresence>
         {open && (
@@ -320,11 +320,26 @@ function FAQItem({ q, a }) {
   );
 }
 
+function Mark({ size = 28, pro = false }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 28 28" aria-hidden="true" style={{ flexShrink: 0, display: "block" }}>
+      <rect width="28" height="28" rx="6" fill={pro ? "#14171C" : C.accent} />
+      <rect x="6.5" y="15" width="3.6" height="6.5" rx="0.8" fill="#fff" opacity="0.55" />
+      <rect x="12.2" y="11" width="3.6" height="10.5" rx="0.8" fill="#fff" opacity="0.8" />
+      <rect x="17.9" y="6.5" width="3.6" height="15" rx="0.8" fill="#fff" />
+    </svg>
+  );
+}
+
 function GlobalStyles() {
   return (
     <style>{`
+      @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600;700&display=swap');
       * { box-sizing: border-box; }
-      body { margin: 0; background: #050810; }
+      body { margin: 0; background: #F3F4F6; font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased; }
+      button { white-space: nowrap; }
+      ::selection { background: #14171C; color: #fff; }
+      button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid #0F7B8A; outline-offset: 2px; }
       html { scroll-behavior: smooth; }
       input[type=range] { -webkit-appearance: none; appearance: none; background: transparent; }
       input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 1px; height: 1px; }
@@ -340,6 +355,7 @@ function GlobalStyles() {
         .charts-grid { grid-template-columns: 1fr !important; }
         .hide-mobile { display: none !important; }
         .show-mobile-only { display: block !important; }
+        .hero-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
         .pricing-grid { grid-template-columns: 1fr !important; }
         .team-grid { grid-template-columns: 1fr 1fr !important; }
       }
@@ -396,26 +412,26 @@ function FreeCalculator({ onUpgrade, onStartTrial, onHome }) {
   ];
 
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'DM Sans','Inter',system-ui,sans-serif", color: C.text }}>
+    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Instrument Sans',system-ui,sans-serif", color: C.text }}>
       {/* Header */}
       <div style={{ borderBottom: `1px solid ${C.border}`, background: `${C.surface}EE`, backdropFilter: "blur(20px)", position: "sticky", top: 0, zIndex: 100, padding: "0 16px" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 52 }}>
           <button onClick={onHome} title="Ir al inicio" style={{ display: "flex", alignItems: "center", gap: 8, background: "transparent", border: "none", cursor: "pointer", fontFamily: "inherit", color: C.text, padding: 0 }}>
-            <div style={{ width: 28, height: 28, borderRadius: 7, background: `linear-gradient(135deg,${C.accent},#6366F1)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>📦</div>
-            <div style={{ fontSize: 13, fontWeight: 800 }}>COD Calculator <span style={{ color: C.textMuted, fontSize: 11, fontWeight: 500 }}>— Gratis</span></div>
+            <Mark size={28} />
+            <div style={{ fontSize: 13, fontWeight: 800, whiteSpace: "nowrap" }}>COD Calculator <span className="hide-mobile" style={{ color: C.textMuted, fontSize: 11, fontWeight: 500 }}>Gratis</span></div>
           </button>
-          <button onClick={onUpgrade} style={{ background: `linear-gradient(135deg,${C.gold},${C.amber})`, border: "none", borderRadius: 9, padding: "7px 16px", color: C.bg, fontSize: 12, fontWeight: 800, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6 }}>
-            ⭐ Ir a PRO
+          <button onClick={onUpgrade} style={{ background: `${C.gold}`, border: "none", borderRadius: 6, padding: "7px 16px", color: C.bg, fontSize: 12, fontWeight: 800, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6 }}>
+            Ir a PRO
           </button>
           <UserMenu />
         </div>
       </div>
 
       {/* Pro upsell banner */}
-      <div style={{ background: `linear-gradient(90deg,${C.accent}12,${C.purple}08)`, borderBottom: `1px solid ${C.accent}20`, padding: "10px 20px", textAlign: "center" }}>
-        <span style={{ fontSize: 12, color: C.textDim }}>🚀 ¿Quieres benchmarks LATAM, IA, escalado y más? </span>
+      <div style={{ background: `${C.accent}12`, borderBottom: `1px solid ${C.accent}20`, padding: "10px 20px", textAlign: "center" }}>
+        <span style={{ fontSize: 12, color: C.textDim }}>¿Quieres benchmarks LATAM, IA, escalado y más? </span>
         <button onClick={onStartTrial} style={{ background: "transparent", border: "none", color: C.accent, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", textDecoration: "underline" }}>
-          Prueba PRO gratis 3 días →
+          Prueba PRO gratis 3 días
         </button>
       </div>
 
@@ -423,30 +439,30 @@ function FreeCalculator({ onUpgrade, onStartTrial, onHome }) {
 
         {/* LEFT */}
         <motion.div className="left-panel" initial={{ opacity: 0, x: -14 }} animate={{ opacity: 1, x: 0 }}
-          style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: "18px", position: "sticky", top: 94 }}>
-          <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 14 }}>⚙️ Tu campaña</div>
+          style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "18px", position: "sticky", top: 94 }}>
+          <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 14 }}>Tu campaña</div>
           <CurrencySelector value={currencyCode} onChange={setCurrencyCode} />
-          <NumInput label="Costo del producto" value={inputs.costo} onChange={set("costo")} icon="📦" prefix={currency.symbol} />
-          <NumInput label="Precio de venta" value={inputs.precio} onChange={set("precio")} icon="🏷️" prefix={currency.symbol} />
-          <NumInput label="Costo de envío" value={inputs.envio} onChange={set("envio")} icon="🚚" prefix={currency.symbol} />
-          <NumInput label="CPA (Costo por adquisición)" value={inputs.cpa} onChange={set("cpa")} icon="📣" prefix={currency.symbol} sublabel="Gasto en ads por pedido generado" />
-          <NumInput label="Total de pedidos" value={inputs.pedidos} onChange={set("pedidos")} prefix="#" icon="📋" />
+          <NumInput label="Costo del producto" value={inputs.costo} onChange={set("costo")} icon="" prefix={currency.symbol} />
+          <NumInput label="Precio de venta" value={inputs.precio} onChange={set("precio")} icon="" prefix={currency.symbol} />
+          <NumInput label="Costo de envío" value={inputs.envio} onChange={set("envio")} icon="" prefix={currency.symbol} />
+          <NumInput label="CPA (Costo por adquisición)" value={inputs.cpa} onChange={set("cpa")} icon="" prefix={currency.symbol} sublabel="Gasto en ads por pedido generado" />
+          <NumInput label="Total de pedidos" value={inputs.pedidos} onChange={set("pedidos")} prefix="#" icon="" />
           <div style={{ height: 1, background: C.border, margin: "16px 0" }} />
           <Slider label="Pedidos confirmados" sublabel="Responden y confirman" value={inputs.pctConfirmados} onChange={set("pctConfirmados")} color={C.accent} />
           <Slider label="Pedidos entregados" sublabel="Realmente entregados" value={inputs.pctEntregados} onChange={set("pctEntregados")} color={C.green} />
           <div style={{ height: 1, background: C.border, margin: "16px 0" }} />
-          <div style={{ fontSize: 12, fontWeight: 600, color: C.textDim, marginBottom: 7 }}>🔁 Recuperación del producto</div>
+          <div style={{ fontSize: 12, fontWeight: 600, color: C.textDim, marginBottom: 7 }}>Recuperación del producto</div>
           <Toggle value={inputs.recupera} onChange={set("recupera")} />
 
           {/* Fixed costs */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 12 }}>
-            <div style={{ background: `${C.purple}0A`, border: `1px solid ${C.purple}25`, borderRadius: 9, padding: "9px 11px" }}>
-              <div style={{ fontSize: 9, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 2 }}>Comisión Dropi</div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: C.purple }}>2.5%</div>
+            <div style={{ background: `${C.purple}0A`, border: `1px solid ${C.purple}25`, borderRadius: 6, padding: "9px 11px" }}>
+              <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 2 }}>Comisión Dropi</div>
+              <div style={{ fontSize: 18, fontFamily: DISPLAY, fontWeight: 800, color: C.purple }}>2.5%</div>
             </div>
-            <div style={{ background: `${C.amber}0A`, border: `1px solid ${C.amber}25`, borderRadius: 9, padding: "9px 11px" }}>
-              <div style={{ fontSize: 9, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 2 }}>Flete devuelto</div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: C.amber }}>40%</div>
+            <div style={{ background: `${C.amber}0A`, border: `1px solid ${C.amber}25`, borderRadius: 6, padding: "9px 11px" }}>
+              <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 2 }}>Flete devuelto</div>
+              <div style={{ fontSize: 18, fontFamily: DISPLAY, fontWeight: 800, color: C.amber }}>40%</div>
             </div>
           </div>
           <SavedCalcs inputs={inputs} currency={currency} R={R} limit={5} onLoad={(inp, cur) => { setInputs(inp); if (cur) setCurrencyCode(cur); }} />
@@ -456,7 +472,7 @@ function FreeCalculator({ onUpgrade, onStartTrial, onHome }) {
         <div>
           {/* Health score simple */}
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            style={{ background: C.card, border: `1px solid ${health.score >= 75 ? C.green : health.score >= 50 ? C.amber : C.red}40`, borderRadius: 16, padding: "18px 20px", marginBottom: 14, display: "flex", alignItems: "center", gap: 16 }}>
+            style={{ background: C.card, border: `1px solid ${health.score >= 75 ? C.green : health.score >= 50 ? C.amber : C.red}40`, borderRadius: 10, padding: "18px 20px", marginBottom: 14, display: "flex", alignItems: "center", gap: 16 }}>
             <div style={{ position: "relative", width: 70, height: 70, flexShrink: 0 }}>
               <svg width="70" height="70" style={{ transform: "rotate(-90deg)" }}>
                 <circle cx="35" cy="35" r="28" fill="none" stroke={C.border} strokeWidth="5" />
@@ -465,58 +481,57 @@ function FreeCalculator({ onUpgrade, onStartTrial, onHome }) {
                   style={{ transition: "stroke-dashoffset 1s ease" }} />
               </svg>
               <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                <div style={{ fontSize: 17, fontWeight: 900, color: health.score >= 75 ? C.green : health.score >= 50 ? C.amber : C.red, lineHeight: 1 }}>{health.score}</div>
+                <div style={{ fontSize: 17, fontFamily: DISPLAY, fontWeight: 800, color: health.score >= 75 ? C.green : health.score >= 50 ? C.amber : C.red, lineHeight: 1 }}>{health.score}</div>
                 <div style={{ fontSize: 8, color: C.textMuted }}>/ 100</div>
               </div>
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 10, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 3 }}>Salud de campaña</div>
-              <div style={{ fontSize: 17, fontWeight: 800, color: health.score >= 75 ? C.green : health.score >= 50 ? C.amber : C.red, marginBottom: 5 }}>
+              <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 3 }}>Salud de campaña</div>
+              <div style={{ fontSize: 17, fontFamily: DISPLAY, fontWeight: 800, color: health.score >= 75 ? C.green : health.score >= 50 ? C.amber : C.red, marginBottom: 5 }}>
                 {health.score >= 75 ? "Saludable" : health.score >= 50 ? "En riesgo" : "Crítico"}
               </div>
               {health.issues[0] && (
-                <div style={{ fontSize: 11, color: C.amber, background: `${C.amber}10`, borderRadius: 7, padding: "4px 9px", display: "inline-block" }}>
-                  ⚠️ {health.issues[0].label}
+                <div style={{ fontSize: 11, color: C.amber, background: `${C.amber}10`, borderRadius: 5, padding: "4px 9px", display: "inline-block" }}>
+                  {health.issues[0].label}
                 </div>
               )}
             </div>
             {/* PRO teaser */}
-            <div style={{ background: `${C.gold}10`, border: `1px solid ${C.gold}25`, borderRadius: 10, padding: "10px 12px", textAlign: "center", flexShrink: 0, cursor: "pointer" }} onClick={onUpgrade}>
-              <div style={{ fontSize: 9, color: C.gold, fontWeight: 700, textTransform: "uppercase", marginBottom: 3 }}>⭐ Solo en PRO</div>
-              <div style={{ fontSize: 10, color: C.textMuted, lineHeight: 1.4 }}>Análisis detallado<br />+ IA + Benchmarks</div>
+            <div style={{ background: `${C.gold}10`, border: `1px solid ${C.gold}25`, borderRadius: 7, padding: "10px 12px", textAlign: "center", flexShrink: 0, cursor: "pointer" }} onClick={onUpgrade}>
+              <div style={{ fontSize: 11, color: C.gold, fontWeight: 700, marginBottom: 3 }}>Solo en PRO</div>
+              <div style={{ fontSize: 11, color: C.textMuted, lineHeight: 1.4 }}>Análisis detallado<br />+ IA + Benchmarks</div>
             </div>
           </motion.div>
 
           {/* Main result */}
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-            style={{ background: isProfit ? `${C.green}0A` : `${C.red}0A`, border: `1.5px solid ${isProfit ? C.green : C.red}40`, borderRadius: 16, padding: "18px 20px", marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14 }}>
+            style={{ background: C.text, border: "none", borderRadius: 10, padding: "18px 20px", marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14 }}>
             <div>
-              <div style={{ fontSize: 10, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>{isProfit ? "✦ Ganancia neta total" : "⚠ Pérdida neta total"}</div>
-              <div style={{ fontSize: "clamp(26px,4vw,40px)", fontWeight: 900, letterSpacing: "-0.03em", color: isProfit ? C.green : C.red, lineHeight: 1 }}>{isProfit ? "" : "−"}{fmt(R.gananciaNet)}</div>
-              <div style={{ fontSize: 11, color: C.textMuted, marginTop: 4 }}>Margen: <span style={{ fontWeight: 700, color: isProfit ? C.green : C.red }}>{fmtPct(R.margen)}</span> · {currency.flag} {currency.code}</div>
+              <div style={{ fontSize: 11, color: "#9AA3B0", marginBottom: 4 }}>{isProfit ? "Ganancia neta total" : "Pérdida neta total"}</div>
+              <div style={{ fontSize: "clamp(26px,4vw,40px)", fontFamily: DISPLAY, fontWeight: 800, letterSpacing: "-0.03em", color: isProfit ? "#6EE7A0" : "#FF8F8F", lineHeight: 1 }}>{isProfit ? "" : "−"}{fmt(R.gananciaNet)}</div>
+              <div style={{ fontSize: 11, color: "#9AA3B0", marginTop: 4 }}>Margen: <span style={{ fontWeight: 700, color: isProfit ? "#6EE7A0" : "#FF8F8F" }}>{fmtPct(R.margen)}</span> · {currency.code}</div>
             </div>
-            <div style={{ width: 48, height: 48, borderRadius: "50%", background: isProfit ? `${C.green}15` : `${C.red}15`, border: `2px solid ${isProfit ? C.green : C.red}40`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>{isProfit ? "🚀" : "⚠️"}</div>
           </motion.div>
 
           {/* Key metrics */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
             {[
-              { label: "Ganancia por pedido", value: fmt(R.gananciaXPedido), color: R.gananciaXPedido >= 0 ? C.green : C.red, icon: "💰" },
-              { label: "Ingresos totales", value: fmt(R.ingresosBrutos), color: C.green, icon: "📈" },
-              { label: "Gastos totales", value: fmt(R.gastosTotales), color: C.red, icon: "📉" },
-              { label: "Total invertido ads", value: fmt(R.invAds), color: C.accent, icon: "📣" },
+              { label: "Ganancia por pedido", value: fmt(R.gananciaXPedido), color: R.gananciaXPedido >= 0 ? C.green : C.red, icon: "" },
+              { label: "Ingresos totales", value: fmt(R.ingresosBrutos), color: C.green, icon: "" },
+              { label: "Gastos totales", value: fmt(R.gastosTotales), color: C.red, icon: "" },
+              { label: "Total invertido ads", value: fmt(R.invAds), color: C.accent, icon: "" },
             ].map((m, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 + i * 0.04 }}
-                style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 13, padding: "14px 15px" }}>
-                <div style={{ fontSize: 10, color: C.textMuted, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>{m.icon} {m.label}</div>
-                <div style={{ fontSize: 18, fontWeight: 800, color: m.color }}>{m.value}</div>
+                style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, padding: "14px 15px" }}>
+                <div style={{ fontSize: 11, color: C.textMuted, fontWeight: 600, marginBottom: 6 }}>{m.icon} {m.label}</div>
+                <div style={{ fontSize: 18, fontFamily: DISPLAY, fontWeight: 800, color: m.color }}>{m.value}</div>
               </motion.div>
             ))}
           </div>
 
           {/* Pedidos flow */}
-          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px", marginBottom: 14 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 12 }}>📊 Flujo de pedidos</div>
+          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "16px", marginBottom: 14 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 12 }}>Flujo de pedidos</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8 }}>
               {[
                 { label: "Totales", val: inputs.pedidos, color: C.accent },
@@ -524,41 +539,41 @@ function FreeCalculator({ onUpgrade, onStartTrial, onHome }) {
                 { label: "Entregados", val: Math.round(R.entregados), color: C.green },
                 { label: "Devueltos", val: Math.round(R.devoluciones), color: C.red },
               ].map((item, i) => (
-                <div key={i} style={{ textAlign: "center", background: C.surface, borderRadius: 10, padding: "10px 6px" }}>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: item.color }}>{fmtNum(item.val)}</div>
-                  <div style={{ fontSize: 10, color: C.textMuted, marginTop: 3 }}>{item.label}</div>
+                <div key={i} style={{ textAlign: "center", background: C.surface, borderRadius: 7, padding: "10px 6px" }}>
+                  <div style={{ fontSize: 18, fontFamily: DISPLAY, fontWeight: 800, color: item.color }}>{fmtNum(item.val)}</div>
+                  <div style={{ fontSize: 11, color: C.textMuted, marginTop: 3 }}>{item.label}</div>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Simple chart */}
-          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px", marginBottom: 14 }}>
+          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "16px", marginBottom: 14 }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 12 }}>Flujo de pedidos</div>
             <ResponsiveContainer width="100%" height={180}>
               <PieChart>
                 <Pie data={pieData} cx="50%" cy="45%" innerRadius={40} outerRadius={65} paddingAngle={3} dataKey="value">
                   {pieData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
                 </Pie>
-                <Tooltip contentStyle={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 11 }} />
-                <Legend iconType="circle" iconSize={8} formatter={(v) => <span style={{ color: C.textDim, fontSize: 10 }}>{v}</span>} />
+                <Tooltip contentStyle={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 6, fontSize: 11 }} />
+                <Legend iconType="circle" iconSize={8} formatter={(v) => <span style={{ color: C.textDim, fontSize: 11 }}>{v}</span>} />
               </PieChart>
             </ResponsiveContainer>
           </div>
 
           {/* PRO upsell cards */}
-          <div style={{ background: `linear-gradient(135deg,${C.gold}10,${C.purple}08)`, border: `1px solid ${C.gold}25`, borderRadius: 16, padding: "20px", marginBottom: 14 }}>
-            <div style={{ fontSize: 13, fontWeight: 800, color: C.gold, marginBottom: 6 }}>⭐ Solo en PRO — esto te estás perdiendo</div>
+          <div style={{ background: `${C.gold}10`, border: `1px solid ${C.gold}25`, borderRadius: 10, padding: "20px", marginBottom: 14 }}>
+            <div style={{ fontSize: 13, fontWeight: 800, color: C.gold, marginBottom: 6 }}>Solo en PRO — esto te estás perdiendo</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
               {[
-                { icon: "🏆", text: "Benchmarks LATAM reales" },
-                { icon: "📈", text: "Simulador de escalado" },
-                { icon: "🔍", text: "Pérdida Invisible detectada" },
-                { icon: "🎯", text: "Oportunidades de crecimiento" },
-                { icon: "🤖", text: "Asesor de IA ilimitado" },
-                { icon: "⚡", text: "Predictor de quiebre" },
-                { icon: "📊", text: "Comparador de productos" },
-                { icon: "📄", text: "PDF profesional" },
+                { icon: "", text: "Benchmarks LATAM reales" },
+                { icon: "", text: "Simulador de escalado" },
+                { icon: "", text: "Pérdida Invisible detectada" },
+                { icon: "", text: "Oportunidades de crecimiento" },
+                { icon: "", text: "Asesor de IA ilimitado" },
+                { icon: "", text: "Predictor de quiebre" },
+                { icon: "", text: "Comparador de productos" },
+                { icon: "", text: "PDF profesional" },
               ].map((item, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: C.textDim }}>
                   <span style={{ fontSize: 14 }}>{item.icon}</span>{item.text}
@@ -567,11 +582,11 @@ function FreeCalculator({ onUpgrade, onStartTrial, onHome }) {
             </div>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
               <motion.button onClick={onStartTrial} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-                style={{ flex: 1, background: `linear-gradient(135deg,${C.accent},#6366F1)`, border: "none", borderRadius: 10, padding: "11px 16px", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", boxShadow: `0 4px 20px ${C.accentGlow}` }}>
-                🎁 Probar PRO gratis 3 días
+                style={{ flex: 1, background: `${C.accent}`, border: "none", borderRadius: 7, padding: "11px 16px", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", boxShadow: `0 4px 20px ${C.accentGlow}` }}>
+                Probar PRO gratis 3 días
               </motion.button>
-              <button onClick={onUpgrade} style={{ flex: 1, background: "transparent", border: `1px solid ${C.gold}40`, borderRadius: 10, padding: "11px 16px", color: C.gold, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
-                ⭐ Activar PRO — $4.99/mes
+              <button onClick={onUpgrade} style={{ flex: 1, background: "transparent", border: `1px solid ${C.gold}40`, borderRadius: 7, padding: "11px 16px", color: C.gold, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                Activar PRO — $4.99/mes
               </button>
             </div>
           </div>
@@ -658,23 +673,23 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
     const newDropi = newPrecio * 0.025;
     const newGXP = newPrecio - inputs.costo - inputs.envio - inputs.cpa - newDropi;
     const newGan = R.entregados * newGXP - R.devoluciones * inputs.cpa - R.devoluciones * inputs.envio * 0.6 - (!inputs.recupera ? R.devoluciones * inputs.costo : 0) - R.noConfirmados * inputs.cpa;
-    ops.push({ icon: "💰", title: "Aumentar precio 15%", desc: `De ${fmt(inputs.precio)} a ${fmt(newPrecio)}`, gain: newGan - R.gananciaNet, time: "Inmediato", dif: "Fácil", priority: 1 });
+    ops.push({ icon: "", title: "Aumentar precio 15%", desc: `De ${fmt(inputs.precio)} a ${fmt(newPrecio)}`, gain: newGan - R.gananciaNet, time: "Inmediato", dif: "Fácil", priority: 1 });
     const newEntPct = Math.min(100, inputs.pctEntregados + 10);
     const newEnt = R.confirmados * (newEntPct / 100);
     const newDev = R.confirmados - newEnt;
     const gan2 = newEnt * ganXP - newDev * inputs.cpa - newDev * inputs.envio * 0.6 - (!inputs.recupera ? newDev * inputs.costo : 0) - R.noConfirmados * inputs.cpa;
-    ops.push({ icon: "📬", title: `Mejorar entrega al ${newEntPct}%`, desc: `+${fmtNum(Math.round(newEnt - R.entregados))} pedidos entregados`, gain: gan2 - R.gananciaNet, time: "1-2 semanas", dif: "Media", priority: 2 });
+    ops.push({ icon: "", title: `Mejorar entrega al ${newEntPct}%`, desc: `+${fmtNum(Math.round(newEnt - R.entregados))} pedidos entregados`, gain: gan2 - R.gananciaNet, time: "1-2 semanas", dif: "Media", priority: 2 });
     const newConfPct = Math.min(100, inputs.pctConfirmados + 10);
     const newConf = inputs.pedidos * (newConfPct / 100);
     const newEnt2 = newConf * (inputs.pctEntregados / 100);
     const newDev2 = newConf - newEnt2;
     const noConf2 = inputs.pedidos - newConf;
     const gan3 = newEnt2 * ganXP - newDev2 * inputs.cpa - newDev2 * inputs.envio * 0.6 - (!inputs.recupera ? newDev2 * inputs.costo : 0) - noConf2 * inputs.cpa;
-    ops.push({ icon: "📞", title: `Mejorar confirmación al ${newConfPct}%`, desc: "Mejor proceso de llamadas y seguimiento", gain: gan3 - R.gananciaNet, time: "1 semana", dif: "Media", priority: 3 });
+    ops.push({ icon: "", title: `Mejorar confirmación al ${newConfPct}%`, desc: "Mejor proceso de llamadas y seguimiento", gain: gan3 - R.gananciaNet, time: "1 semana", dif: "Media", priority: 3 });
     const newCPA = inputs.cpa * 0.8;
     const gxp2 = inputs.precio - inputs.costo - inputs.envio - newCPA - dropi;
     const gan4 = R.entregados * gxp2 - R.devoluciones * newCPA - R.devoluciones * inputs.envio * 0.6 - (!inputs.recupera ? R.devoluciones * inputs.costo : 0) - R.noConfirmados * newCPA;
-    ops.push({ icon: "📣", title: "Reducir CPA un 20%", desc: `De ${fmt(inputs.cpa)} a ${fmt(newCPA)}`, gain: gan4 - R.gananciaNet, time: "2-4 semanas", dif: "Difícil", priority: 4 });
+    ops.push({ icon: "", title: "Reducir CPA un 20%", desc: `De ${fmt(inputs.cpa)} a ${fmt(newCPA)}`, gain: gan4 - R.gananciaNet, time: "2-4 semanas", dif: "Difícil", priority: 4 });
     return ops.sort((a, b) => b.gain - a.gain);
   }, [inputs, R]);
 
@@ -692,7 +707,7 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
     const date = new Date().toLocaleDateString("es-ES", { year: "numeric", month: "long", day: "numeric" });
     const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Reporte PRO COD</title>
 <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;padding:36px;color:#1a1a2e}
-.header{background:linear-gradient(135deg,#0f172a,#1e3a5f);color:#fff;padding:28px;border-radius:12px;margin-bottom:24px}
+.header{background:#0f172a;color:#fff;padding:28px;border-radius:12px;margin-bottom:24px}
 .header h1{font-size:22px;font-weight:900;margin-bottom:4px}.badge{display:inline-block;background:rgba(59,130,246,.3);border:1px solid rgba(59,130,246,.5);border-radius:6px;padding:2px 9px;font-size:10px;color:#93c5fd;font-weight:700;margin-bottom:8px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px}
@@ -748,19 +763,19 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
   };
 
   const TABS = [
-    { id: "resultados", label: "📊 Resultados" },
-    { id: "salud", label: "❤️ Salud & Riesgo" },
-    { id: "benchmarks", label: "🏆 Benchmarks" },
-    { id: "invisible", label: "🔍 Pérdida Invisible" },
-    { id: "escenarios", label: "🎭 Escenarios" },
-    { id: "escalado", label: "📈 Escalado" },
-    { id: "oportunidades", label: "🎯 Optimización" },
-    { id: "comparador", label: "⚖️ Comparador" },
-    { id: "ia", label: "🤖 IA" },
+    { id: "resultados", label: "Resultados" },
+    { id: "salud", label: "Salud & Riesgo" },
+    { id: "benchmarks", label: "Benchmarks" },
+    { id: "invisible", label: "Pérdida Invisible" },
+    { id: "escenarios", label: "Escenarios" },
+    { id: "escalado", label: "Escalado" },
+    { id: "oportunidades", label: "Optimización" },
+    { id: "comparador", label: "Comparador" },
+    { id: "ia", label: "IA" },
   ];
 
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'DM Sans','Inter',system-ui,sans-serif", color: C.text }}>
+    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Instrument Sans',system-ui,sans-serif", color: C.text }}>
       {/* Header */}
       <div style={{ borderBottom: `1px solid ${C.border}`, background: `${C.surface}F0`, backdropFilter: "blur(24px)", position: "sticky", top: 0, zIndex: 100, padding: "0 14px" }}>
         <div style={{ maxWidth: 1300, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 52 }}>
@@ -768,17 +783,17 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
             <button onClick={onBackToFree} style={{ background: "transparent", border: "none", cursor: "pointer", color: C.textMuted, fontSize: 11, fontFamily: "inherit", padding: "4px 6px" }}>← Gratis</button>
             <div style={{ width: 1, height: 14, background: C.border }} />
             <button onClick={onHome} title="Ir al inicio" style={{ display: "flex", alignItems: "center", gap: 8, background: "transparent", border: "none", cursor: "pointer", fontFamily: "inherit", color: C.text, padding: 0, textAlign: "left" }}>
-              <div style={{ width: 26, height: 26, borderRadius: 7, background: `linear-gradient(135deg,${C.gold},${C.amber})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13 }}>⭐</div>
+              <Mark size={26} pro />
               <div>
                 <div style={{ fontSize: 12, fontWeight: 800 }}>COD Calculator <span style={{ color: C.gold }}>PRO</span></div>
-                <div style={{ fontSize: 9, color: C.textMuted }}>Sistema operativo de dropshipping COD LATAM</div>
+                <div style={{ fontSize: 11, color: C.textMuted }}>Sistema operativo de dropshipping COD LATAM</div>
               </div>
             </button>
           </div>
           <div style={{ display: "flex", gap: 7, alignItems: "center" }}>
-            <div style={{ background: `${health.score >= 75 ? C.green : health.score >= 50 ? C.amber : C.red}15`, border: `1px solid ${health.score >= 75 ? C.green : health.score >= 50 ? C.amber : C.red}35`, borderRadius: 7, padding: "3px 9px", fontSize: 10, fontWeight: 700, color: health.score >= 75 ? C.green : health.score >= 50 ? C.amber : C.red }}>❤️ {health.score}/100</div>
-            <div style={{ background: `${risk.color}15`, border: `1px solid ${risk.color}35`, borderRadius: 7, padding: "3px 9px", fontSize: 10, fontWeight: 700, color: risk.color }}>{risk.emoji} {risk.level}</div>
-            <button onClick={generatePDF} style={{ background: `${C.green}15`, border: `1px solid ${C.green}30`, borderRadius: 7, padding: "4px 10px", color: C.green, fontSize: 10, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>📄 PDF</button>
+            <div style={{ background: `${health.score >= 75 ? C.green : health.score >= 50 ? C.amber : C.red}15`, border: `1px solid ${health.score >= 75 ? C.green : health.score >= 50 ? C.amber : C.red}35`, borderRadius: 5, padding: "3px 9px", fontSize: 11, fontWeight: 700, color: health.score >= 75 ? C.green : health.score >= 50 ? C.amber : C.red }}>{health.score}/100</div>
+            <div style={{ background: `${risk.color}15`, border: `1px solid ${risk.color}35`, borderRadius: 5, padding: "3px 9px", fontSize: 11, fontWeight: 700, color: risk.color }}>{risk.emoji} {risk.level}</div>
+            <button onClick={generatePDF} style={{ background: `${C.green}15`, border: `1px solid ${C.green}30`, borderRadius: 5, padding: "4px 10px", color: C.green, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>PDF</button>
             <UserMenu />
           </div>
         </div>
@@ -791,36 +806,36 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
 
         {/* LEFT */}
         <motion.div className="left-panel" initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }}
-          style={{ background: C.card, border: `1px solid ${C.gold}20`, borderRadius: 18, padding: "18px", position: "sticky", top: 64 }}>
+          style={{ background: C.card, border: `1px solid ${C.gold}20`, borderRadius: 12, padding: "18px", position: "sticky", top: 64 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 14 }}>
-            <span style={{ fontSize: 14 }}>⚙️</span>
+            
             <div style={{ fontSize: 13, fontWeight: 800, color: C.text }}>Campaña</div>
-            <span style={{ background: `${C.gold}18`, color: C.gold, fontSize: 9, fontWeight: 700, borderRadius: 5, padding: "2px 6px", marginLeft: "auto" }}>PRO</span>
+            <span style={{ background: `${C.gold}18`, color: C.gold, fontSize: 11, fontWeight: 700, borderRadius: 5, padding: "2px 6px", marginLeft: "auto" }}>PRO</span>
           </div>
           <CurrencySelector value={currencyCode} onChange={setCurrencyCode} />
-          <NumInput label="Costo del producto" value={inputs.costo} onChange={set("costo")} icon="📦" prefix={currency.symbol} />
-          <NumInput label="Precio de venta" value={inputs.precio} onChange={set("precio")} icon="🏷️" prefix={currency.symbol} />
-          <NumInput label="Costo de envío" value={inputs.envio} onChange={set("envio")} icon="🚚" prefix={currency.symbol} />
-          <NumInput label="CPA" value={inputs.cpa} onChange={set("cpa")} icon="📣" prefix={currency.symbol} sublabel="Costo por pedido generado" />
-          <NumInput label="Total de pedidos" value={inputs.pedidos} onChange={set("pedidos")} prefix="#" icon="📋" />
+          <NumInput label="Costo del producto" value={inputs.costo} onChange={set("costo")} icon="" prefix={currency.symbol} />
+          <NumInput label="Precio de venta" value={inputs.precio} onChange={set("precio")} icon="" prefix={currency.symbol} />
+          <NumInput label="Costo de envío" value={inputs.envio} onChange={set("envio")} icon="" prefix={currency.symbol} />
+          <NumInput label="CPA" value={inputs.cpa} onChange={set("cpa")} icon="" prefix={currency.symbol} sublabel="Costo por pedido generado" />
+          <NumInput label="Total de pedidos" value={inputs.pedidos} onChange={set("pedidos")} prefix="#" icon="" />
           <div style={{ height: 1, background: C.border, margin: "14px 0" }} />
           <Slider label="Confirmados" value={inputs.pctConfirmados} onChange={set("pctConfirmados")} color={C.accent} />
           <Slider label="Entregados" value={inputs.pctEntregados} onChange={set("pctEntregados")} color={C.green} />
           <div style={{ height: 1, background: C.border, margin: "14px 0" }} />
-          <div style={{ fontSize: 11, fontWeight: 600, color: C.textDim, marginBottom: 7 }}>🔁 Recuperación del producto</div>
+          <div style={{ fontSize: 11, fontWeight: 600, color: C.textDim, marginBottom: 7 }}>Recuperación del producto</div>
           <Toggle value={inputs.recupera} onChange={set("recupera")} />
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7, marginTop: 10 }}>
-            <div style={{ background: `${C.purple}0A`, border: `1px solid ${C.purple}25`, borderRadius: 8, padding: "8px 10px" }}>
-              <div style={{ fontSize: 9, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 2 }}>Dropi</div>
-              <div style={{ fontSize: 17, fontWeight: 800, color: C.purple }}>2.5%</div>
+            <div style={{ background: `${C.purple}0A`, border: `1px solid ${C.purple}25`, borderRadius: 6, padding: "8px 10px" }}>
+              <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 2 }}>Dropi</div>
+              <div style={{ fontSize: 17, fontFamily: DISPLAY, fontWeight: 800, color: C.purple }}>2.5%</div>
             </div>
-            <div style={{ background: `${C.amber}0A`, border: `1px solid ${C.amber}25`, borderRadius: 8, padding: "8px 10px" }}>
-              <div style={{ fontSize: 9, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 2 }}>Flete</div>
-              <div style={{ fontSize: 17, fontWeight: 800, color: C.amber }}>40%</div>
+            <div style={{ background: `${C.amber}0A`, border: `1px solid ${C.amber}25`, borderRadius: 6, padding: "8px 10px" }}>
+              <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 2 }}>Flete</div>
+              <div style={{ fontSize: 17, fontFamily: DISPLAY, fontWeight: 800, color: C.amber }}>40%</div>
             </div>
           </div>
-          <div style={{ marginTop: 10, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 12px" }}>
-            <div style={{ fontSize: 9, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 7 }}>Ganancia por pedido</div>
+          <div style={{ marginTop: 10, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 7, padding: "10px 12px" }}>
+            <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 7 }}>Ganancia por pedido</div>
             {[
               { label: "+ Precio", val: inputs.precio, pos: true },
               { label: "− Producto", val: inputs.costo },
@@ -838,23 +853,23 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
             </div>
           </div>
           <SavedCalcs inputs={inputs} currency={currency} R={R} limit={50} onLoad={(inp, cur) => { setInputs(inp); if (cur) setCurrencyCode(cur); }} />
-          <button onClick={generatePDF} style={{ width: "100%", marginTop: 10, background: `${C.green}15`, border: `1px solid ${C.green}30`, borderRadius: 10, padding: "9px", color: C.green, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>📄 Generar PDF profesional</button>
+          <button onClick={generatePDF} style={{ width: "100%", marginTop: 10, background: `${C.green}15`, border: `1px solid ${C.green}30`, borderRadius: 7, padding: "9px", color: C.green, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Generar PDF profesional</button>
         </motion.div>
 
         {/* RIGHT */}
         <div>
           {/* Big result */}
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-            style={{ background: isProfit ? `${C.green}0A` : `${C.red}0A`, border: `1.5px solid ${isProfit ? C.green : C.red}40`, borderRadius: 16, padding: "16px 20px", marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14 }}>
+            style={{ background: C.text, border: "none", borderRadius: 10, padding: "16px 20px", marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14 }}>
             <div>
-              <div style={{ fontSize: 10, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>{isProfit ? "✦ Ganancia neta total" : "⚠ Pérdida neta total"}</div>
-              <div style={{ fontSize: "clamp(24px,4vw,40px)", fontWeight: 900, letterSpacing: "-0.03em", color: isProfit ? C.green : C.red, lineHeight: 1 }}>{isProfit ? "" : "−"}{fmt(R.gananciaNet)}</div>
-              <div style={{ fontSize: 11, color: C.textMuted, marginTop: 4 }}>Margen: <span style={{ fontWeight: 700, color: isProfit ? C.green : C.red }}>{fmtPct(R.margen)}</span> · {currency.flag} {currency.code}</div>
+              <div style={{ fontSize: 11, color: "#9AA3B0", marginBottom: 4 }}>{isProfit ? "Ganancia neta total" : "Pérdida neta total"}</div>
+              <div style={{ fontSize: "clamp(24px,4vw,40px)", fontFamily: DISPLAY, fontWeight: 800, letterSpacing: "-0.03em", color: isProfit ? "#6EE7A0" : "#FF8F8F", lineHeight: 1 }}>{isProfit ? "" : "−"}{fmt(R.gananciaNet)}</div>
+              <div style={{ fontSize: 11, color: "#9AA3B0", marginTop: 4 }}>Margen: <span style={{ fontWeight: 700, color: isProfit ? "#6EE7A0" : "#FF8F8F" }}>{fmtPct(R.margen)}</span> · {currency.code}</div>
             </div>
             <div style={{ textAlign: "right", flexShrink: 0 }}>
-              <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 2 }}>Total ads invertido</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: C.accent }}>{fmt(R.invAds)}</div>
-              <div style={{ fontSize: 10, color: C.textMuted, marginTop: 2 }}>ROAS {R.roas.toFixed(2)}x · BE {R.roasBreakEven.toFixed(2)}x</div>
+              <div style={{ fontSize: 11, color: "#9AA3B0", marginBottom: 2 }}>Total ads invertido</div>
+              <div style={{ fontSize: 20, fontFamily: DISPLAY, fontWeight: 800, color: "#fff" }}>{fmt(R.invAds)}</div>
+              <div style={{ fontSize: 11, color: "#9AA3B0", marginTop: 2 }}>ROAS {R.roas.toFixed(2)}x · BE {R.roasBreakEven.toFixed(2)}x</div>
             </div>
           </motion.div>
 
@@ -862,7 +877,7 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
           <div style={{ display: "flex", gap: 5, marginBottom: 16, overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch" }}>
             {TABS.map(t => (
               <button key={t.id} onClick={() => setTab(t.id)}
-                style={{ padding: "7px 12px", background: tab === t.id ? `${C.gold}15` : C.card, border: `1px solid ${tab === t.id ? C.gold : C.border}`, borderRadius: 9, color: tab === t.id ? C.gold : C.textDim, fontSize: 11, fontWeight: tab === t.id ? 700 : 500, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", transition: "all 0.2s", flexShrink: 0 }}>
+                style={{ padding: "7px 12px", background: tab === t.id ? `${C.gold}15` : C.card, border: `1px solid ${tab === t.id ? C.gold : C.border}`, borderRadius: 6, color: tab === t.id ? C.gold : C.textDim, fontSize: 11, fontWeight: tab === t.id ? 700 : 500, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", transition: "all 0.2s", flexShrink: 0 }}>
                 {t.label}
               </button>
             ))}
@@ -876,57 +891,57 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
                 <div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 9, marginBottom: 12 }}>
                     {[
-                      { label: "Totales", val: fmtNum(inputs.pedidos), color: C.accent, icon: "📋" },
-                      { label: "Confirmados", val: fmtNum(R.confirmados), color: C.accent, icon: "✅" },
-                      { label: "Entregados", val: fmtNum(R.entregados), color: C.green, icon: "📬" },
-                      { label: "Devoluciones", val: fmtNum(R.devoluciones), color: C.red, icon: "↩️" },
+                      { label: "Totales", val: fmtNum(inputs.pedidos), color: C.accent, icon: "" },
+                      { label: "Confirmados", val: fmtNum(R.confirmados), color: C.accent, icon: "" },
+                      { label: "Entregados", val: fmtNum(R.entregados), color: C.green, icon: "" },
+                      { label: "Devoluciones", val: fmtNum(R.devoluciones), color: C.red, icon: "" },
                     ].map((m, i) => (
-                      <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "13px 12px" }}>
-                        <div style={{ fontSize: 9, color: C.textMuted, textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.07em", marginBottom: 6 }}>{m.icon} {m.label}</div>
-                        <div style={{ fontSize: 20, fontWeight: 800, color: m.color }}>{m.val}</div>
+                      <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, padding: "13px 12px" }}>
+                        <div style={{ fontSize: 11, color: C.textMuted, fontWeight: 600, marginBottom: 6 }}>{m.icon} {m.label}</div>
+                        <div style={{ fontSize: 20, fontFamily: DISPLAY, fontWeight: 800, color: m.color }}>{m.val}</div>
                       </div>
                     ))}
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 9, marginBottom: 12 }}>
                     {[
-                      { label: "Ingresos totales", val: fmt(R.ingresosBrutos), color: C.green, icon: "📈" },
-                      { label: "Gastos totales", val: fmt(R.gastosTotales), color: C.red, icon: "📉" },
-                      { label: "Ganancia/pedido", val: fmt(R.gananciaXPedido), color: R.gananciaXPedido >= 0 ? C.green : C.red, icon: "💰" },
-                      { label: "ROAS actual", val: `${R.roas.toFixed(2)}x`, color: C.accent, icon: "🎯" },
-                      { label: "ROAS Break Even", val: `${R.roasBreakEven.toFixed(2)}x`, color: C.amber, icon: "⚖️" },
-                      { label: "Comisión Dropi", val: fmt(R.totalDropi), color: C.purple, icon: "🏢" },
-                      { label: "Pérdidas dev.", val: fmt(R.totalPerdidaDev), color: C.red, icon: "💸" },
-                      { label: "Perdido en ads", val: fmt(R.perdidaCPA_dev + R.perdidaCPA_noc), color: C.red, icon: "📣" },
-                      { label: "Perdido logística", val: fmt(R.perdidaFlete_dev), color: C.amber, icon: "🚚" },
+                      { label: "Ingresos totales", val: fmt(R.ingresosBrutos), color: C.green, icon: "" },
+                      { label: "Gastos totales", val: fmt(R.gastosTotales), color: C.red, icon: "" },
+                      { label: "Ganancia/pedido", val: fmt(R.gananciaXPedido), color: R.gananciaXPedido >= 0 ? C.green : C.red, icon: "" },
+                      { label: "ROAS actual", val: `${R.roas.toFixed(2)}x`, color: C.accent, icon: "" },
+                      { label: "ROAS Break Even", val: `${R.roasBreakEven.toFixed(2)}x`, color: C.amber, icon: "" },
+                      { label: "Comisión Dropi", val: fmt(R.totalDropi), color: C.purple, icon: "" },
+                      { label: "Pérdidas dev.", val: fmt(R.totalPerdidaDev), color: C.red, icon: "" },
+                      { label: "Perdido en ads", val: fmt(R.perdidaCPA_dev + R.perdidaCPA_noc), color: C.red, icon: "" },
+                      { label: "Perdido logística", val: fmt(R.perdidaFlete_dev), color: C.amber, icon: "" },
                     ].map((m, i) => (
-                      <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "13px 12px" }}>
-                        <div style={{ fontSize: 9, color: C.textMuted, textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.07em", marginBottom: 6 }}>{m.icon} {m.label}</div>
-                        <div style={{ fontSize: 17, fontWeight: 800, color: m.color }}>{m.val}</div>
+                      <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, padding: "13px 12px" }}>
+                        <div style={{ fontSize: 11, color: C.textMuted, fontWeight: 600, marginBottom: 6 }}>{m.icon} {m.label}</div>
+                        <div style={{ fontSize: 17, fontFamily: DISPLAY, fontWeight: 800, color: m.color }}>{m.val}</div>
                       </div>
                     ))}
                   </div>
                   {/* Charts */}
                   <div className="charts-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 13, padding: "14px 12px" }}>
+                    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, padding: "14px 12px" }}>
                       <div style={{ fontSize: 12, fontWeight: 700, color: C.textDim, marginBottom: 10 }}>Flujo de pedidos</div>
                       <ResponsiveContainer width="100%" height={170}>
                         <PieChart>
                           <Pie data={[{ name: "Entregados", value: Math.max(0, Math.round(R.entregados)), color: C.green }, { name: "Devoluciones", value: Math.max(0, Math.round(R.devoluciones)), color: C.red }, { name: "No confirmados", value: Math.max(0, Math.round(R.noConfirmados)), color: C.textMuted }]} cx="50%" cy="45%" innerRadius={38} outerRadius={60} paddingAngle={3} dataKey="value">
                             {[C.green, C.red, C.textMuted].map((color, i) => <Cell key={i} fill={color} />)}
                           </Pie>
-                          <Tooltip contentStyle={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 10 }} />
-                          <Legend iconType="circle" iconSize={7} formatter={(v) => <span style={{ color: C.textDim, fontSize: 9 }}>{v}</span>} />
+                          <Tooltip contentStyle={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 6, fontSize: 11 }} />
+                          <Legend iconType="circle" iconSize={7} formatter={(v) => <span style={{ color: C.textDim, fontSize: 11 }}>{v}</span>} />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
-                    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 13, padding: "14px 12px" }}>
+                    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, padding: "14px 12px" }}>
                       <div style={{ fontSize: 12, fontWeight: 700, color: C.textDim, marginBottom: 10 }}>Ingresos vs Gastos</div>
                       <ResponsiveContainer width="100%" height={170}>
                         <BarChart data={[{ name: "Ingresos", value: R.ingresosBrutos, fill: C.green }, { name: "Gastos", value: R.gastosTotales, fill: C.red }, { name: "Ganancia", value: Math.max(0, R.gananciaNet), fill: C.accent }]} barSize={28} margin={{ top: 4, right: 4, left: 4, bottom: 4 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke={C.border} vertical={false} />
-                          <XAxis dataKey="name" tick={{ fill: C.textMuted, fontSize: 9 }} axisLine={false} tickLine={false} />
+                          <XAxis dataKey="name" tick={{ fill: C.textMuted, fontSize: 11 }} axisLine={false} tickLine={false} />
                           <YAxis hide />
-                          <Tooltip contentStyle={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 10 }} formatter={v => [`${currency.symbol}${v.toFixed(2)}`]} />
+                          <Tooltip contentStyle={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 6, fontSize: 11 }} formatter={v => [`${currency.symbol}${v.toFixed(2)}`]} />
                           <Bar dataKey="value" radius={[5, 5, 0, 0]}>{[C.green, C.red, C.accent].map((c, i) => <Cell key={i} fill={c} />)}</Bar>
                         </BarChart>
                       </ResponsiveContainer>
@@ -939,7 +954,7 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
               {tab === "salud" && (
                 <div>
                   {/* Health score */}
-                  <div style={{ background: C.card, border: `1px solid ${health.score >= 75 ? C.green : health.score >= 50 ? C.amber : C.red}40`, borderRadius: 16, padding: "20px", marginBottom: 12 }}>
+                  <div style={{ background: C.card, border: `1px solid ${health.score >= 75 ? C.green : health.score >= 50 ? C.amber : C.red}40`, borderRadius: 10, padding: "20px", marginBottom: 12 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16 }}>
                       <div style={{ position: "relative", width: 90, height: 90, flexShrink: 0 }}>
                         <svg width="90" height="90" style={{ transform: "rotate(-90deg)" }}>
@@ -949,40 +964,40 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
                             style={{ transition: "stroke-dashoffset 1s ease", filter: `drop-shadow(0 0 6px ${health.score >= 75 ? C.green : health.score >= 50 ? C.amber : C.red})` }} />
                         </svg>
                         <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                          <div style={{ fontSize: 22, fontWeight: 900, color: health.score >= 75 ? C.green : health.score >= 50 ? C.amber : C.red, lineHeight: 1 }}>{health.score}</div>
-                          <div style={{ fontSize: 9, color: C.textMuted }}>/ 100</div>
+                          <div style={{ fontSize: 22, fontFamily: DISPLAY, fontWeight: 800, color: health.score >= 75 ? C.green : health.score >= 50 ? C.amber : C.red, lineHeight: 1 }}>{health.score}</div>
+                          <div style={{ fontSize: 11, color: C.textMuted }}>/ 100</div>
                         </div>
                       </div>
                       <div>
-                        <div style={{ fontSize: 10, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Puntuación de salud</div>
-                        <div style={{ fontSize: 22, fontWeight: 900, color: health.score >= 75 ? C.green : health.score >= 50 ? C.amber : C.red, marginBottom: 4 }}>
+                        <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 4 }}>Puntuación de salud</div>
+                        <div style={{ fontSize: 22, fontFamily: DISPLAY, fontWeight: 800, color: health.score >= 75 ? C.green : health.score >= 50 ? C.amber : C.red, marginBottom: 4 }}>
                           {health.score >= 75 ? "Saludable" : health.score >= 50 ? "En riesgo" : "Crítico"}
                         </div>
                         <div style={{ fontSize: 12, color: C.textMuted }}>{health.issues.length} problema(s) · {health.wins.length} punto(s) positivo(s)</div>
                       </div>
                     </div>
                     {health.issues.map((issue, i) => (
-                      <div key={i} style={{ background: `${issue.severity === "urgente" ? C.red : C.amber}08`, border: `1px solid ${issue.severity === "urgente" ? C.red : C.amber}30`, borderRadius: 10, padding: "10px 12px", marginBottom: 7 }}>
+                      <div key={i} style={{ background: `${issue.severity === "urgente" ? C.red : C.amber}08`, border: `1px solid ${issue.severity === "urgente" ? C.red : C.amber}30`, borderRadius: 7, padding: "10px 12px", marginBottom: 7 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
-                          <span style={{ fontSize: 12 }}>{issue.severity === "urgente" ? "🚨" : "⚠️"}</span>
+                          <span style={{ fontSize: 12 }}>{issue.severity === "urgente" ? "" : ""}</span>
                           <span style={{ fontSize: 12, fontWeight: 700, color: issue.severity === "urgente" ? C.red : C.amber }}>{issue.label}</span>
-                          <span style={{ background: `${issue.severity === "urgente" ? C.red : C.amber}20`, color: issue.severity === "urgente" ? C.red : C.amber, fontSize: 9, fontWeight: 700, borderRadius: 4, padding: "2px 6px", textTransform: "uppercase" }}>{issue.severity}</span>
+                          <span style={{ background: `${issue.severity === "urgente" ? C.red : C.amber}20`, color: issue.severity === "urgente" ? C.red : C.amber, fontSize: 11, fontWeight: 700, borderRadius: 4, padding: "2px 6px", textTransform: "uppercase" }}>{issue.severity}</span>
                         </div>
                         <div style={{ fontSize: 11, color: C.textMuted }}>{issue.detail}</div>
                       </div>
                     ))}
                     {health.wins.length > 0 && <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
-                      {health.wins.map((w, i) => <div key={i} style={{ background: `${C.green}0A`, border: `1px solid ${C.green}25`, borderRadius: 7, padding: "4px 9px", fontSize: 11, color: C.green }}>✓ {w.label}: {w.detail}</div>)}
+                      {health.wins.map((w, i) => <div key={i} style={{ background: `${C.green}0A`, border: `1px solid ${C.green}25`, borderRadius: 5, padding: "4px 9px", fontSize: 11, color: C.green }}>{w.label}: {w.detail}</div>)}
                     </div>}
                   </div>
 
                   {/* Risk level */}
-                  <div style={{ background: `${risk.color}08`, border: `1.5px solid ${risk.color}40`, borderRadius: 16, padding: "20px", marginBottom: 12 }}>
-                    <div style={{ fontSize: 11, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 8 }}>⚡ Nivel de riesgo</div>
+                  <div style={{ background: `${risk.color}08`, border: `1.5px solid ${risk.color}40`, borderRadius: 10, padding: "20px", marginBottom: 12 }}>
+                    <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 8 }}>Nivel de riesgo</div>
                     <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 10 }}>
-                      <div style={{ fontSize: 40 }}>{risk.emoji}</div>
+                      <div style={{ fontSize: 40, fontFamily: DISPLAY }}>{risk.emoji}</div>
                       <div>
-                        <div style={{ fontSize: 24, fontWeight: 900, color: risk.color }}>{risk.level}</div>
+                        <div style={{ fontSize: 24, fontFamily: DISPLAY, fontWeight: 800, color: risk.color }}>{risk.level}</div>
                         <div style={{ fontSize: 13, color: C.textDim }}>{risk.desc}</div>
                       </div>
                     </div>
@@ -992,8 +1007,8 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
                         { label: "Entrega", val: `${inputs.pctEntregados}%`, ok: inputs.pctEntregados >= 70 },
                         { label: "ROAS vs BE", val: `${R.roas.toFixed(1)}x vs ${R.roasBreakEven.toFixed(1)}x`, ok: R.roas >= R.roasBreakEven },
                       ].map((item, i) => (
-                        <div key={i} style={{ background: item.ok ? `${C.green}08` : `${C.red}08`, border: `1px solid ${item.ok ? C.green : C.red}25`, borderRadius: 9, padding: "9px 10px" }}>
-                          <div style={{ fontSize: 9, color: C.textMuted, textTransform: "uppercase", marginBottom: 3 }}>{item.label}</div>
+                        <div key={i} style={{ background: item.ok ? `${C.green}08` : `${C.red}08`, border: `1px solid ${item.ok ? C.green : C.red}25`, borderRadius: 6, padding: "9px 10px" }}>
+                          <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 3 }}>{item.label}</div>
                           <div style={{ fontSize: 13, fontWeight: 700, color: item.ok ? C.green : C.red }}>{item.val}</div>
                         </div>
                       ))}
@@ -1001,26 +1016,26 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
                   </div>
 
                   {/* Break predictor */}
-                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: "20px" }}>
-                    <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 4 }}>⚡ Predictor de Quiebre</div>
+                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "20px" }}>
+                    <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 4 }}>Predictor de Quiebre</div>
                     <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 14 }}>Los límites críticos de tu campaña. Si cruzas estas líneas, pierdes dinero.</div>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                      <div style={{ background: `${C.red}08`, border: `1px solid ${C.red}25`, borderRadius: 12, padding: "14px" }}>
-                        <div style={{ fontSize: 10, color: C.textMuted, textTransform: "uppercase", marginBottom: 6 }}>🚨 Entrega mínima rentable</div>
-                        <div style={{ fontSize: 26, fontWeight: 900, color: C.red }}>{breakPts.minEntrega}%</div>
+                      <div style={{ background: `${C.red}08`, border: `1px solid ${C.red}25`, borderRadius: 8, padding: "14px" }}>
+                        <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 6 }}>Entrega mínima rentable</div>
+                        <div style={{ fontSize: 26, fontFamily: DISPLAY, fontWeight: 800, color: C.red }}>{breakPts.minEntrega}%</div>
                         <div style={{ fontSize: 11, color: C.textMuted, marginTop: 4 }}>
                           {inputs.pctEntregados > breakPts.minEntrega
-                            ? `✓ Estás ${inputs.pctEntregados - breakPts.minEntrega}pp por encima del límite`
-                            : `⚠ Estás ${breakPts.minEntrega - inputs.pctEntregados}pp por debajo del límite`}
+                            ? `Estás ${inputs.pctEntregados - breakPts.minEntrega}pp por encima del límite`
+                            : `Estás ${breakPts.minEntrega - inputs.pctEntregados}pp por debajo del límite`}
                         </div>
                       </div>
-                      <div style={{ background: `${C.amber}08`, border: `1px solid ${C.amber}25`, borderRadius: 12, padding: "14px" }}>
-                        <div style={{ fontSize: 10, color: C.textMuted, textTransform: "uppercase", marginBottom: 6 }}>⚠️ CPA máximo seguro</div>
-                        <div style={{ fontSize: 26, fontWeight: 900, color: C.amber }}>{fmt(breakPts.maxCPA)}</div>
+                      <div style={{ background: `${C.amber}08`, border: `1px solid ${C.amber}25`, borderRadius: 8, padding: "14px" }}>
+                        <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 6 }}>CPA máximo seguro</div>
+                        <div style={{ fontSize: 26, fontFamily: DISPLAY, fontWeight: 800, color: C.amber }}>{fmt(breakPts.maxCPA)}</div>
                         <div style={{ fontSize: 11, color: C.textMuted, marginTop: 4 }}>
                           {inputs.cpa <= breakPts.maxCPA
-                            ? `✓ Tu CPA está ${fmt(breakPts.maxCPA - inputs.cpa)} por debajo del límite`
-                            : `⚠ Tu CPA supera el límite en ${fmt(inputs.cpa - breakPts.maxCPA)}`}
+                            ? `Tu CPA está ${fmt(breakPts.maxCPA - inputs.cpa)} por debajo del límite`
+                            : `Tu CPA supera el límite en ${fmt(inputs.cpa - breakPts.maxCPA)}`}
                         </div>
                       </div>
                     </div>
@@ -1031,11 +1046,11 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
               {/* ── BENCHMARKS ── */}
               {tab === "benchmarks" && (
                 <div>
-                  <div style={{ background: `${C.accent}08`, border: `1px solid ${C.accent}20`, borderRadius: 14, padding: "14px 16px", marginBottom: 14 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: C.accent, marginBottom: 4 }}>🏆 Benchmarks COD LATAM</div>
+                  <div style={{ background: `${C.accent}08`, border: `1px solid ${C.accent}20`, borderRadius: 10, padding: "14px 16px", marginBottom: 14 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: C.accent, marginBottom: 4 }}>Benchmarks COD LATAM</div>
                     <div style={{ fontSize: 12, color: C.textMuted }}>Datos reales del mercado de dropshipping contraentrega en Ecuador y Colombia.</div>
                   </div>
-                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "18px", marginBottom: 12 }}>
+                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "18px", marginBottom: 12 }}>
                     <BenchmarkBar label="Tasa de Confirmación" value={inputs.pctConfirmados} bench={BENCH.confirmacion} />
                     <BenchmarkBar label="Tasa de Entrega" value={inputs.pctEntregados} bench={BENCH.entrega} />
                     <BenchmarkBar label="Margen de Ganancia" value={R.margen} bench={BENCH.margen} />
@@ -1043,15 +1058,15 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                     {[
-                      { icon: "📞", title: "Confirmación promedio LATAM", val: "70-80%", tip: "Llamar en las primeras 2 horas mejora hasta 20% la confirmación.", color: C.accent },
-                      { icon: "📬", title: "Entrega promedio LATAM", val: "68-75%", tip: "Urbano: 75%. Rural: baja a 55%. Elige bien tu zona de cobertura.", color: C.green },
-                      { icon: "💰", title: "Margen saludable COD", val: "25-35%", tip: "Bajo el 20%, cualquier variación en devoluciones te pone en pérdida.", color: C.amber },
-                      { icon: "📣", title: "CPA óptimo LATAM", val: "8-15% del precio", tip: "Si el CPA supera el 15% del precio de venta, revisa la segmentación.", color: C.purple },
+                      { icon: "", title: "Confirmación promedio LATAM", val: "70-80%", tip: "Llamar en las primeras 2 horas mejora hasta 20% la confirmación.", color: C.accent },
+                      { icon: "", title: "Entrega promedio LATAM", val: "68-75%", tip: "Urbano: 75%. Rural: baja a 55%. Elige bien tu zona de cobertura.", color: C.green },
+                      { icon: "", title: "Margen saludable COD", val: "25-35%", tip: "Bajo el 20%, cualquier variación en devoluciones te pone en pérdida.", color: C.amber },
+                      { icon: "", title: "CPA óptimo LATAM", val: "8-15% del precio", tip: "Si el CPA supera el 15% del precio de venta, revisa la segmentación.", color: C.purple },
                     ].map((item, i) => (
-                      <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 13, padding: "14px" }}>
-                        <div style={{ fontSize: 20, marginBottom: 8 }}>{item.icon}</div>
+                      <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, padding: "14px" }}>
+                        <div style={{ fontSize: 20, fontFamily: DISPLAY, marginBottom: 8 }}>{item.icon}</div>
                         <div style={{ fontSize: 12, fontWeight: 700, color: C.textDim, marginBottom: 3 }}>{item.title}</div>
-                        <div style={{ fontSize: 17, fontWeight: 800, color: item.color, marginBottom: 5 }}>{item.val}</div>
+                        <div style={{ fontSize: 17, fontFamily: DISPLAY, fontWeight: 800, color: item.color, marginBottom: 5 }}>{item.val}</div>
                         <div style={{ fontSize: 11, color: C.textMuted, lineHeight: 1.5 }}>{item.tip}</div>
                       </div>
                     ))}
@@ -1062,29 +1077,29 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
               {/* ── PÉRDIDA INVISIBLE ── */}
               {tab === "invisible" && (
                 <div>
-                  <div style={{ background: `linear-gradient(135deg,${C.red}10,${C.purple}07)`, border: `1px solid ${C.red}25`, borderRadius: 16, padding: "20px", marginBottom: 14, textAlign: "center" }}>
-                    <div style={{ fontSize: 11, color: C.red, textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700, marginBottom: 8 }}>🔍 Pérdida Invisible</div>
+                  <div style={{ background: `${C.red}10`, border: `1px solid ${C.red}25`, borderRadius: 10, padding: "20px", marginBottom: 14, textAlign: "center" }}>
+                    <div style={{ fontSize: 11, color: C.red, fontWeight: 700, marginBottom: 8 }}>Pérdida Invisible</div>
                     <div style={{ fontSize: 13, color: C.textDim, marginBottom: 16, lineHeight: 1.6 }}>Este es el dinero que <strong style={{ color: C.text }}>podrías estar ganando</strong> si optimizas los puntos clave de tu campaña. No es lo que pierdes — es lo que dejas de ganar.</div>
-                    <div style={{ fontSize: 38, fontWeight: 900, color: C.red, letterSpacing: "-0.02em", marginBottom: 6 }}>−{fmt(invisible.total)}</div>
+                    <div style={{ fontSize: 38, fontFamily: DISPLAY, fontWeight: 800, color: C.red, letterSpacing: "-0.02em", marginBottom: 6 }}>−{fmt(invisible.total)}</div>
                     <div style={{ fontSize: 13, color: C.textMuted }}>dinero que estás dejando sobre la mesa</div>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                     {[
-                      { icon: "📬", label: "Por baja tasa de entrega", amount: invisible.lossEntrega, desc: `Si llevaras la entrega al 75% (óptimo LATAM), ganarías ${fmt(invisible.lossEntrega)} más`, action: "Mejorar seguimiento post-confirmación y aliarte con mejor transportadora" },
-                      { icon: "📞", label: "Por baja confirmación", amount: invisible.lossConf, desc: `Si llevaras la confirmación al 78%, ganarías ${fmt(invisible.lossConf)} más`, action: "Llamar en los primeros 30 minutos después del pedido" },
-                      { icon: "📣", label: "Por CPA alto", amount: invisible.lossCPA, desc: `Si bajaras el CPA un 20% (a ${fmt(inputs.cpa * 0.8)}), ganarías ${fmt(invisible.lossCPA)} más`, action: "Optimizar audiencias y creativos para mejorar CPM y CTR" },
+                      { icon: "", label: "Por baja tasa de entrega", amount: invisible.lossEntrega, desc: `Si llevaras la entrega al 75% (óptimo LATAM), ganarías ${fmt(invisible.lossEntrega)} más`, action: "Mejorar seguimiento post-confirmación y aliarte con mejor transportadora" },
+                      { icon: "", label: "Por baja confirmación", amount: invisible.lossConf, desc: `Si llevaras la confirmación al 78%, ganarías ${fmt(invisible.lossConf)} más`, action: "Llamar en los primeros 30 minutos después del pedido" },
+                      { icon: "", label: "Por CPA alto", amount: invisible.lossCPA, desc: `Si bajaras el CPA un 20% (a ${fmt(inputs.cpa * 0.8)}), ganarías ${fmt(invisible.lossCPA)} más`, action: "Optimizar audiencias y creativos para mejorar CPM y CTR" },
                     ].map((item, i) => (
                       <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.08 }}
-                        style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px", display: "flex", gap: 14 }}>
-                        <div style={{ fontSize: 28, flexShrink: 0 }}>{item.icon}</div>
+                        style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "16px", display: "flex", gap: 14 }}>
+                        <div style={{ fontSize: 28, fontFamily: DISPLAY, flexShrink: 0 }}>{item.icon}</div>
                         <div style={{ flex: 1 }}>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 5, flexWrap: "wrap", gap: 8 }}>
                             <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{item.label}</div>
-                            <div style={{ fontSize: 16, fontWeight: 900, color: C.red }}>−{fmt(item.amount)}</div>
+                            <div style={{ fontSize: 16, fontWeight: 800, color: C.red }}>−{fmt(item.amount)}</div>
                           </div>
                           <div style={{ fontSize: 12, color: C.textDim, marginBottom: 8, lineHeight: 1.5 }}>{item.desc}</div>
-                          <div style={{ background: `${C.green}08`, border: `1px solid ${C.green}20`, borderRadius: 8, padding: "7px 10px", fontSize: 11, color: C.green }}>
-                            💡 {item.action}
+                          <div style={{ background: `${C.green}08`, border: `1px solid ${C.green}20`, borderRadius: 6, padding: "7px 10px", fontSize: 11, color: C.green }}>
+                            {item.action}
                           </div>
                         </div>
                       </motion.div>
@@ -1096,19 +1111,19 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
               {/* ── ESCENARIOS ── */}
               {tab === "escenarios" && (
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 4 }}>🎭 Modo Escenario</div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 4 }}>Modo Escenario</div>
                   <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 14 }}>Tres proyecciones automáticas basadas en tus datos. Sin cambiar nada manualmente.</div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10, marginBottom: 16 }}>
                     {scenarioResults.map((sc, i) => (
                       <motion.div key={sc.key} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}
                         onClick={() => setScenarioMode(sc.key)}
-                        style={{ background: scenarioMode === sc.key ? `${sc.color}12` : C.card, border: `1.5px solid ${scenarioMode === sc.key ? sc.color : C.border}`, borderRadius: 14, padding: "16px", cursor: "pointer", transition: "all 0.2s" }}>
+                        style={{ background: scenarioMode === sc.key ? `${sc.color}12` : C.card, border: `1.5px solid ${scenarioMode === sc.key ? sc.color : C.border}`, borderRadius: 10, padding: "16px", cursor: "pointer", transition: "all 0.2s" }}>
                         <div style={{ fontSize: 12, fontWeight: 800, color: sc.color, marginBottom: 3 }}>{sc.label}</div>
                         <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 10 }}>{sc.desc}</div>
-                        <div style={{ fontSize: 22, fontWeight: 900, color: sc.ganancia >= 0 ? C.green : C.red }}>{sc.ganancia >= 0 ? "" : "−"}{fmt(sc.ganancia)}</div>
-                        <div style={{ fontSize: 10, color: C.textMuted, marginTop: 3 }}>Margen: {fmtPct(sc.margen)} · {sc.entregados} entregados</div>
+                        <div style={{ fontSize: 22, fontFamily: DISPLAY, fontWeight: 800, color: sc.ganancia >= 0 ? C.green : C.red }}>{sc.ganancia >= 0 ? "" : "−"}{fmt(sc.ganancia)}</div>
+                        <div style={{ fontSize: 11, color: C.textMuted, marginTop: 3 }}>Margen: {fmtPct(sc.margen)} · {sc.entregados} entregados</div>
                         <div style={{ height: 1, background: C.border, margin: "10px 0" }} />
-                        <div style={{ display: "flex", flexDirection: "column", gap: 3, fontSize: 10, color: C.textMuted }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 3, fontSize: 11, color: C.textMuted }}>
                           <div>CPA: {fmt(sc.cpa)}</div>
                           <div>Confirmación: {sc.confirmacion.toFixed(0)}%</div>
                           <div>Entrega: {sc.entrega.toFixed(0)}%</div>
@@ -1116,14 +1131,14 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
                       </motion.div>
                     ))}
                   </div>
-                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px" }}>
+                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "16px" }}>
                     <div style={{ fontSize: 12, fontWeight: 700, color: C.textDim, marginBottom: 12 }}>Comparación visual de escenarios</div>
                     <ResponsiveContainer width="100%" height={180}>
                       <BarChart data={scenarioResults.map(sc => ({ name: sc.label, ganancia: Math.max(0, sc.ganancia), fill: sc.color }))} barSize={50} margin={{ top: 4, right: 4, left: 4, bottom: 4 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke={C.border} vertical={false} />
                         <XAxis dataKey="name" tick={{ fill: C.textMuted, fontSize: 11 }} axisLine={false} tickLine={false} />
                         <YAxis hide />
-                        <Tooltip contentStyle={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 11 }} formatter={v => [`${currency.symbol}${v.toFixed(2)}`]} />
+                        <Tooltip contentStyle={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 6, fontSize: 11 }} formatter={v => [`${currency.symbol}${v.toFixed(2)}`]} />
                         <Bar dataKey="ganancia" radius={[6, 6, 0, 0]}>{scenarioResults.map((sc, i) => <Cell key={i} fill={sc.color} />)}</Bar>
                       </BarChart>
                     </ResponsiveContainer>
@@ -1134,18 +1149,18 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
               {/* ── ESCALADO ── */}
               {tab === "escalado" && (
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 4 }}>📈 Simulador de Escalado</div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 4 }}>Simulador de Escalado</div>
                   <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 14 }}>¿Qué pasa con tu ganancia si escalas el presupuesto manteniendo las mismas tasas?</div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 9, marginBottom: 14 }}>
                     {scaleData.filter(s => ["2x","5x","10x"].includes(s.m)).map((s, i) => (
-                      <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "14px" }}>
+                      <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, padding: "14px" }}>
                         <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 5 }}>Escalar {s.m}</div>
-                        <div style={{ fontSize: 20, fontWeight: 800, color: s.ganancia > 0 ? C.green : C.red }}>{fmt(s.ganancia)}</div>
-                        <div style={{ fontSize: 10, color: C.textMuted, marginTop: 3 }}>{fmtNum(s.pedidos)} pedidos</div>
+                        <div style={{ fontSize: 20, fontFamily: DISPLAY, fontWeight: 800, color: s.ganancia > 0 ? C.green : C.red }}>{fmt(s.ganancia)}</div>
+                        <div style={{ fontSize: 11, color: C.textMuted, marginTop: 3 }}>{fmtNum(s.pedidos)} pedidos</div>
                       </div>
                     ))}
                   </div>
-                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px" }}>
+                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "16px" }}>
                     <div style={{ fontSize: 12, fontWeight: 700, color: C.textDim, marginBottom: 12 }}>Ganancia proyectada por multiplicador</div>
                     <ResponsiveContainer width="100%" height={200}>
                       <AreaChart data={scaleData} margin={{ top: 4, right: 4, left: 4, bottom: 4 }}>
@@ -1156,9 +1171,9 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke={C.border} vertical={false} />
-                        <XAxis dataKey="m" tick={{ fill: C.textMuted, fontSize: 10 }} axisLine={false} tickLine={false} />
+                        <XAxis dataKey="m" tick={{ fill: C.textMuted, fontSize: 11 }} axisLine={false} tickLine={false} />
                         <YAxis hide />
-                        <Tooltip contentStyle={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 11 }} formatter={v => [`${currency.symbol}${v.toFixed(2)}`, "Ganancia"]} />
+                        <Tooltip contentStyle={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 6, fontSize: 11 }} formatter={v => [`${currency.symbol}${v.toFixed(2)}`, "Ganancia"]} />
                         <Area type="monotone" dataKey="ganancia" stroke={C.accent} fill="url(#scaleGrad)" strokeWidth={2} dot={{ fill: C.accent, r: 3 }} />
                       </AreaChart>
                     </ResponsiveContainer>
@@ -1169,28 +1184,28 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
               {/* ── OPTIMIZACIÓN ── */}
               {tab === "oportunidades" && (
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 4 }}>🎯 Centro de Optimización</div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 4 }}>Centro de Optimización</div>
                   <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 14 }}>Acciones ordenadas por impacto económico real. Las más rentables primero.</div>
                   {growthOps.map((op, i) => {
                     const difColor = { "Fácil": C.green, "Media": C.amber, "Difícil": C.red };
                     return (
                       <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.07 }}
-                        style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px", marginBottom: 10, display: "flex", alignItems: "center", gap: 14 }}>
-                        <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${C.accent}12`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>{op.icon}</div>
+                        style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "16px", marginBottom: 10, display: "flex", alignItems: "center", gap: 14 }}>
+                        <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${C.accent}12`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontFamily: DISPLAY, flexShrink: 0 }}>{op.icon}</div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
                             <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{op.title}</span>
-                            <span style={{ background: `${difColor[op.dif]}18`, color: difColor[op.dif], fontSize: 9, fontWeight: 700, borderRadius: 5, padding: "2px 6px" }}>{op.dif}</span>
+                            <span style={{ background: `${difColor[op.dif]}18`, color: difColor[op.dif], fontSize: 11, fontWeight: 700, borderRadius: 5, padding: "2px 6px" }}>{op.dif}</span>
                           </div>
                           <div style={{ fontSize: 11, color: C.textMuted }}>{op.desc}</div>
-                          <div style={{ display: "flex", gap: 12, marginTop: 6, fontSize: 10, color: C.textMuted }}>
-                            <span>⏱ {op.time}</span>
-                            <span>🎯 Prioridad #{op.priority}</span>
+                          <div style={{ display: "flex", gap: 12, marginTop: 6, fontSize: 11, color: C.textMuted }}>
+                            <span>{op.time}</span>
+                            <span>Prioridad #{op.priority}</span>
                           </div>
                         </div>
                         <div style={{ textAlign: "right", flexShrink: 0 }}>
-                          <div style={{ fontSize: 16, fontWeight: 900, color: op.gain >= 0 ? C.green : C.red }}>{op.gain >= 0 ? "+" : "−"}{fmt(op.gain)}</div>
-                          <div style={{ fontSize: 9, color: C.textMuted }}>ganancia adicional</div>
+                          <div style={{ fontSize: 16, fontWeight: 800, color: op.gain >= 0 ? C.green : C.red }}>{op.gain >= 0 ? "+" : "−"}{fmt(op.gain)}</div>
+                          <div style={{ fontSize: 11, color: C.textMuted }}>ganancia adicional</div>
                         </div>
                       </motion.div>
                     );
@@ -1201,12 +1216,12 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
               {/* ── COMPARADOR ── */}
               {tab === "comparador" && (
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 4 }}>⚖️ Comparador de Productos</div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 4 }}>Comparador de Productos</div>
                   <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 14 }}>¿Cuál producto conviene más escalar? Compara rentabilidad lado a lado.</div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
                     {/* Producto A */}
-                    <div style={{ background: `${C.accent}08`, border: `1px solid ${C.accent}25`, borderRadius: 14, padding: "16px" }}>
-                      <div style={{ fontSize: 12, fontWeight: 800, color: C.accent, marginBottom: 12 }}>📦 Producto A (actual)</div>
+                    <div style={{ background: `${C.accent}08`, border: `1px solid ${C.accent}25`, borderRadius: 10, padding: "16px" }}>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: C.accent, marginBottom: 12 }}>Producto A (actual)</div>
                       {[
                         { label: "Costo", val: fmt(inputs.costo) },
                         { label: "Precio", val: fmt(inputs.precio) },
@@ -1219,8 +1234,8 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
                       ))}
                     </div>
                     {/* Producto B */}
-                    <div style={{ background: `${C.purple}08`, border: `1px solid ${C.purple}25`, borderRadius: 14, padding: "16px" }}>
-                      <div style={{ fontSize: 12, fontWeight: 800, color: C.purple, marginBottom: 10 }}>📦 Producto B (comparar)</div>
+                    <div style={{ background: `${C.purple}08`, border: `1px solid ${C.purple}25`, borderRadius: 10, padding: "16px" }}>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: C.purple, marginBottom: 10 }}>Producto B (comparar)</div>
                       <NumInput label="Costo" value={prodB.costo} onChange={v => setProdB(p => ({ ...p, costo: v }))} prefix={currency.symbol} />
                       <NumInput label="Precio" value={prodB.precio} onChange={v => setProdB(p => ({ ...p, precio: v }))} prefix={currency.symbol} />
                       <NumInput label="Envío" value={prodB.envio} onChange={v => setProdB(p => ({ ...p, envio: v }))} prefix={currency.symbol} />
@@ -1228,7 +1243,7 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
                     </div>
                   </div>
                   {/* Comparison results */}
-                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px" }}>
+                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "16px" }}>
                     <div style={{ fontSize: 13, fontWeight: 700, color: C.textDim, marginBottom: 12 }}>Comparación de resultados</div>
                     {[
                       { label: "Ganancia neta", a: fmt(R.gananciaNet), b: fmt(RB.ganancia), aBetter: R.gananciaNet >= RB.ganancia },
@@ -1238,13 +1253,13 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
                     ].map((row, i) => (
                       <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 2fr 2fr", gap: 10, padding: "8px 0", borderBottom: `1px solid ${C.border}`, alignItems: "center" }}>
                         <div style={{ fontSize: 11, color: C.textMuted }}>{row.label}</div>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: row.aBetter ? C.green : C.textDim, background: row.aBetter ? `${C.green}08` : "transparent", borderRadius: 7, padding: "4px 8px", textAlign: "center" }}>A: {row.a} {row.aBetter ? "✓" : ""}</div>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: !row.aBetter ? C.green : C.textDim, background: !row.aBetter ? `${C.green}08` : "transparent", borderRadius: 7, padding: "4px 8px", textAlign: "center" }}>B: {row.b} {!row.aBetter ? "✓" : ""}</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: row.aBetter ? C.green : C.textDim, background: row.aBetter ? `${C.green}08` : "transparent", borderRadius: 5, padding: "4px 8px", textAlign: "center" }}>A: {row.a} {row.aBetter ? "" : ""}</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: !row.aBetter ? C.green : C.textDim, background: !row.aBetter ? `${C.green}08` : "transparent", borderRadius: 5, padding: "4px 8px", textAlign: "center" }}>B: {row.b} {!row.aBetter ? "" : ""}</div>
                       </div>
                     ))}
-                    <div style={{ marginTop: 14, background: R.gananciaNet >= RB.ganancia ? `${C.green}08` : `${C.purple}08`, border: `1px solid ${R.gananciaNet >= RB.ganancia ? C.green : C.purple}25`, borderRadius: 10, padding: "12px", textAlign: "center" }}>
+                    <div style={{ marginTop: 14, background: R.gananciaNet >= RB.ganancia ? `${C.green}08` : `${C.purple}08`, border: `1px solid ${R.gananciaNet >= RB.ganancia ? C.green : C.purple}25`, borderRadius: 7, padding: "12px", textAlign: "center" }}>
                       <div style={{ fontSize: 14, fontWeight: 800, color: R.gananciaNet >= RB.ganancia ? C.green : C.purple }}>
-                        {R.gananciaNet >= RB.ganancia ? "📦 Producto A" : "📦 Producto B"} es más rentable para escalar
+                        {R.gananciaNet >= RB.ganancia ? "Producto A" : "Producto B"} es más rentable para escalar
                       </div>
                       <div style={{ fontSize: 11, color: C.textMuted, marginTop: 4 }}>
                         Diferencia de ganancia: {fmt(Math.abs(R.gananciaNet - RB.ganancia))}
@@ -1262,7 +1277,7 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
         </div>
       </div>
       <div style={{ borderTop: `1px solid ${C.border}`, padding: "10px", textAlign: "center" }}>
-        <div style={{ fontSize: 10, color: C.textMuted }}>COD Calculator PRO · Sistema operativo de dropshipping COD LATAM</div>
+        <div style={{ fontSize: 11, color: C.textMuted }}>COD Calculator PRO · Sistema operativo de dropshipping COD LATAM</div>
       </div>
       <GlobalStyles />
     </div>
@@ -1298,19 +1313,19 @@ BENCHMARKS LATAM: Confirmación óptima 75%+, Entrega óptima 70-75%, Margen mí
 
 Responde con este formato EXACTO:
 
-🎯 VEREDICTO EJECUTIVO
+VEREDICTO EJECUTIVO
 [2 oraciones máximo. ¿Escala o pausa YA?]
 
-✅ FORTALEZAS REALES
+FORTALEZAS REALES
 [2-3 puntos con números concretos]
 
-🚨 PROBLEMAS QUE TE CUESTAN DINERO
+PROBLEMAS QUE TE CUESTAN DINERO
 [Los 2-3 problemas más caros con impacto en ${currency.symbol}]
 
-⚡ 3 ACCIONES PARA ESTA SEMANA
+3 ACCIONES PARA ESTA SEMANA
 [Acciones ejecutables con impacto estimado en ${currency.symbol}]
 
-📈 PROYECCIÓN 30 DÍAS
+PROYECCIÓN 30 DÍAS
 [Si aplica las mejoras, ganancia esperada con números reales en ${currency.symbol}]
 
 Sé brutal y honesto. Usa números. Máximo 400 palabras.`;
@@ -1327,10 +1342,10 @@ Sé brutal y honesto. Usa números. Máximo 400 palabras.`;
 
   const sections = useMemo(() => {
     if (!advice) return [];
-    return advice.split(/(?=🎯|✅|🚨|⚡|📈)/).filter(s => s.trim()).map(s => {
+    return advice.split(/(?=||||)/).filter(s => s.trim()).map(s => {
       const lines = s.trim().split("\n");
-      const emoji = lines[0].match(/^(🎯|✅|🚨|⚡|📈)/)?.[1] || "";
-      const colorMap = { "🎯": C.accent, "✅": C.green, "🚨": C.red, "⚡": C.purple, "📈": C.cyan };
+      const emoji = lines[0].match(/^(||||)/)?.[1] || "";
+      const colorMap = { "": C.accent, "": C.green, "": C.red, "": C.purple, "": C.cyan };
       return { title: lines[0], content: lines.slice(1).join("\n").trim(), color: colorMap[emoji] || C.accent };
     });
   }, [advice]);
@@ -1339,17 +1354,16 @@ Sé brutal y honesto. Usa números. Máximo 400 palabras.`;
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexWrap: "wrap", gap: 10 }}>
         <div>
-          <div style={{ fontSize: 14, fontWeight: 800, color: C.text }}>🤖 Consultor de IA PRO</div>
+          <div style={{ fontSize: 14, fontWeight: 800, color: C.text }}>Consultor de IA PRO</div>
           <div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>Análisis personalizado · Contexto COD LATAM · Sin respuestas genéricas</div>
         </div>
         <motion.button onClick={getAdvice} disabled={loading} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-          style={{ background: loading ? C.border : `linear-gradient(135deg,${C.accent},#6366F1)`, border: "none", borderRadius: 11, padding: "10px 18px", color: loading ? C.textMuted : "#fff", fontSize: 12, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 7, whiteSpace: "nowrap" }}>
-          {loading ? <><span style={{ display: "inline-block", width: 13, height: 13, border: `2px solid ${C.textMuted}`, borderTopColor: C.text, borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />Analizando...</> : "✨ Analizar mi campaña"}
+          style={{ background: loading ? C.border : `${C.accent}`, border: "none", borderRadius: 7, padding: "10px 18px", color: loading ? C.textMuted : "#fff", fontSize: 12, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 7, whiteSpace: "nowrap" }}>
+          {loading ? <><span style={{ display: "inline-block", width: 13, height: 13, border: `2px solid ${C.textMuted}`, borderTopColor: C.text, borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />Analizando...</> : "Analizar mi campaña"}
         </motion.button>
       </div>
       {!advice && !loading && (
-        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "32px", textAlign: "center" }}>
-          <div style={{ fontSize: 32, marginBottom: 12 }}>🤖</div>
+        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "32px", textAlign: "center" }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 6 }}>Consultor de IA listo</div>
           <div style={{ fontSize: 12, color: C.textMuted, maxWidth: 320, margin: "0 auto" }}>Analiza todos tus números en tiempo real y te da recomendaciones específicas para tu campaña COD en LATAM.</div>
         </div>
@@ -1357,7 +1371,7 @@ Sé brutal y honesto. Usa números. Máximo 400 palabras.`;
       <AnimatePresence>
         {(advice || loading) && (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            style={{ background: `${C.accent}06`, border: `1px solid ${C.accent}18`, borderRadius: 14, padding: "18px", overflow: "hidden" }}>
+            style={{ background: `${C.accent}06`, border: `1px solid ${C.accent}18`, borderRadius: 10, padding: "18px", overflow: "hidden" }}>
             {loading ? (
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, padding: "20px 0" }}>
                 <div style={{ width: 36, height: 36, border: `3px solid ${C.border}`, borderTopColor: C.accent, borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
@@ -1373,7 +1387,7 @@ Sé brutal y honesto. Usa números. Máximo 400 palabras.`;
                   </motion.div>
                 ))}
                 <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end" }}>
-                  <button onClick={getAdvice} style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 7, padding: "5px 11px", color: C.textMuted, fontSize: 11, cursor: "pointer", fontFamily: "inherit" }}>🔄 Nuevo análisis</button>
+                  <button onClick={getAdvice} style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 5, padding: "5px 11px", color: C.textMuted, fontSize: 11, cursor: "pointer", fontFamily: "inherit" }}>Nuevo análisis</button>
                 </div>
               </div>
             )}
@@ -1385,14 +1399,55 @@ Sé brutal y honesto. Usa números. Máximo 400 palabras.`;
 }
 
 // ─── LANDING PAGE ─────────────────────────────────────────────────────────────
+// ─── HERO SLIP (liquidación de ejemplo) ───────────────────────────────────────
+function HeroSlip() {
+  const demo = { costo: 8, precio: 34.99, envio: 5, cpa: 4, pedidos: 100, pctConfirmados: 75, pctEntregados: 65, recupera: true };
+  const R = useCalc(demo);
+  const f = makeFmt("$");
+  const naive = R.confirmados * R.gananciaXPedido;
+  const rows = [
+    { l: `Ingresos · ${Math.round(R.entregados)} entregados`, v: R.ingresosBrutos, sign: "+" },
+    { l: "Producto", v: R.totalCosto, sign: "−" },
+    { l: "Envíos y flete de devoluciones", v: R.totalEnvio, sign: "−" },
+    { l: `Publicidad · ${demo.pedidos} pedidos`, v: R.totalCPA, sign: "−" },
+    { l: "Comisión Dropi", v: R.totalDropi, sign: "−" },
+  ];
+  return (
+    <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}
+      style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 6, padding: "22px 24px", boxShadow: "0 1px 0 rgba(20,23,28,0.04), 0 18px 40px -18px rgba(20,23,28,0.22)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: C.textMuted, marginBottom: 16 }}>
+        <span>Liquidación de campaña</span><span>100 pedidos · USD</span>
+      </div>
+      <div style={{ fontSize: 13, color: C.textMuted, display: "flex", justifyContent: "space-between", marginBottom: 14 }}>
+        <span>Lo que parecía ganar</span>
+        <span style={{ textDecoration: "line-through", textDecorationColor: C.red }}>{f(naive)}</span>
+      </div>
+      <div style={{ borderTop: `1px dashed ${C.borderBright}`, paddingTop: 12 }}>
+        {rows.map((r, i) => (
+          <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: 12, fontSize: 13, padding: "5px 0", color: C.textDim }}>
+            <span>{r.l}</span><span style={{ color: r.sign === "+" ? C.green : C.text, fontWeight: 600 }}>{r.sign}{f(r.v)}</span>
+          </div>
+        ))}
+      </div>
+      <div style={{ borderTop: `1px dashed ${C.borderBright}`, marginTop: 10, paddingTop: 14, display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+        <span style={{ fontSize: 14, fontWeight: 700, color: C.text }}>Ganancia real</span>
+        <span style={{ fontFamily: DISPLAY, fontSize: 34, fontWeight: 800, letterSpacing: "-0.03em", color: C.green }}>{f(R.gananciaNet)}</span>
+      </div>
+      <div style={{ fontSize: 11, color: C.textMuted, marginTop: 8, lineHeight: 1.5 }}>
+        Ejemplo con 75% de confirmación y 65% de entrega. La diferencia son {f(naive - R.gananciaNet)} que no se ven en el panel de ads.
+      </div>
+    </motion.div>
+  );
+}
+
 function Landing({ onOpenFree, onOpenPro, onStartTrial }) {
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'DM Sans','Inter',system-ui,sans-serif", color: C.text }}>
+    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Instrument Sans',system-ui,sans-serif", color: C.text }}>
       <nav style={{ borderBottom: `1px solid ${C.border}`, background: `${C.surface}EE`, backdropFilter: "blur(20px)", position: "sticky", top: 0, zIndex: 100, padding: "0 20px" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 56 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 30, height: 30, borderRadius: 8, background: `linear-gradient(135deg,${C.accent},#6366F1)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15 }}>📦</div>
-            <div style={{ fontSize: 14, fontWeight: 800 }}>COD Calculator <span style={{ color: C.gold }}>Pro</span></div>
+            <Mark size={30} />
+            <div style={{ fontSize: 14, fontWeight: 800, whiteSpace: "nowrap" }}>COD Calculator <span style={{ color: C.textMuted, fontWeight: 600 }}>Pro</span></div>
           </div>
           <div className="hide-mobile" style={{ display: "flex", gap: 22, alignItems: "center" }}>
             <a href="#nosotros" style={{ fontSize: 13, color: C.textDim, textDecoration: "none" }}>Quiénes somos</a>
@@ -1400,45 +1455,33 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial }) {
             <a href="#faq" style={{ fontSize: 13, color: C.textDim, textDecoration: "none" }}>FAQ</a>
           </div>
           <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={onOpenFree} style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 9, padding: "8px 16px", color: C.textDim, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Gratis</button>
+            <button className="hide-mobile" onClick={onOpenFree} style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 16px", color: C.textDim, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Gratis</button>
             <motion.button onClick={onOpenPro} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-              style={{ background: `linear-gradient(135deg,${C.gold},${C.amber})`, border: "none", borderRadius: 9, padding: "8px 16px", color: C.bg, fontSize: 12, fontWeight: 800, cursor: "pointer", fontFamily: "inherit" }}>⭐ Ver PRO</motion.button>
+              style={{ background: `${C.gold}`, border: "none", borderRadius: 6, padding: "8px 16px", color: "#fff", whiteSpace: "nowrap", fontSize: 12, fontWeight: 800, cursor: "pointer", fontFamily: "inherit" }}>Ver PRO</motion.button>
             <UserMenu />
           </div>
         </div>
       </nav>
 
       {/* Hero */}
-      <section style={{ padding: "80px 20px 60px", textAlign: "center", position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", top: -100, left: "50%", transform: "translateX(-50%)", width: 800, height: 500, background: `radial-gradient(ellipse,${C.accentGlow},transparent 65%)`, pointerEvents: "none" }} />
-        <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: `${C.green}12`, border: `1px solid ${C.green}30`, borderRadius: 99, padding: "6px 16px", fontSize: 12, color: C.green, fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 24 }}>
-            ✦ La herramienta que los dropshippers de LATAM necesitaban
-          </div>
-          <h1 style={{ fontSize: "clamp(30px,5.5vw,60px)", fontWeight: 900, letterSpacing: "-0.03em", margin: "0 0 20px", lineHeight: 1.08, background: `linear-gradient(135deg,${C.text} 35%,${C.accent})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", maxWidth: 820, marginLeft: "auto", marginRight: "auto" }}>
-            Deja de perder dinero en campañas que parecen rentables y no lo son
-          </h1>
-          <p style={{ fontSize: "clamp(14px,2vw,17px)", color: C.textDim, maxWidth: 560, margin: "0 auto 36px", lineHeight: 1.75 }}>
-            Calcula tu ganancia real incluyendo devoluciones, confirmaciones, comisión Dropi y publicidad. Con puntuación de salud, IA, benchmarks LATAM y simulador de escalado. <strong style={{ color: C.text }}>16 monedas de toda Latinoamérica.</strong>
-          </p>
-          <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-            <motion.button onClick={onOpenFree} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-              style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 13, padding: "14px 28px", color: C.textDim, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
-              Usar gratis →
-            </motion.button>
-            <motion.button onClick={onStartTrial} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-              style={{ background: `linear-gradient(135deg,${C.gold},${C.amber})`, border: "none", borderRadius: 13, padding: "14px 28px", color: C.bg, fontSize: 14, fontWeight: 800, cursor: "pointer", fontFamily: "inherit", boxShadow: `0 8px 32px ${C.amberGlow}` }}>
-              ⭐ Probar PRO gratis 3 días
-            </motion.button>
-          </div>
-          <div style={{ marginTop: 16, fontSize: 11, color: C.textMuted }}>✓ Sin tarjeta de crédito &nbsp;·&nbsp; ✓ Sin registro &nbsp;·&nbsp; ✓ 16 monedas LATAM</div>
-        </motion.div>
-        <div style={{ marginTop: 40, display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 6, maxWidth: 560, marginLeft: "auto", marginRight: "auto" }}>
-          {CURRENCIES.map(c => (
-            <div key={c.code} title={c.name} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 7, padding: "4px 8px", fontSize: 11, color: C.textDim, display: "flex", alignItems: "center", gap: 4 }}>
-              <span style={{ fontSize: 13 }}>{c.flag}</span>{c.code}
+      <section style={{ padding: "64px 20px 56px" }}>
+        <div className="hero-grid" style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "1.05fr 0.95fr", gap: 56, alignItems: "center" }}>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+            <h1 style={{ fontSize: "clamp(32px,5vw,56px)", fontFamily: DISPLAY, fontWeight: 800, letterSpacing: "-0.035em", margin: "0 0 20px", lineHeight: 1.04, color: C.text }}>
+              Tu campaña no gana lo que crees. Mira cuánto gana de verdad.
+            </h1>
+            <p style={{ fontSize: 17, color: C.textDim, maxWidth: 480, margin: "0 0 30px", lineHeight: 1.6 }}>
+              Calculadora para dropshipping contraentrega. Descuenta devoluciones, pedidos sin confirmar, flete perdido, comisión de Dropi y publicidad, y te dice si la campaña es rentable.
+            </p>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+              <button onClick={onOpenFree} style={{ background: C.gold, border: "none", borderRadius: 8, padding: "13px 24px", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Calcular gratis</button>
+              <button onClick={onStartTrial} style={{ background: "transparent", border: `1px solid ${C.borderBright}`, borderRadius: 8, padding: "13px 22px", color: C.text, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Probar PRO 3 días</button>
             </div>
-          ))}
+            <div style={{ marginTop: 18, fontSize: 12, color: C.textMuted, lineHeight: 1.7, maxWidth: 460 }}>
+              Sin tarjeta ni registro. Funciona en {CURRENCIES.map(c => c.code).join(", ")}.
+            </div>
+          </motion.div>
+          <HeroSlip />
         </div>
       </section>
 
@@ -1446,61 +1489,59 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial }) {
       <section id="precios" style={{ padding: "20px 20px 60px" }}>
         <div style={{ maxWidth: 900, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 40 }}>
-            <div style={{ fontSize: 12, color: C.accent, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>Planes</div>
-            <div style={{ fontSize: "clamp(22px,3vw,32px)", fontWeight: 900, color: C.text, letterSpacing: "-0.02em" }}>Elige tu nivel</div>
+            <div style={{ fontSize: "clamp(22px,3vw,32px)", fontFamily: DISPLAY, fontWeight: 800, color: C.text, letterSpacing: "-0.02em" }}>Elige tu nivel</div>
             <div style={{ fontSize: 14, color: C.textMuted, marginTop: 8 }}>Gratis para calcular. PRO para escalar y ganar más.</div>
           </div>
           <div className="pricing-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             {/* Free */}
-            <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, padding: "26px 22px" }}>
+            <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "26px 22px" }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: C.textDim, marginBottom: 6 }}>Gratis</div>
-              <div style={{ fontSize: 34, fontWeight: 900, color: C.text, letterSpacing: "-0.03em" }}>$0</div>
+              <div style={{ fontSize: 34, fontFamily: DISPLAY, fontWeight: 800, color: C.text, letterSpacing: "-0.03em" }}>$0</div>
               <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 4 }}>Para siempre</div>
               <div style={{ fontSize: 12, color: C.textDim, marginBottom: 18, lineHeight: 1.5 }}>Calcula si tu campaña es rentable. Rápido y simple.</div>
               {["Calculadora completa", "16 monedas LATAM", "Score de salud básico", "1 gráfico de pedidos", "Resultados principales"].map((f, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, color: C.textDim, marginBottom: 7 }}>
-                  <span style={{ color: C.green, fontWeight: 700 }}>✓</span>{f}
+                  <span style={{ color: C.green, fontWeight: 700 }}></span>{f}
                 </div>
               ))}
               <div style={{ height: 1, background: C.border, margin: "12px 0" }} />
               {["Benchmarks LATAM", "Simulador de escalado", "Pérdida Invisible", "Asesor IA", "Escenarios", "Comparador A/B", "PDF profesional", "Simulaciones guardadas"].map((f, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, color: C.textMuted, marginBottom: 6, opacity: 0.5 }}>
-                  <span style={{ color: C.textMuted }}>✗</span>{f}
+                  <span style={{ color: C.textMuted }}></span>{f}
                 </div>
               ))}
-              <button onClick={onOpenFree} style={{ width: "100%", marginTop: 16, background: "transparent", border: `1px solid ${C.border}`, borderRadius: 12, padding: "11px", color: C.textDim, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Usar gratis</button>
+              <button onClick={onOpenFree} style={{ width: "100%", marginTop: 16, background: "transparent", border: `1px solid ${C.border}`, borderRadius: 8, padding: "11px", color: C.textDim, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Usar gratis</button>
             </div>
 
             {/* Pro */}
-            <div style={{ background: `linear-gradient(135deg,${C.gold}08,${C.purple}06)`, border: `2px solid ${C.gold}40`, borderRadius: 20, padding: "26px 22px", position: "relative" }}>
-              <div style={{ position: "absolute", top: -11, left: "50%", transform: "translateX(-50%)", background: `linear-gradient(135deg,${C.gold},${C.amber})`, borderRadius: 99, padding: "3px 14px", fontSize: 10, color: C.bg, fontWeight: 800, whiteSpace: "nowrap" }}>⭐ SISTEMA PROFESIONAL</div>
+            <div style={{ background: C.card, border: `2px solid ${C.gold}`, borderRadius: 12, padding: "26px 22px", position: "relative" }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: C.gold, marginBottom: 6 }}>PRO</div>
-              <div style={{ fontSize: 34, fontWeight: 900, color: C.text, letterSpacing: "-0.03em" }}>$4.99</div>
+              <div style={{ fontSize: 34, fontFamily: DISPLAY, fontWeight: 800, color: C.text, letterSpacing: "-0.03em" }}>$4.99</div>
               <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 4 }}>por mes · cancela cuando quieras</div>
               <div style={{ fontSize: 12, color: C.textDim, marginBottom: 18, lineHeight: 1.5 }}>Sistema operativo de dropshipping COD. Escala, optimiza y toma decisiones profesionales.</div>
               {[
                 "Todo lo del plan gratis",
-                "❤️ Salud y riesgo detallado",
-                "🏆 Benchmarks LATAM reales",
-                "🔍 Pérdida Invisible calculada",
-                "🎭 Simulador de 3 escenarios",
-                "📈 Escalado proyectado",
-                "🎯 Centro de optimización",
-                "⚖️ Comparador A/B de productos",
-                "🤖 Consultor IA ilimitado",
-                "⚡ Predictor de quiebre",
-                "📄 PDF profesional",
-                "📁 Simulaciones ilimitadas",
+                "Salud y riesgo detallado",
+                "Benchmarks LATAM reales",
+                "Pérdida Invisible calculada",
+                "Simulador de 3 escenarios",
+                "Escalado proyectado",
+                "Centro de optimización",
+                "Comparador A/B de productos",
+                "Consultor IA ilimitado",
+                "Predictor de quiebre",
+                "PDF profesional",
+                "Simulaciones ilimitadas",
               ].map((f, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, color: i === 0 ? C.textDim : C.text, marginBottom: 7 }}>
-                  <span style={{ color: C.gold, fontWeight: 700 }}>✓</span>{f}
+                  <span style={{ color: C.gold, fontWeight: 700 }}></span>{f}
                 </div>
               ))}
               <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 14 }}>
-                <button onClick={onStartTrial} style={{ background: `linear-gradient(135deg,${C.gold},${C.amber})`, border: "none", borderRadius: 12, padding: "12px", color: C.bg, fontSize: 13, fontWeight: 800, cursor: "pointer", fontFamily: "inherit" }}>
-                  🎁 Probar PRO gratis 3 días
+                <button onClick={onStartTrial} style={{ background: `${C.gold}`, border: "none", borderRadius: 8, padding: "12px", color: C.bg, fontSize: 13, fontWeight: 800, cursor: "pointer", fontFamily: "inherit" }}>
+                  Probar PRO gratis 3 días
                 </button>
-                <button onClick={onOpenPro} style={{ background: "transparent", border: `1px solid ${C.gold}40`, borderRadius: 12, padding: "10px", color: C.gold, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                <button onClick={onOpenPro} style={{ background: "transparent", border: `1px solid ${C.gold}40`, borderRadius: 8, padding: "10px", color: C.gold, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
                   Activar PRO — $4.99/mes
                 </button>
               </div>
@@ -1513,30 +1554,29 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial }) {
       <section id="nosotros" style={{ padding: "10px 20px 60px" }}>
         <div style={{ maxWidth: 1000, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 40 }}>
-            <div style={{ fontSize: 12, color: C.accent, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>Quiénes somos</div>
-            <div style={{ fontSize: "clamp(22px,3vw,34px)", fontWeight: 900, color: C.text, letterSpacing: "-0.02em", lineHeight: 1.2 }}>
+            <div style={{ fontSize: "clamp(22px,3vw,34px)", fontFamily: DISPLAY, fontWeight: 800, color: C.text, letterSpacing: "-0.02em", lineHeight: 1.2 }}>
               Nació de perder dinero real.<br />
-              <span style={{ background: `linear-gradient(135deg,${C.accent},${C.purple})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Se construyó para que tú no lo pierdas.</span>
+              Se construyó para que tú no lo pierdas.
             </div>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, alignItems: "center", marginBottom: 44 }}>
             <div>
-              <div style={{ background: `${C.red}08`, border: `1px solid ${C.red}20`, borderRadius: 14, padding: "20px", marginBottom: 16 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: C.red, marginBottom: 7, textTransform: "uppercase", letterSpacing: "0.06em" }}>⚠️ El momento que lo cambió todo</div>
+              <div style={{ background: `${C.red}08`, border: `1px solid ${C.red}20`, borderRadius: 10, padding: "20px", marginBottom: 16 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: C.red, marginBottom: 7 }}>El momento que lo cambió todo</div>
                 <p style={{ fontSize: 14, color: C.textDim, lineHeight: 1.8, margin: 0 }}>Era un martes por la noche. Tenía los números en la cabeza: 200 pedidos, precio $35, CPA $4. La matemática parecía perfecta. <strong style={{ color: C.text }}>Pero cuando llegó el dinero real, había perdido más de $600.</strong></p>
               </div>
               <p style={{ fontSize: 14, color: C.textDim, lineHeight: 1.8, marginBottom: 12 }}>Lo que no había calculado: que solo el 72% iba a confirmar. Que el 63% iba a recibir el paquete. Que cada devolución costaba el CPA más el 60% del flete.</p>
               <p style={{ fontSize: 14, color: C.textDim, lineHeight: 1.8 }}>Esa noche construí la herramienta que ojalá hubiera tenido desde el primer día.</p>
             </div>
-            <div style={{ background: `${C.accent}08`, border: `1px solid ${C.accent}20`, borderRadius: 18, padding: "24px" }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: C.accent, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 14 }}>📊 Lo que aprendimos a las malas</div>
+            <div style={{ background: `${C.accent}08`, border: `1px solid ${C.accent}20`, borderRadius: 12, padding: "24px" }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: C.accent, marginBottom: 14 }}>Lo que aprendimos a las malas</div>
               {[
                 { stat: "40%", desc: "de dropshippers en LATAM pierden dinero en su primera campaña sin saberlo" },
                 { stat: "2–3x", desc: "es la diferencia entre el margen estimado y el real al incluir devoluciones" },
                 { stat: "$800+", desc: "es el promedio que un dropshipper pierde antes de entender el COD real" },
               ].map((item, i) => (
                 <div key={i} style={{ display: "flex", gap: 14, alignItems: "flex-start", marginBottom: i < 2 ? 14 : 0, paddingBottom: i < 2 ? 14 : 0, borderBottom: i < 2 ? `1px solid ${C.border}` : "none" }}>
-                  <div style={{ fontSize: 22, fontWeight: 900, color: C.accent, flexShrink: 0, lineHeight: 1 }}>{item.stat}</div>
+                  <div style={{ fontSize: 22, fontFamily: DISPLAY, fontWeight: 800, color: C.accent, flexShrink: 0, lineHeight: 1 }}>{item.stat}</div>
                   <div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.6 }}>{item.desc}</div>
                 </div>
               ))}
@@ -1548,10 +1588,10 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial }) {
               { initials: "EQ", name: "Equipo Ops", role: "Ecuador & Colombia", desc: "Gestión de más de 3.000 pedidos mensuales en contraentrega. Conocen cada detalle del modelo COD real.", color: C.green },
               { initials: "DS", name: "Data & Strategy", role: "Análisis de campañas", desc: "Benchmarks de tasas de entrega, CPA óptimo y márgenes reales del mercado LATAM.", color: C.purple },
             ].map((m, i) => (
-              <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "18px 16px", textAlign: "center" }}>
+              <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "18px 16px", textAlign: "center" }}>
                 <div style={{ width: 46, height: 46, borderRadius: "50%", background: `${m.color}20`, border: `2px solid ${m.color}40`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 800, color: m.color, margin: "0 auto 10px" }}>{m.initials}</div>
                 <div style={{ fontSize: 13, fontWeight: 800, color: C.text, marginBottom: 3 }}>{m.name}</div>
-                <div style={{ fontSize: 10, color: m.color, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 7 }}>{m.role}</div>
+                <div style={{ fontSize: 11, color: m.color, fontWeight: 600, marginBottom: 7 }}>{m.role}</div>
                 <div style={{ fontSize: 11, color: C.textMuted, lineHeight: 1.6 }}>{m.desc}</div>
               </div>
             ))}
@@ -1563,7 +1603,7 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial }) {
       <section id="faq" style={{ padding: "10px 20px 60px" }}>
         <div style={{ maxWidth: 620, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 26 }}>
-            <div style={{ fontSize: "clamp(18px,3vw,24px)", fontWeight: 900, color: C.text }}>Preguntas frecuentes</div>
+            <div style={{ fontSize: "clamp(18px,3vw,24px)", fontFamily: DISPLAY, fontWeight: 800, color: C.text }}>Preguntas frecuentes</div>
           </div>
           {[
             { q: "¿Qué diferencia hay entre Gratis y PRO?", a: "Gratis te ayuda a calcular si una campaña es rentable. PRO te ayuda a escalar, optimizar y tomar decisiones profesionales con benchmarks LATAM, IA, escenarios, pérdida invisible, comparador de productos y más." },
@@ -1577,14 +1617,14 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial }) {
 
       {/* CTA */}
       <section style={{ padding: "10px 20px 80px" }}>
-        <div style={{ maxWidth: 560, margin: "0 auto", textAlign: "center", background: `linear-gradient(135deg,${C.gold}10,${C.purple}08)`, border: `1px solid ${C.gold}25`, borderRadius: 22, padding: "40px 24px" }}>
-          <div style={{ fontSize: "clamp(20px,3vw,28px)", fontWeight: 900, color: C.text, letterSpacing: "-0.02em", marginBottom: 10 }}>¿Tu campaña es rentable de verdad?</div>
+        <div style={{ maxWidth: 560, margin: "0 auto", textAlign: "center", background: `${C.gold}10`, border: `1px solid ${C.gold}25`, borderRadius: 12, padding: "40px 24px" }}>
+          <div style={{ fontSize: "clamp(20px,3vw,28px)", fontFamily: DISPLAY, fontWeight: 800, color: C.text, letterSpacing: "-0.02em", marginBottom: 10 }}>¿Tu campaña es rentable de verdad?</div>
           <div style={{ fontSize: 13, color: C.textMuted, marginBottom: 22, lineHeight: 1.7 }}>Descúbrelo en 30 segundos. Sin registro. Sin tarjeta.</div>
           <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-            <button onClick={onOpenFree} style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 12, padding: "12px 22px", color: C.textDim, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Usar gratis</button>
+            <button onClick={onOpenFree} style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 8, padding: "12px 22px", color: C.textDim, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Usar gratis</button>
             <motion.button onClick={onStartTrial} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-              style={{ background: `linear-gradient(135deg,${C.gold},${C.amber})`, border: "none", borderRadius: 12, padding: "12px 22px", color: C.bg, fontSize: 13, fontWeight: 800, cursor: "pointer", fontFamily: "inherit" }}>
-              ⭐ Probar PRO gratis 3 días
+              style={{ background: `${C.gold}`, border: "none", borderRadius: 8, padding: "12px 22px", color: C.bg, fontSize: 13, fontWeight: 800, cursor: "pointer", fontFamily: "inherit" }}>
+              Probar PRO gratis 3 días
             </motion.button>
           </div>
         </div>
@@ -1593,7 +1633,7 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial }) {
       <footer style={{ borderTop: `1px solid ${C.border}`, padding: "24px 20px" }}>
         <div style={{ maxWidth: 1000, margin: "0 auto", display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ width: 24, height: 24, borderRadius: 6, background: `linear-gradient(135deg,${C.accent},#6366F1)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>📦</div>
+            <Mark size={24} />
             <div style={{ fontSize: 13, fontWeight: 800, color: C.text }}>COD Calculator <span style={{ color: C.gold }}>Pro</span></div>
           </div>
           <div style={{ display: "flex", gap: 16, fontSize: 11, color: C.textMuted, flexWrap: "wrap" }}>
@@ -1705,8 +1745,8 @@ function UserMenu() {
 
   if (!user) return (
     <button onClick={handleLogin} disabled={loading}
-      style={{ background: `linear-gradient(135deg,${C.accent},#6366F1)`, border: "none", borderRadius: 9, padding: "7px 16px", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6, opacity: loading ? 0.7 : 1 }}>
-      {loading ? "..." : "🔑 Iniciar sesión"}
+      style={{ background: `${C.accent}`, border: "none", borderRadius: 6, padding: "7px 16px", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6, opacity: loading ? 0.7 : 1 }}>
+      {loading ? "..." : "Iniciar sesión"}
     </button>
   );
 
@@ -1716,21 +1756,21 @@ function UserMenu() {
         style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 99, padding: "4px 12px 4px 4px", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, fontFamily: "inherit" }}>
         <img src={user.photoURL} alt="" width={26} height={26} style={{ borderRadius: "50%", display: "block" }} />
         <span style={{ fontSize: 12, fontWeight: 600, color: C.text, maxWidth: 100, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.displayName?.split(" ")[0]}</span>
-        {isPro && <span style={{ background: `${C.gold}20`, color: C.gold, fontSize: 9, fontWeight: 700, borderRadius: 5, padding: "1px 6px" }}>PRO</span>}
-        <span style={{ color: C.textMuted, fontSize: 10 }}>▼</span>
+        {isPro && <span style={{ background: `${C.gold}20`, color: C.gold, fontSize: 11, fontWeight: 700, borderRadius: 5, padding: "1px 6px" }}>PRO</span>}
+        <span style={{ color: C.textMuted, fontSize: 11 }}>▼</span>
       </button>
       <AnimatePresence>
         {open && (
           <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.15 }}
-            style={{ position: "absolute", right: 0, top: "calc(100% + 6px)", background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "6px", minWidth: 180, zIndex: 200, boxShadow: "0 16px 40px rgba(0,0,0,0.5)" }}>
+            style={{ position: "absolute", right: 0, top: "calc(100% + 6px)", background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, padding: "6px", minWidth: 180, zIndex: 200, boxShadow: "0 8px 24px rgba(20,23,28,0.12)" }}>
             <div style={{ padding: "8px 10px 10px", borderBottom: `1px solid ${C.border}`, marginBottom: 4 }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: C.text }}>{user.displayName}</div>
-              <div style={{ fontSize: 10, color: C.textMuted }}>{user.email}</div>
-              <div style={{ marginTop: 4, fontSize: 10, color: isPro ? C.gold : C.textMuted, fontWeight: 600 }}>{isPro ? "⭐ Plan PRO" : "Plan Gratuito"}</div>
+              <div style={{ fontSize: 11, color: C.textMuted }}>{user.email}</div>
+              <div style={{ marginTop: 4, fontSize: 11, color: isPro ? C.gold : C.textMuted, fontWeight: 600 }}>{isPro ? "Plan PRO" : "Plan Gratuito"}</div>
             </div>
             <button onClick={() => { logout(); setOpen(false); }}
-              style={{ width: "100%", background: "transparent", border: "none", borderRadius: 8, padding: "8px 10px", color: C.red, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>
-              🚪 Cerrar sesión
+              style={{ width: "100%", background: "transparent", border: "none", borderRadius: 6, padding: "8px 10px", color: C.red, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>
+              Cerrar sesión
             </button>
           </motion.div>
         )}
@@ -1772,7 +1812,7 @@ function SavedCalcs({ inputs, currency, R, limit, onLoad }) {
     try {
       if (user) await saveSimulationFS(user.uid, sim);
       else localStorage.setItem(LS, JSON.stringify([{ id: String(Date.now()), ...sim }, ...readLocal()]));
-      setName(""); setMsg("✅ Cálculo guardado");
+      setName(""); setMsg("Cálculo guardado");
       await refresh();
     } catch (e) { console.error(e); setMsg("Error al guardar: " + (e.code || e.message)); }
     setBusy(false);
@@ -1787,31 +1827,31 @@ function SavedCalcs({ inputs, currency, R, limit, onLoad }) {
   };
 
   return (
-    <div style={{ marginTop: 14, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: 12 }}>
+    <div style={{ marginTop: 14, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: 12 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-        <div style={{ fontSize: 12, fontWeight: 800, color: C.text }}>💾 Mis cálculos</div>
-        <div style={{ fontSize: 10, color: C.textMuted }}>{list.length}/{limit}</div>
+        <div style={{ fontSize: 12, fontWeight: 800, color: C.text }}>Mis cálculos</div>
+        <div style={{ fontSize: 11, color: C.textMuted }}>{list.length}/{limit}</div>
       </div>
       <div style={{ display: "flex", gap: 6 }}>
         <input value={name} onChange={e => setName(e.target.value)} onKeyDown={e => e.key === "Enter" && save()} placeholder="Nombre (ej: Perfume X)"
-          style={{ flex: 1, minWidth: 0, background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 10px", color: C.text, fontSize: 12, fontFamily: "inherit", outline: "none" }} />
+          style={{ flex: 1, minWidth: 0, background: C.card, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 10px", color: C.text, fontSize: 12, fontFamily: "inherit", outline: "none" }} />
         <button onClick={save} disabled={busy}
-          style={{ background: C.green, border: "none", borderRadius: 8, padding: "8px 12px", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", flexShrink: 0, opacity: busy ? 0.6 : 1 }}>Guardar</button>
+          style={{ background: C.green, border: "none", borderRadius: 6, padding: "8px 12px", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", flexShrink: 0, opacity: busy ? 0.6 : 1 }}>Guardar</button>
       </div>
-      {!user && <div style={{ fontSize: 10, color: C.amber, marginTop: 6 }}>Inicia sesión para guardarlos en tu cuenta y verlos desde cualquier dispositivo. Ahora se guardan solo en este navegador.</div>}
-      {msg && <div style={{ fontSize: 11, color: msg.startsWith("✅") ? C.green : C.amber, marginTop: 6 }}>{msg}</div>}
+      {!user && <div style={{ fontSize: 11, color: C.amber, marginTop: 6 }}>Inicia sesión para guardarlos en tu cuenta y verlos desde cualquier dispositivo. Ahora se guardan solo en este navegador.</div>}
+      {msg && <div style={{ fontSize: 11, color: msg.startsWith("") ? C.green : C.amber, marginTop: 6 }}>{msg}</div>}
       <div style={{ maxHeight: 230, overflowY: "auto", marginTop: 8 }}>
         {list.length === 0 && <div style={{ fontSize: 11, color: C.textMuted, padding: "6px 2px" }}>Aún no tienes cálculos guardados.</div>}
         {list.map(s => (
-          <div key={s.id} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, padding: "7px 9px", marginBottom: 5, display: "flex", alignItems: "center", gap: 6 }}>
+          <div key={s.id} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 6, padding: "7px 9px", marginBottom: 5, display: "flex", alignItems: "center", gap: 6 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.name}</div>
-              <div style={{ fontSize: 9, color: (s.results?.gananciaNet ?? 0) >= 0 ? C.green : C.red }}>
+              <div style={{ fontSize: 11, color: (s.results?.gananciaNet ?? 0) >= 0 ? C.green : C.red }}>
                 {(s.results?.gananciaNet ?? 0) >= 0 ? "+" : "−"}{s.currency || "USD"} {Math.abs(Math.round(s.results?.gananciaNet ?? 0)).toLocaleString("es-ES")} · {fmtPct(s.results?.margen)} · {s.date}
               </div>
             </div>
-            <button onClick={() => onLoad(s.inputs, s.currency)} title="Cargar" style={{ background: `${C.accent}15`, border: "none", borderRadius: 6, padding: "4px 8px", color: C.accent, fontSize: 10, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Abrir</button>
-            <button onClick={() => remove(s.id)} title="Borrar" style={{ background: `${C.red}15`, border: "none", borderRadius: 6, padding: "4px 7px", color: C.red, fontSize: 10, cursor: "pointer", fontFamily: "inherit" }}>🗑</button>
+            <button onClick={() => onLoad(s.inputs, s.currency)} title="Cargar" style={{ background: `${C.accent}15`, border: "none", borderRadius: 5, padding: "4px 8px", color: C.accent, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Abrir</button>
+            <button onClick={() => remove(s.id)} title="Borrar" style={{ background: `${C.red}15`, border: "none", borderRadius: 5, padding: "4px 7px", color: C.red, fontSize: 11, cursor: "pointer", fontFamily: "inherit" }}>×</button>
           </div>
         ))}
       </div>
@@ -1822,15 +1862,15 @@ function SavedCalcs({ inputs, currency, R, limit, onLoad }) {
 // ─── PRO NAV BAR (Calculadora | Control financiero) ───────────────────────────
 function ProNav({ active, onCalc, onFinance }) {
   const items = [
-    { id: "calc", label: "🧮 Calculadora", fn: onCalc },
-    { id: "fin", label: "💼 Control financiero", fn: onFinance },
+    { id: "calc", label: "Calculadora", fn: onCalc },
+    { id: "fin", label: "Control financiero", fn: onFinance },
   ];
   return (
     <div style={{ background: C.surface, borderBottom: `1px solid ${C.border}`, padding: "8px 14px" }}>
       <div style={{ maxWidth: 1300, margin: "0 auto", display: "flex", gap: 6, overflowX: "auto" }}>
         {items.map(i => (
           <button key={i.id} onClick={i.fn}
-            style={{ padding: "7px 14px", background: active === i.id ? `${C.gold}18` : "transparent", border: `1px solid ${active === i.id ? C.gold : C.border}`, borderRadius: 9, color: active === i.id ? C.gold : C.textDim, fontSize: 12, fontWeight: active === i.id ? 800 : 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>
+            style={{ padding: "7px 14px", background: active === i.id ? `${C.gold}18` : "transparent", border: `1px solid ${active === i.id ? C.gold : C.border}`, borderRadius: 6, color: active === i.id ? C.gold : C.textDim, fontSize: 12, fontWeight: active === i.id ? 800 : 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>
             {i.label}
           </button>
         ))}
@@ -1952,16 +1992,16 @@ function FinanceCenter({ onBackToCalc, onHome, onBackToFree }) {
   };
 
   // styles
-  const card = { background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 16 };
-  const inp = { background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 10px", color: C.text, fontSize: 12, fontFamily: "inherit", outline: "none", minWidth: 0, colorScheme: "dark" };
-  const th = { textAlign: "left", fontSize: 10, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.06em", padding: "8px 8px", borderBottom: `2px solid ${C.accent}`, whiteSpace: "nowrap" };
+  const card = { background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: 16 };
+  const inp = { background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, padding: "9px 10px", color: C.text, fontSize: 12, fontFamily: "inherit", outline: "none", minWidth: 0, colorScheme: "light" };
+  const th = { textAlign: "left", fontSize: 11, color: C.textMuted, padding: "8px 8px", borderBottom: `2px solid ${C.accent}`, whiteSpace: "nowrap" };
   const td = { fontSize: 12, color: C.text, padding: "8px 8px", borderBottom: `1px solid ${C.border}` };
-  const btn = (color) => ({ background: color, border: "none", borderRadius: 8, padding: "9px 14px", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" });
+  const btn = (color) => ({ background: color, border: "none", borderRadius: 6, padding: "9px 14px", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" });
   const kpi = (label, value, color, sub) => (
-    <div style={{ ...card, borderLeft: `3px solid ${color}` }}>
-      <div style={{ fontSize: 10, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>{label}</div>
-      <div style={{ fontSize: "clamp(20px,3vw,28px)", fontWeight: 900, color, letterSpacing: "-0.02em" }}>{value}</div>
-      {sub && <div style={{ fontSize: 10, color: C.textMuted, marginTop: 4 }}>{sub}</div>}
+    <div style={card}>
+      <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 6 }}>{label}</div>
+      <div style={{ fontSize: "clamp(20px,3vw,28px)", fontFamily: DISPLAY, fontWeight: 800, color, letterSpacing: "-0.02em" }}>{value}</div>
+      {sub && <div style={{ fontSize: 11, color: C.textMuted, marginTop: 4 }}>{sub}</div>}
     </div>
   );
   const MonthSelect = ({ all }) => (
@@ -1970,14 +2010,14 @@ function FinanceCenter({ onBackToCalc, onHome, onBackToFree }) {
       {[...months].reverse().map(k => <option key={k} value={k}>{monthLabel(k)}</option>)}
     </select>
   );
-  const tooltipStyle = { contentStyle: { background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 12, color: C.text }, labelStyle: { color: C.text }, itemStyle: { color: C.text } };
+  const tooltipStyle = { contentStyle: { background: C.card, border: `1px solid ${C.border}`, borderRadius: 6, fontSize: 12, color: C.text }, labelStyle: { color: C.text }, itemStyle: { color: C.text } };
 
   const SECTIONS = [
-    { id: "resumen", label: "📊 Resumen" },
-    { id: "gastos", label: "🧾 Gastos" },
-    { id: "categorias", label: "🗂 Por categoría" },
-    { id: "historial", label: "📅 Historial" },
-    { id: "fondos", label: "💸 Fondos Dropi" },
+    { id: "resumen", label: "Resumen" },
+    { id: "gastos", label: "Gastos" },
+    { id: "categorias", label: "Por categoría" },
+    { id: "historial", label: "Historial" },
+    { id: "fondos", label: "Fondos Dropi" },
   ];
 
   // category aggregation
@@ -1990,21 +2030,21 @@ function FinanceCenter({ onBackToCalc, onHome, onBackToFree }) {
   const monthFunds = funds.filter(f => monthKey(f.date) === month);
   const histData = months.map(k => ({ k, label: monthLabel(k), ...stat(k) }));
 
-  const statusText = { loading: "Cargando…", saving: "Guardando…", saved: user ? "☁️ Guardado en tu cuenta" : "💾 Guardado en este navegador", error: "⚠️ Error al guardar" }[status];
+  const statusText = { loading: "Cargando…", saving: "Guardando…", saved: user ? "Guardado en tu cuenta" : "Guardado en este navegador", error: "Error al guardar" }[status];
 
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'DM Sans','Inter',system-ui,sans-serif", color: C.text }}>
+    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Instrument Sans',system-ui,sans-serif", color: C.text }}>
       <GlobalStyles />
       <div style={{ borderBottom: `1px solid ${C.border}`, background: `${C.surface}F0`, backdropFilter: "blur(24px)", position: "sticky", top: 0, zIndex: 100, padding: "0 14px" }}>
         <div style={{ maxWidth: 1300, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 52 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button onClick={onHome} title="Ir al inicio" style={{ display: "flex", alignItems: "center", gap: 8, background: "transparent", border: "none", cursor: "pointer", fontFamily: "inherit", color: C.text, padding: 0 }}>
-              <div style={{ width: 26, height: 26, borderRadius: 7, background: `linear-gradient(135deg,${C.gold},${C.amber})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13 }}>⭐</div>
+              <Mark size={26} pro />
               <div style={{ fontSize: 12, fontWeight: 800 }}>COD Calculator <span style={{ color: C.gold }}>PRO</span></div>
             </button>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <span className="hide-mobile" style={{ fontSize: 10, color: status === "error" ? C.red : C.textMuted }}>{statusText}</span>
+            <span className="hide-mobile" style={{ fontSize: 11, color: status === "error" ? C.red : C.textMuted }}>{statusText}</span>
             <UserMenu />
           </div>
         </div>
@@ -2013,30 +2053,29 @@ function FinanceCenter({ onBackToCalc, onHome, onBackToFree }) {
 
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "18px 14px 50px" }}>
         <div style={{ marginBottom: 14 }}>
-          <div style={{ fontSize: 20, fontWeight: 900, letterSpacing: "-0.02em" }}>💼 Control financiero</div>
+          <div style={{ fontSize: 20, fontFamily: DISPLAY, fontWeight: 800, letterSpacing: "-0.02em" }}>Control financiero</div>
           <div style={{ fontSize: 12, color: C.textMuted, marginTop: 3 }}>Capital, gastos, fondos de Dropi y saldo de tu negocio, mes a mes.</div>
           {!user && <div style={{ fontSize: 11, color: C.amber, marginTop: 6 }}>Inicia sesión para guardar tus finanzas en tu cuenta. Ahora se guardan solo en este navegador.</div>}
-          <div className="show-mobile-only" style={{ fontSize: 10, color: status === "error" ? C.red : C.textMuted, marginTop: 6 }}>{statusText}</div>
+          <div className="show-mobile-only" style={{ fontSize: 11, color: status === "error" ? C.red : C.textMuted, marginTop: 6 }}>{statusText}</div>
         </div>
 
         {needsSetup && (
           <div style={{ ...card, maxWidth: 480, margin: "30px auto", textAlign: "center", border: `1px solid ${C.gold}40` }}>
-            <div style={{ fontSize: 34, marginBottom: 8 }}>💰</div>
-            <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 6 }}>Empecemos por tu capital</div>
+            <div style={{ fontSize: 18, fontFamily: DISPLAY, fontWeight: 800, marginBottom: 6 }}>Empecemos por tu capital</div>
             <div style={{ fontSize: 12, color: C.textDim, lineHeight: 1.6, marginBottom: 16 }}>¿Con cuánto dinero cuenta tu negocio hoy? Es tu punto de partida: a partir de ahí se calculan tus gastos, fondos de Dropi y saldo.</div>
             <div style={{ textAlign: "left", fontSize: 11, color: C.textMuted, marginBottom: 4 }}>Capital actual ($)</div>
-            <input type="number" min={0} step="0.01" placeholder="Ej: 1500" value={setupAmt} onChange={e => setSetupAmt(e.target.value)} onKeyDown={e => e.key === "Enter" && finishSetup()} style={{ ...inp, width: "100%", fontSize: 18, fontWeight: 700, marginBottom: 12 }} />
+            <input type="number" min={0} step="0.01" placeholder="Ej: 1500" value={setupAmt} onChange={e => setSetupAmt(e.target.value)} onKeyDown={e => e.key === "Enter" && finishSetup()} style={{ ...inp, width: "100%", fontSize: 18, fontFamily: DISPLAY, fontWeight: 700, marginBottom: 12 }} />
             <div style={{ textAlign: "left", fontSize: 11, color: C.textMuted, marginBottom: 4 }}>Fecha desde la que empiezas a llevar el control</div>
             <input type="date" value={setupDate} onChange={e => setSetupDate(e.target.value)} style={{ ...inp, width: "100%", marginBottom: 16 }} />
-            <button onClick={finishSetup} style={{ ...btn(`linear-gradient(135deg,${C.gold},${C.amber})`), width: "100%", color: C.bg, fontWeight: 800, fontSize: 13 }}>Guardar y empezar</button>
-            <div style={{ fontSize: 10, color: C.textMuted, marginTop: 10 }}>Podrás cambiarlo cuando quieras en la pestaña “Gastos”.</div>
+            <button onClick={finishSetup} style={{ ...btn(`${C.gold}`), width: "100%", color: C.bg, fontWeight: 800, fontSize: 13 }}>Guardar y empezar</button>
+            <div style={{ fontSize: 11, color: C.textMuted, marginTop: 10 }}>Podrás cambiarlo cuando quieras en la pestaña “Gastos”.</div>
           </div>
         )}
         <div style={{ display: needsSetup ? "none" : "block" }}>
         <div style={{ display: "flex", gap: 5, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
           {SECTIONS.map(s => (
             <button key={s.id} onClick={() => setSection(s.id)}
-              style={{ padding: "7px 12px", background: section === s.id ? `${C.gold}15` : C.card, border: `1px solid ${section === s.id ? C.gold : C.border}`, borderRadius: 9, color: section === s.id ? C.gold : C.textDim, fontSize: 11, fontWeight: section === s.id ? 700 : 500, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", flexShrink: 0 }}>{s.label}</button>
+              style={{ padding: "7px 12px", background: section === s.id ? `${C.gold}15` : C.card, border: `1px solid ${section === s.id ? C.gold : C.border}`, borderRadius: 6, color: section === s.id ? C.gold : C.textDim, fontSize: 11, fontWeight: section === s.id ? 700 : 500, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", flexShrink: 0 }}>{s.label}</button>
           ))}
         </div>
 
@@ -2057,12 +2096,12 @@ function FinanceCenter({ onBackToCalc, onHome, onBackToFree }) {
                 <span style={{ fontWeight: 800, color: saldoColor }}>{cur.pct.toFixed(1)}%</span>
               </div>
               <div style={{ height: 10, background: C.border, borderRadius: 99, overflow: "hidden" }}>
-                <div style={{ width: `${Math.min(100, cur.pct)}%`, height: "100%", background: `linear-gradient(90deg,${C.accent},${saldoColor})`, borderRadius: 99, transition: "width 0.4s" }} />
+                <div style={{ width: `${Math.min(100, cur.pct)}%`, height: "100%", background: `${C.accent}`, borderRadius: 99, transition: "width 0.4s" }} />
               </div>
-              <div style={{ fontSize: 10, color: C.textMuted, marginTop: 8 }}>⚠ Saldo en ROJO = menos del 20% del capital · AMARILLO = entre 20% y 50%</div>
+              <div style={{ fontSize: 11, color: C.textMuted, marginTop: 8 }}>El saldo se marca en rojo cuando queda menos del 20% del capital, y en ámbar entre 20% y 50%.</div>
             </div>
             <div style={{ ...card, marginTop: 12 }}>
-              <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 10 }}>⚡ Gastos recientes — {monthLabel(month)}</div>
+              <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 10 }}>Gastos recientes — {monthLabel(month)}</div>
               {monthExpenses.length === 0 ? <div style={{ fontSize: 12, color: C.textMuted }}>Aún no hay gastos este mes. Ve a la pestaña “Gastos” para agregar el primero.</div> : (
                 <div style={{ overflowX: "auto" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 420 }}>
@@ -2086,7 +2125,7 @@ function FinanceCenter({ onBackToCalc, onHome, onBackToFree }) {
               <input type="number" min={0} step="0.01" value={capital[month] ?? ""} onChange={e => setCapital(month, e.target.value)} placeholder="0.00" style={{ ...inp, width: 110 }} />
             </div>
             <div style={{ ...card, marginBottom: 12 }}>
-              <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 10 }}>➕ Registrar gasto</div>
+              <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 10 }}>Registrar gasto</div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 8 }}>
                 <input placeholder="Concepto (ej: Fondos TikTok Ads)" value={ef.concept} onChange={e => setEf({ ...ef, concept: e.target.value })} style={{ ...inp, gridColumn: "span 2" }} />
                 <input type="date" value={ef.date} onChange={e => setEf({ ...ef, date: e.target.value })} style={inp} />
@@ -2109,7 +2148,7 @@ function FinanceCenter({ onBackToCalc, onHome, onBackToFree }) {
                       <tr key={e.id}>
                         <td style={{ ...td, color: C.textMuted }}>{monthExpenses.length - i}</td><td style={td}>{e.concept}</td><td style={{ ...td, color: C.textDim }}>{e.date}</td>
                         <td style={{ ...td, textAlign: "right", color: C.red, fontWeight: 700 }}>{fmt(e.amount)}</td><td style={{ ...td, color: C.textDim }}>{e.category}</td>
-                        <td style={td}><button onClick={() => delExpense(e.id)} title="Borrar" style={{ background: "transparent", border: "none", color: C.red, cursor: "pointer", fontSize: 13 }}>🗑</button></td>
+                        <td style={td}><button onClick={() => delExpense(e.id)} title="Borrar" style={{ background: "transparent", border: "none", color: C.red, cursor: "pointer", fontSize: 13 }}>×</button></td>
                       </tr>
                     ))}</tbody>
                   </table>
@@ -2147,9 +2186,9 @@ function FinanceCenter({ onBackToCalc, onHome, onBackToFree }) {
                   <ResponsiveContainer width="100%" height={Math.max(220, catData.length * 42)}>
                     <BarChart data={catData} layout="vertical" margin={{ left: 10, right: 20 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke={C.border} horizontal={false} />
-                      <XAxis type="number" tick={{ fill: C.textMuted, fontSize: 10 }} />
-                      <YAxis type="category" dataKey="name" width={130} tick={{ fill: C.textDim, fontSize: 10 }} />
-                      <Tooltip formatter={(v) => fmt(v)} {...tooltipStyle} cursor={{ fill: "rgba(255,255,255,0.04)" }} />
+                      <XAxis type="number" tick={{ fill: C.textMuted, fontSize: 11 }} />
+                      <YAxis type="category" dataKey="name" width={130} tick={{ fill: C.textDim, fontSize: 11 }} />
+                      <Tooltip formatter={(v) => fmt(v)} {...tooltipStyle} cursor={{ fill: "rgba(20,23,28,0.05)" }} />
                       <Bar dataKey="value" radius={[0, 6, 6, 0]}>{catData.map((c, i) => <Cell key={c.name} fill={FIN_COLORS[i % FIN_COLORS.length]} />)}</Bar>
                     </BarChart>
                   </ResponsiveContainer>
@@ -2181,9 +2220,9 @@ function FinanceCenter({ onBackToCalc, onHome, onBackToFree }) {
               <ResponsiveContainer width="100%" height={260}>
                 <BarChart data={histData} margin={{ left: 0, right: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={C.border} vertical={false} />
-                  <XAxis dataKey="label" tick={{ fill: C.textDim, fontSize: 10 }} />
-                  <YAxis tick={{ fill: C.textMuted, fontSize: 10 }} />
-                  <Tooltip formatter={(v) => fmt(v)} {...tooltipStyle} cursor={{ fill: "rgba(255,255,255,0.04)" }} />
+                  <XAxis dataKey="label" tick={{ fill: C.textDim, fontSize: 11 }} />
+                  <YAxis tick={{ fill: C.textMuted, fontSize: 11 }} />
+                  <Tooltip formatter={(v) => fmt(v)} {...tooltipStyle} cursor={{ fill: "rgba(20,23,28,0.05)" }} />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
                   <Bar dataKey="g" name="Total gastado" fill={C.red} radius={[6, 6, 0, 0]} />
                   <Bar dataKey="f" name="Fondos Dropi" fill={C.green} radius={[6, 6, 0, 0]} />
@@ -2197,7 +2236,7 @@ function FinanceCenter({ onBackToCalc, onHome, onBackToFree }) {
         {section === "fondos" && (
           <div>
             <div style={{ ...card, marginBottom: 12 }}>
-              <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 10 }}>➕ Registrar retiro de Dropi</div>
+              <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 10 }}>Registrar retiro de Dropi</div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 8 }}>
                 <input placeholder="Concepto (opcional)" value={ff.concept} onChange={e => setFf({ ...ff, concept: e.target.value })} style={inp} />
                 <input type="date" value={ff.date} onChange={e => setFf({ ...ff, date: e.target.value })} style={inp} />
@@ -2219,7 +2258,7 @@ function FinanceCenter({ onBackToCalc, onHome, onBackToFree }) {
                       <tr key={f.id}>
                         <td style={td}>{f.concept}</td><td style={{ ...td, color: C.textDim }}>{f.date}</td>
                         <td style={{ ...td, textAlign: "right", color: C.green, fontWeight: 700 }}>{fmt(f.amount)}</td><td style={{ ...td, color: C.textDim }}>{f.notes}</td>
-                        <td style={td}><button onClick={() => delFund(f.id)} title="Borrar" style={{ background: "transparent", border: "none", color: C.red, cursor: "pointer", fontSize: 13 }}>🗑</button></td>
+                        <td style={td}><button onClick={() => delFund(f.id)} title="Borrar" style={{ background: "transparent", border: "none", color: C.red, cursor: "pointer", fontSize: 13 }}>×</button></td>
                       </tr>
                     ))}</tbody>
                   </table>
@@ -2241,7 +2280,7 @@ function AppInner() {
   const [trialDaysLeft, setTrialDaysLeft] = useState(0);
 
   if (loadingAuth) return (
-    <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans',system-ui,sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Instrument Sans',system-ui,sans-serif" }}>
       <div style={{ textAlign: "center" }}>
         <div style={{ width: 40, height: 40, border: `3px solid ${C.border}`, borderTopColor: C.accent, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} />
         <div style={{ fontSize: 13, color: C.textMuted }}>Cargando...</div>
