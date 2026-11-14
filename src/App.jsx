@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, AreaChart, Area } from "recharts";
 import { initializeApp, getApps } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
-import { getFirestore, doc, getDoc, setDoc, collection, addDoc, getDocs, deleteDoc, query, orderBy, serverTimestamp } from "firebase/firestore";
+import { getFirestore, doc, getDoc, setDoc, collection, addDoc, getDocs, deleteDoc, query, orderBy, serverTimestamp, onSnapshot } from "firebase/firestore";
 
 // ─── THEME ────────────────────────────────────────────────────────────────────
 const C = {
@@ -418,7 +418,7 @@ function useCalc(inputs) {
 }
 
 // ─── FREE CALCULATOR ──────────────────────────────────────────────────────────
-function FreeCalculator({ onUpgrade, onStartTrial, onHome }) {
+function FreeCalculator({ onUpgrade, onStartTrial, onHome, onOpenPro }) {
   const [currencyCode, setCurrencyCode] = useState("USD");
   const currency = CURRENCIES.find(c => c.code === currencyCode) || CURRENCIES[0];
   const fmt = makeFmt(currency.symbol);
@@ -443,7 +443,7 @@ function FreeCalculator({ onUpgrade, onStartTrial, onHome }) {
             <div style={{ width: 28, height: 28, borderRadius: 7, background: `linear-gradient(135deg,${C.accent},#6366F1)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>📦</div>
             <div style={{ fontSize: 13, fontWeight: 800 }}>COD Calculator <span className="hide-mobile" style={{ color: C.textMuted, fontSize: 11, fontWeight: 500 }}>— Gratis</span></div>
           </button>
-          <button onClick={onUpgrade} style={{ background: `linear-gradient(135deg,${C.gold},${C.amber})`, border: "none", borderRadius: 9, padding: "7px 16px", color: C.bg, fontSize: 12, fontWeight: 800, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6 }}>
+          <button onClick={onOpenPro} style={{ background: `linear-gradient(135deg,${C.gold},${C.amber})`, border: "none", borderRadius: 9, padding: "7px 16px", color: C.bg, fontSize: 12, fontWeight: 800, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6 }}>
             ⭐ Ir a PRO
           </button>
           <UserMenu />
@@ -1426,7 +1426,7 @@ Sé brutal y honesto. Usa números. Máximo 400 palabras.`;
 }
 
 // ─── LANDING PAGE ─────────────────────────────────────────────────────────────
-function Landing({ onOpenFree, onOpenPro, onStartTrial }) {
+function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
   return (
     <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'DM Sans','Inter',system-ui,sans-serif", color: C.text }}>
       <nav style={{ borderBottom: `1px solid ${C.border}`, background: `${C.surface}EE`, backdropFilter: "blur(20px)", position: "sticky", top: 0, zIndex: 100, padding: "0 20px" }}>
@@ -1541,7 +1541,7 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial }) {
                 <button onClick={onStartTrial} style={{ background: `linear-gradient(135deg,${C.gold},${C.amber})`, border: "none", borderRadius: 12, padding: "12px", color: C.bg, fontSize: 13, fontWeight: 800, cursor: "pointer", fontFamily: "inherit" }}>
                   🎁 Probar PRO gratis 3 días
                 </button>
-                <button onClick={onOpenPro} style={{ background: "transparent", border: `1px solid ${C.gold}40`, borderRadius: 12, padding: "10px", color: C.gold, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                <button onClick={onUpgrade} style={{ background: "transparent", border: `1px solid ${C.gold}40`, borderRadius: 12, padding: "10px", color: C.gold, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
                   Activar PRO — $4.99/mes
                 </button>
               </div>
@@ -1684,19 +1684,37 @@ async function deleteSimulationFS(userId, simId) {
 
 // Auth context
 const AuthCtx = createContext(null);
+const LEMON_CHECKOUT_URL = import.meta.env.VITE_LEMON_CHECKOUT_URL || "";
+function buildCheckoutUrl(u) {
+  if (!LEMON_CHECKOUT_URL) return "";
+  try {
+    const url = new URL(LEMON_CHECKOUT_URL);
+    url.searchParams.set("embed", "1");
+    url.searchParams.set("media", "0");
+    url.searchParams.set("desc", "0");
+    url.searchParams.set("checkout[email]", u.email || "");
+    if (u.displayName) url.searchParams.set("checkout[name]", u.displayName);
+    url.searchParams.set("checkout[custom][user_id]", u.uid);
+    return url.toString();
+  } catch { return ""; }
+}
+
 function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [isPro, setIsPro] = useState(false);
+  const [portalUrl, setPortalUrl] = useState("");
 
   useEffect(() => {
+    let unsubDoc = null;
     const unsub = onAuthStateChanged(auth, async (fu) => {
+      if (unsubDoc) { unsubDoc(); unsubDoc = null; }
       if (fu) {
         // Mostrar la sesión de inmediato, sin esperar a Firestore
         setUser(fu);
         setLoadingAuth(false);
+        const userRef = doc(db, "users", fu.uid);
         try {
-          const userRef = doc(db, "users", fu.uid);
           const snap = await getDoc(userRef);
           if (!snap.exists()) {
             await setDoc(userRef, {
@@ -1705,25 +1723,26 @@ function AuthProvider({ children }) {
               plan: "free", createdAt: serverTimestamp(),
             });
           }
-          const data = snap.exists() ? snap.data() : { plan: "free" };
-          setIsPro(data.plan === "pro");
         } catch (err) {
           console.error("Firestore error (revisa las reglas):", err);
-          setIsPro(false);
         }
+        // Escucha el plan en tiempo real: cambia a PRO solo cuando el webhook de pago lo confirma
+        unsubDoc = onSnapshot(userRef,
+          (s) => { const d = s.data() || {}; setIsPro(d.plan === "pro"); setPortalUrl(d.customerPortalUrl || ""); },
+          (err) => { console.error(err); setIsPro(false); });
       } else {
-        setUser(null); setIsPro(false);
+        setUser(null); setIsPro(false); setPortalUrl("");
       }
       setLoadingAuth(false);
     });
-    return () => unsub();
+    return () => { unsub(); if (unsubDoc) unsubDoc(); };
   }, []);
 
   const loginWithGoogle = () => signInWithPopup(auth, googleProvider);
   const logout = () => signOut(auth);
 
   return (
-    <AuthCtx.Provider value={{ user, loadingAuth, isPro, loginWithGoogle, logout, saveSimulationFS, getSimulationsFS, deleteSimulationFS }}>
+    <AuthCtx.Provider value={{ user, loadingAuth, isPro, portalUrl, loginWithGoogle, logout, saveSimulationFS, getSimulationsFS, deleteSimulationFS }}>
       {children}
     </AuthCtx.Provider>
   );
@@ -1734,7 +1753,7 @@ function useAuth() {
 
 // ─── USER MENU ────────────────────────────────────────────────────────────────
 function UserMenu() {
-  const { user, isPro, loginWithGoogle, logout } = useAuth();
+  const { user, isPro, portalUrl, loginWithGoogle, logout } = useAuth();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -1769,6 +1788,12 @@ function UserMenu() {
               <div style={{ fontSize: 10, color: C.textMuted }}>{user.email}</div>
               <div style={{ marginTop: 4, fontSize: 10, color: isPro ? C.gold : C.textMuted, fontWeight: 600 }}>{isPro ? "⭐ Plan PRO" : "Plan Gratuito"}</div>
             </div>
+            {isPro && portalUrl && (
+              <a href={portalUrl} target="_blank" rel="noreferrer"
+                style={{ display: "block", width: "100%", borderRadius: 8, padding: "8px 10px", color: C.text, fontSize: 12, fontWeight: 600, textDecoration: "none", boxSizing: "border-box" }}>
+                Administrar suscripción
+              </a>
+            )}
             <button onClick={() => { logout(); setOpen(false); }}
               style={{ width: "100%", background: "transparent", border: "none", borderRadius: 8, padding: "8px 10px", color: C.red, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>
               🚪 Cerrar sesión
@@ -2276,10 +2301,74 @@ function FinanceCenter({ onBackToCalc, onHome, onBackToFree }) {
 }
 
 // ─── ROOT ─────────────────────────────────────────────────────────────────────
+function Paywall({ onUpgrade, onStartTrial, onHome, trialAvailable, message, justPaid }) {
+  const { user } = useAuth();
+  return (
+    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'DM Sans','Inter',system-ui,sans-serif", color: C.text, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div style={{ maxWidth: 440, width: "100%", background: C.card, border: `1px solid ${C.gold}40`, borderRadius: 16, padding: 28, textAlign: "center" }}>
+        <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 6 }}>{justPaid ? "Activando tu plan PRO" : "PRO es para suscriptores"}</div>
+        <div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.6, marginBottom: 18 }}>
+          {justPaid
+            ? "Recibimos tu pago. Tu cuenta se activa en unos segundos; esta pantalla cambia sola."
+            : "Salud y riesgo, benchmarks, pérdida invisible, escenarios, comparador A/B, asesor IA, PDF y Control financiero."}
+        </div>
+        {!justPaid && <div style={{ fontSize: 34, fontWeight: 800, marginBottom: 4 }}>$4.99<span style={{ fontSize: 13, color: C.textMuted, fontWeight: 500 }}> / mes</span></div>}
+        {!justPaid && <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 18 }}>Cancelas cuando quieras. {user ? `Cuenta: ${user.email}` : "Te pediremos iniciar sesión con Google."}</div>}
+        {message && <div style={{ fontSize: 12, color: C.amber, marginBottom: 12, lineHeight: 1.5 }}>{message}</div>}
+        {!justPaid && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <button onClick={onUpgrade} style={{ background: C.gold, border: "none", borderRadius: 10, padding: "13px", color: C.bg, fontSize: 14, fontWeight: 800, cursor: "pointer", fontFamily: "inherit" }}>Activar PRO — $4.99/mes</button>
+            {trialAvailable && <button onClick={onStartTrial} style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 10, padding: "12px", color: C.text, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Probar 3 días gratis</button>}
+          </div>
+        )}
+        <button onClick={onHome} style={{ marginTop: 14, background: "transparent", border: "none", color: C.textMuted, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>Volver al inicio</button>
+      </div>
+    </div>
+  );
+}
+
+const TRIAL_KEY = "cod_trial_start";
+const trialLeft = () => {
+  try {
+    const t = Number(localStorage.getItem(TRIAL_KEY));
+    if (!t) return 0;
+    return Math.max(0, Math.ceil((t + 3 * 86400000 - Date.now()) / 86400000));
+  } catch { return 0; }
+};
+const trialUsed = () => { try { return !!localStorage.getItem(TRIAL_KEY); } catch { return false; } };
+
 function AppInner() {
-  const { loadingAuth } = useAuth();
+  const { user, isPro, loadingAuth, loginWithGoogle } = useAuth();
   const [view, setView] = useState("landing");
-  const [trialDaysLeft, setTrialDaysLeft] = useState(0);
+  const [trialDaysLeft, setTrialDaysLeft] = useState(trialLeft);
+  const [payMsg, setPayMsg] = useState("");
+  const [paidNow, setPaidNow] = useState(false);
+  const justPaidUrl = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("pago") === "ok";
+  const justPaid = justPaidUrl || paidNow;
+
+  // Carga el pago de Lemon Squeezy para abrirlo dentro de la página
+  useEffect(() => {
+    const setup = () => {
+      try {
+        window.createLemonSqueezy && window.createLemonSqueezy();
+        window.LemonSqueezy && window.LemonSqueezy.Setup({
+          eventHandler: (e) => { if (e && e.event === "Checkout.Success") { setPaidNow(true); setView("paywall"); } },
+        });
+      } catch (err) { console.error(err); }
+    };
+    if (window.LemonSqueezy) { setup(); return; }
+    if (document.getElementById("lemonjs")) return;
+    const sc = document.createElement("script");
+    sc.id = "lemonjs"; sc.src = "https://assets.lemonsqueezy.com/lemon.js"; sc.defer = true; sc.onload = setup;
+    document.body.appendChild(sc);
+  }, []);
+
+  const canPro = isPro || trialDaysLeft > 0;
+
+  // Si el pago llega mientras se espera, entra a PRO solo
+  useEffect(() => { if (isPro && view === "paywall") setView("pro"); }, [isPro, view]);
+  // Al volver del pago, mostrar la pantalla de espera
+  useEffect(() => { if (justPaidUrl && !isPro) setView("paywall"); }, []);
 
   if (loadingAuth) return (
     <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans',system-ui,sans-serif" }}>
@@ -2291,15 +2380,39 @@ function AppInner() {
     </div>
   );
 
-  const startTrial = () => { setTrialDaysLeft(3); setView("pro"); };
-  const openPro = () => setView("pro");
+  const startTrial = () => {
+    try { if (!localStorage.getItem(TRIAL_KEY)) localStorage.setItem(TRIAL_KEY, String(Date.now())); } catch {}
+    const left = trialLeft();
+    setTrialDaysLeft(left);
+    if (left > 0 || isPro) setView("pro");
+    else { setPayMsg("Tu prueba gratis ya terminó. Activa PRO para seguir."); setView("paywall"); }
+  };
+  const openPro = () => { if (canPro) setView("pro"); else { setPayMsg(""); setView("paywall"); } };
   const openFree = () => setView("free");
-
   const goHome = () => { setView("landing"); window.scrollTo(0, 0); };
-  if (view === "free") return <FreeCalculator onUpgrade={openPro} onStartTrial={startTrial} onHome={goHome} />;
-  if (view === "pro") return <ProCalculator trialDaysLeft={trialDaysLeft} onUpgrade={openPro} onBackToFree={openFree} onHome={goHome} onFinance={() => setView("finance")} />;
+
+  // Ir a pagar: pide sesión (para saber a qué cuenta activar PRO) y abre el checkout de Lemon Squeezy
+  const upgrade = async () => {
+    setPayMsg("");
+    let u = user;
+    if (!u) {
+      try { u = (await loginWithGoogle()).user; }
+      catch { setPayMsg("Necesitas iniciar sesión con Google para activar PRO."); setView("paywall"); return; }
+    }
+    const url = buildCheckoutUrl(u);
+    if (!url) { setPayMsg("El pago aún no está configurado. Intenta más tarde."); setView("paywall"); return; }
+    // Abre el pago encima de la página (sin salir). Si no cargó, abre el enlace normal.
+    if (window.LemonSqueezy && window.LemonSqueezy.Url) window.LemonSqueezy.Url.Open(url);
+    else window.location.href = url.replace("embed=1&", "");
+  };
+
+  const proTrial = isPro ? 0 : trialDaysLeft;
+  if ((view === "pro" || view === "finance") && !canPro) return <Paywall onUpgrade={upgrade} onStartTrial={startTrial} onHome={goHome} trialAvailable={!trialUsed()} message={payMsg} justPaid={false} />;
+  if (view === "paywall") return <Paywall onUpgrade={upgrade} onStartTrial={startTrial} onHome={goHome} trialAvailable={!trialUsed()} message={payMsg} justPaid={justPaid && !isPro} />;
+  if (view === "free") return <FreeCalculator onUpgrade={upgrade} onOpenPro={openPro} onStartTrial={startTrial} onHome={goHome} />;
+  if (view === "pro") return <ProCalculator trialDaysLeft={proTrial} onUpgrade={upgrade} onBackToFree={openFree} onHome={goHome} onFinance={() => setView("finance")} />;
   if (view === "finance") return <FinanceCenter onBackToCalc={openPro} onHome={goHome} />;
-  return <Landing onOpenFree={openFree} onOpenPro={openPro} onStartTrial={startTrial} />;
+  return <Landing onOpenFree={openFree} onOpenPro={openPro} onStartTrial={startTrial} onUpgrade={upgrade} />;
 }
 
 export default function App() {
