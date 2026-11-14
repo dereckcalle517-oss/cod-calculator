@@ -256,7 +256,7 @@ function ProLocked({ title, desc, icon, onUpgrade }) {
           <div style={{ fontSize: 13, fontWeight: 800, color: C.gold, marginBottom: 4 }}>Disponible en PRO</div>
           <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 12, lineHeight: 1.5 }}>{desc}</div>
           <button onClick={onUpgrade} style={{ background: `linear-gradient(135deg,${C.accent},#6366F1)`, border: "none", borderRadius: 8, padding: "8px 18px", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
-            Activar PRO — $4.99/mes
+            Activar PRO — $5.99/mes
           </button>
         </div>
       </div>
@@ -422,7 +422,7 @@ function FreeCalculator({ onUpgrade, onStartTrial, onHome, onOpenPro }) {
   const [currencyCode, setCurrencyCode] = useState("USD");
   const currency = CURRENCIES.find(c => c.code === currencyCode) || CURRENCIES[0];
   const fmt = makeFmt(currency.symbol);
-  const [inputs, setInputs] = useState({ costo: 8, precio: 34.99, envio: 5, cpa: 4, pedidos: 100, pctConfirmados: 75, pctEntregados: 65, recupera: true });
+  const [inputs, setInputs] = useState({ costo: 8, precio: 35.99, envio: 5, cpa: 4, pedidos: 100, pctConfirmados: 75, pctEntregados: 65, recupera: true });
   const set = (key) => (val) => setInputs(p => ({ ...p, [key]: val }));
   const R = useCalc(inputs);
   const health = calcHealth(inputs, R);
@@ -611,7 +611,7 @@ function FreeCalculator({ onUpgrade, onStartTrial, onHome, onOpenPro }) {
                 🎁 Probar PRO gratis 3 días
               </motion.button>
               <button onClick={onUpgrade} style={{ flex: 1, background: "transparent", border: `1px solid ${C.gold}40`, borderRadius: 10, padding: "11px 16px", color: C.gold, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
-                ⭐ Activar PRO — $4.99/mes
+                ⭐ Activar PRO — $5.99/mes
               </button>
             </div>
           </div>
@@ -627,7 +627,7 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
   const [currencyCode, setCurrencyCode] = useState("USD");
   const currency = CURRENCIES.find(c => c.code === currencyCode) || CURRENCIES[0];
   const fmt = makeFmt(currency.symbol);
-  const [inputs, setInputs] = useState({ costo: 8, precio: 34.99, envio: 5, cpa: 4, pedidos: 100, pctConfirmados: 75, pctEntregados: 65, recupera: true });
+  const [inputs, setInputs] = useState({ costo: 8, precio: 35.99, envio: 5, cpa: 4, pedidos: 100, pctConfirmados: 75, pctEntregados: 65, recupera: true });
   const set = (key) => (val) => setInputs(p => ({ ...p, [key]: val }));
   const R = useCalc(inputs);
   const health = calcHealth(inputs, R);
@@ -1516,7 +1516,7 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
             <div style={{ background: `linear-gradient(135deg,${C.gold}08,${C.purple}06)`, border: `2px solid ${C.gold}40`, borderRadius: 20, padding: "26px 22px", position: "relative" }}>
               <div style={{ position: "absolute", top: -11, left: "50%", transform: "translateX(-50%)", background: `linear-gradient(135deg,${C.gold},${C.amber})`, borderRadius: 99, padding: "3px 14px", fontSize: 10, color: C.bg, fontWeight: 800, whiteSpace: "nowrap" }}>⭐ SISTEMA PROFESIONAL</div>
               <div style={{ fontSize: 13, fontWeight: 700, color: C.gold, marginBottom: 6 }}>PRO</div>
-              <div style={{ fontSize: 34, fontWeight: 900, color: C.text, letterSpacing: "-0.03em" }}>$4.99</div>
+              <div style={{ fontSize: 34, fontWeight: 900, color: C.text, letterSpacing: "-0.03em" }}>$5.99</div>
               <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 4 }}>por mes · cancela cuando quieras</div>
               <div style={{ fontSize: 12, color: C.textDim, marginBottom: 18, lineHeight: 1.5 }}>Sistema operativo de dropshipping COD. Escala, optimiza y toma decisiones profesionales.</div>
               {[
@@ -1542,7 +1542,7 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
                   🎁 Probar PRO gratis 3 días
                 </button>
                 <button onClick={onUpgrade} style={{ background: "transparent", border: `1px solid ${C.gold}40`, borderRadius: 12, padding: "10px", color: C.gold, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
-                  Activar PRO — $4.99/mes
+                  Activar PRO — $5.99/mes
                 </button>
               </div>
             </div>
@@ -1684,19 +1684,32 @@ async function deleteSimulationFS(userId, simId) {
 
 // Auth context
 const AuthCtx = createContext(null);
-// Enlace de compra de Lemon Squeezy (modo de prueba). Al pasar a modo real, cambia solo esta línea por el enlace nuevo.
-const LEMON_CHECKOUT_URL = "https://cod-calculator-ten.lemonsqueezy.com/checkout/buy/17de9912-b14d-4efe-8f79-6a225a9c3c1f?media=0&desc=0&discount=0";
-function buildCheckoutUrl(u) {
-  if (!LEMON_CHECKOUT_URL) return "";
-  try {
-    const url = new URL(LEMON_CHECKOUT_URL);
-    url.searchParams.set("media", "0");
-    url.searchParams.set("desc", "0");
-    url.searchParams.set("checkout[email]", u.email || "");
-    if (u.displayName) url.searchParams.set("checkout[name]", u.displayName);
-    url.searchParams.set("checkout[custom][user_id]", u.uid);
-    return url.toString();
-  } catch { return ""; }
+// Paddle (pago dentro de la página). Estos valores se configuran en Vercel (variables VITE_PADDLE_*).
+const PADDLE_ENV = import.meta.env.VITE_PADDLE_ENV || "sandbox";
+const PADDLE_TOKEN = import.meta.env.VITE_PADDLE_TOKEN || "";
+const PADDLE_PRICE_ID = import.meta.env.VITE_PADDLE_PRICE_ID || "";
+let paddleReady = null;
+function loadPaddle(onEvent) {
+  if (typeof window === "undefined" || !PADDLE_TOKEN) return Promise.resolve(null);
+  window.__paddleOnEvent = onEvent;
+  if (paddleReady) return paddleReady;
+  paddleReady = new Promise((resolve) => {
+    const init = () => {
+      try {
+        if (PADDLE_ENV === "sandbox") window.Paddle.Environment.set("sandbox");
+        window.Paddle.Initialize({ token: PADDLE_TOKEN, eventCallback: (e) => { if (window.__paddleOnEvent) window.__paddleOnEvent(e); } });
+        resolve(window.Paddle);
+      } catch { resolve(null); }
+    };
+    if (window.Paddle) return init();
+    const sc = document.createElement("script");
+    sc.src = "https://cdn.paddle.com/paddle/v2/paddle.js";
+    sc.async = true;
+    sc.onload = init;
+    sc.onerror = () => { paddleReady = null; resolve(null); };
+    document.head.appendChild(sc);
+  });
+  return paddleReady;
 }
 
 function AuthProvider({ children }) {
@@ -1791,7 +1804,7 @@ function UserMenu() {
             {isPro && portalUrl && (
               <a href={portalUrl} target="_blank" rel="noreferrer"
                 style={{ display: "block", width: "100%", borderRadius: 8, padding: "8px 10px", color: C.text, fontSize: 12, fontWeight: 600, textDecoration: "none", boxSizing: "border-box" }}>
-                Administrar suscripción
+                Cancelar suscripción
               </a>
             )}
             <button onClick={() => { logout(); setOpen(false); }}
@@ -2312,16 +2325,67 @@ function Paywall({ onUpgrade, onStartTrial, onHome, trialAvailable, message, jus
             ? "Recibimos tu pago. Tu cuenta se activa en unos segundos; esta pantalla cambia sola."
             : "Salud y riesgo, benchmarks, pérdida invisible, escenarios, comparador A/B, asesor IA, PDF y Control financiero."}
         </div>
-        {!justPaid && <div style={{ fontSize: 34, fontWeight: 800, marginBottom: 4 }}>$4.99<span style={{ fontSize: 13, color: C.textMuted, fontWeight: 500 }}> / mes</span></div>}
+        {!justPaid && <div style={{ fontSize: 34, fontWeight: 800, marginBottom: 4 }}>$5.99<span style={{ fontSize: 13, color: C.textMuted, fontWeight: 500 }}> / mes</span></div>}
         {!justPaid && <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 18 }}>Cancelas cuando quieras. {user ? `Cuenta: ${user.email}` : "Te pediremos iniciar sesión con Google."}</div>}
         {message && <div style={{ fontSize: 12, color: C.amber, marginBottom: 12, lineHeight: 1.5 }}>{message}</div>}
         {!justPaid && (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <button onClick={onUpgrade} style={{ background: C.gold, border: "none", borderRadius: 10, padding: "13px", color: C.bg, fontSize: 14, fontWeight: 800, cursor: "pointer", fontFamily: "inherit" }}>Activar PRO — $4.99/mes</button>
+            <button onClick={onUpgrade} style={{ background: C.gold, border: "none", borderRadius: 10, padding: "13px", color: C.bg, fontSize: 14, fontWeight: 800, cursor: "pointer", fontFamily: "inherit" }}>Activar PRO — $5.99/mes</button>
             {trialAvailable && <button onClick={onStartTrial} style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 10, padding: "12px", color: C.text, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Probar 3 días gratis</button>}
           </div>
         )}
         <button onClick={onHome} style={{ marginTop: 14, background: "transparent", border: "none", color: C.textMuted, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>Volver al inicio</button>
+      </div>
+    </div>
+  );
+}
+
+function CheckoutView({ onBack, onDone }) {
+  const { user, isPro } = useAuth();
+  const [state, setState] = useState("loading");
+  const [paid, setPaid] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    loadPaddle((e) => { if (e && e.name === "checkout.completed" && alive) setPaid(true); }).then((P) => {
+      if (!alive) return;
+      if (!P || !PADDLE_PRICE_ID) { setState("error"); return; }
+      try {
+        P.Checkout.open({
+          settings: { displayMode: "inline", frameTarget: "paddle-checkout", frameInitialHeight: 450, frameStyle: "width:100%; min-width:280px; background-color:transparent; border:none;", theme: "dark", locale: "es", variant: "one-page" },
+          items: [{ priceId: PADDLE_PRICE_ID, quantity: 1 }],
+          customer: user && user.email ? { email: user.email } : undefined,
+          customData: { user_id: user ? user.uid : "" },
+        });
+        setState("ready");
+      } catch { setState("error"); }
+    });
+    return () => { alive = false; };
+  }, []);
+  useEffect(() => { if (isPro) onDone(); }, [isPro]);
+  return (
+    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'DM Sans','Inter',system-ui,sans-serif", color: C.text, padding: "24px 16px" }}>
+      <div style={{ maxWidth: 900, margin: "0 auto" }}>
+        <button onClick={onBack} style={{ background: "transparent", border: "none", color: C.textMuted, fontSize: 13, cursor: "pointer", fontFamily: "inherit", marginBottom: 16 }}>← Volver</button>
+        {paid ? (
+          <div style={{ maxWidth: 440, margin: "60px auto", background: C.card, border: `1px solid ${C.gold}40`, borderRadius: 16, padding: 28, textAlign: "center" }}>
+            <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>Activando tu plan PRO</div>
+            <div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.6 }}>Recibimos tu pago. Tu cuenta se activa en unos segundos; esta pantalla cambia sola.</div>
+          </div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))", gap: 20, alignItems: "start" }}>
+            <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 24 }}>
+              <div style={{ fontSize: 13, color: C.gold, fontWeight: 700, marginBottom: 6 }}>Plan PRO</div>
+              <div style={{ fontSize: 34, fontWeight: 800, marginBottom: 4 }}>$5.99<span style={{ fontSize: 13, color: C.textMuted, fontWeight: 500 }}> / mes</span></div>
+              <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 16 }}>Cancelas cuando quieras.{user ? ` Cuenta: ${user.email}` : ""}</div>
+              <div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.9 }}>✓ Salud y riesgo<br />✓ Benchmarks y pérdida invisible<br />✓ Escenarios y comparador A/B<br />✓ Asesor IA y PDF<br />✓ Control financiero</div>
+            </div>
+            <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 16, minHeight: 200 }}>
+              {state === "loading" && <div style={{ fontSize: 13, color: C.textMuted, padding: 12 }}>Cargando pago seguro…</div>}
+              {state === "error" && <div style={{ fontSize: 13, color: C.amber, padding: 12, lineHeight: 1.6 }}>No pudimos cargar el pago. Revisa tu conexión e intenta de nuevo.</div>}
+              <div className="paddle-checkout" />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -2373,7 +2437,7 @@ function AppInner() {
   const openFree = () => setView("free");
   const goHome = () => { setView("landing"); window.scrollTo(0, 0); };
 
-  // Ir a pagar: pide sesión (para saber a qué cuenta activar PRO) y abre el checkout de Lemon Squeezy
+  // Ir a pagar: pide sesión (para saber a qué cuenta activar PRO) y abre el pago dentro de la página
   const upgrade = async () => {
     setPayMsg("");
     let u = user;
@@ -2381,14 +2445,12 @@ function AppInner() {
       try { u = (await loginWithGoogle()).user; }
       catch { setPayMsg("Necesitas iniciar sesión con Google para activar PRO."); setView("paywall"); return; }
     }
-    const url = buildCheckoutUrl(u);
-    if (!url) { setPayMsg("El pago aún no está configurado. Intenta más tarde."); setView("paywall"); return; }
-    // Abre la página de pago de Lemon Squeezy; al terminar vuelve a tu página con ?pago=ok
-    window.location.href = url;
+    setView("checkout");
   };
 
   const proTrial = isPro ? 0 : trialDaysLeft;
   if ((view === "pro" || view === "finance") && !canPro) return <Paywall onUpgrade={upgrade} onStartTrial={startTrial} onHome={goHome} trialAvailable={!trialUsed()} message={payMsg} justPaid={false} />;
+  if (view === "checkout") return <CheckoutView onBack={goHome} onDone={() => setView("pro")} />;
   if (view === "paywall") return <Paywall onUpgrade={upgrade} onStartTrial={startTrial} onHome={goHome} trialAvailable={!trialUsed()} message={payMsg} justPaid={justPaid && !isPro} />;
   if (view === "free") return <FreeCalculator onUpgrade={upgrade} onOpenPro={openPro} onStartTrial={startTrial} onHome={goHome} />;
   if (view === "pro") return <ProCalculator trialDaysLeft={proTrial} onUpgrade={upgrade} onBackToFree={openFree} onHome={goHome} onFinance={() => setView("finance")} />;
