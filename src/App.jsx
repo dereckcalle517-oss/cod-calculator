@@ -1670,18 +1670,25 @@ function AuthProvider({ children }) {
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (fu) => {
       if (fu) {
-        const userRef = doc(db, "users", fu.uid);
-        const snap = await getDoc(userRef);
-        if (!snap.exists()) {
-          await setDoc(userRef, {
-            uid: fu.uid, email: fu.email,
-            name: fu.displayName, photo: fu.photoURL,
-            plan: "free", createdAt: serverTimestamp(),
-          });
-        }
-        const data = snap.exists() ? snap.data() : { plan: "free" };
-        setIsPro(data.plan === "pro");
+        // Mostrar la sesión de inmediato, sin esperar a Firestore
         setUser(fu);
+        setLoadingAuth(false);
+        try {
+          const userRef = doc(db, "users", fu.uid);
+          const snap = await getDoc(userRef);
+          if (!snap.exists()) {
+            await setDoc(userRef, {
+              uid: fu.uid, email: fu.email,
+              name: fu.displayName, photo: fu.photoURL,
+              plan: "free", createdAt: serverTimestamp(),
+            });
+          }
+          const data = snap.exists() ? snap.data() : { plan: "free" };
+          setIsPro(data.plan === "pro");
+        } catch (err) {
+          console.error("Firestore error (revisa las reglas):", err);
+          setIsPro(false);
+        }
       } else {
         setUser(null); setIsPro(false);
       }
