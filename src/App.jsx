@@ -1,6 +1,9 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, createContext, useContext } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, AreaChart, Area } from "recharts";
+import { initializeApp, getApps } from "firebase/app";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
+import { getFirestore, doc, getDoc, setDoc, collection, addDoc, getDocs, deleteDoc, query, orderBy, serverTimestamp } from "firebase/firestore";
 
 // ─── THEME ────────────────────────────────────────────────────────────────────
 const C = {
@@ -402,6 +405,7 @@ function FreeCalculator({ onUpgrade, onStartTrial }) {
           <button onClick={onUpgrade} style={{ background: `linear-gradient(135deg,${C.gold},${C.amber})`, border: "none", borderRadius: 9, padding: "7px 16px", color: C.bg, fontSize: 12, fontWeight: 800, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6 }}>
             ⭐ Ir a PRO
           </button>
+          <UserMenu />
         </div>
       </div>
 
@@ -770,6 +774,7 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree }) {
             <div style={{ background: `${health.score >= 75 ? C.green : health.score >= 50 ? C.amber : C.red}15`, border: `1px solid ${health.score >= 75 ? C.green : health.score >= 50 ? C.amber : C.red}35`, borderRadius: 7, padding: "3px 9px", fontSize: 10, fontWeight: 700, color: health.score >= 75 ? C.green : health.score >= 50 ? C.amber : C.red }}>❤️ {health.score}/100</div>
             <div style={{ background: `${risk.color}15`, border: `1px solid ${risk.color}35`, borderRadius: 7, padding: "3px 9px", fontSize: 10, fontWeight: 700, color: risk.color }}>{risk.emoji} {risk.level}</div>
             <button onClick={generatePDF} style={{ background: `${C.green}15`, border: `1px solid ${C.green}30`, borderRadius: 7, padding: "4px 10px", color: C.green, fontSize: 10, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>📄 PDF</button>
+            <UserMenu />
           </div>
         </div>
       </div>
@@ -1417,6 +1422,7 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial }) {
             <button onClick={onOpenFree} style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 9, padding: "8px 16px", color: C.textDim, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Gratis</button>
             <motion.button onClick={onOpenPro} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
               style={{ background: `linear-gradient(135deg,${C.gold},${C.amber})`, border: "none", borderRadius: 9, padding: "8px 16px", color: C.bg, fontSize: 12, fontWeight: 800, cursor: "pointer", fontFamily: "inherit" }}>⭐ Ver PRO</motion.button>
+            <UserMenu />
           </div>
         </div>
       </nav>
@@ -1623,21 +1629,157 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial }) {
   );
 }
 
-// ─── ROOT ─────────────────────────────────────────────────────────────────────
-export default function App() {
-  const [view, setView] = useState("landing"); // "landing" | "free" | "pro"
-  const [trialDaysLeft, setTrialDaysLeft] = useState(0);
+// ─── FIREBASE & AUTH ─────────────────────────────────────────────────────────
 
-  const startTrial = () => {
-    setTrialDaysLeft(3);
-    setView("pro");
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+};
+
+const firebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+const auth = getAuth(firebaseApp);
+const db = getFirestore(firebaseApp);
+const googleProvider = new GoogleAuthProvider();
+
+// Firestore helpers
+async function saveSimulationFS(userId, simulation) {
+  const ref = collection(db, "users", userId, "simulations");
+  await addDoc(ref, { ...simulation, createdAt: serverTimestamp() });
+}
+async function getSimulationsFS(userId) {
+  const ref = collection(db, "users", userId, "simulations");
+  const q = query(ref, orderBy("createdAt", "desc"));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+async function deleteSimulationFS(userId, simId) {
+  await deleteDoc(doc(db, "users", userId, "simulations", simId));
+}
+
+// Auth context
+const AuthCtx = createContext(null);
+function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  const [loadingAuth, setLoadingAuth] = useState(true);
+  const [isPro, setIsPro] = useState(false);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (fu) => {
+      if (fu) {
+        const userRef = doc(db, "users", fu.uid);
+        const snap = await getDoc(userRef);
+        if (!snap.exists()) {
+          await setDoc(userRef, {
+            uid: fu.uid, email: fu.email,
+            name: fu.displayName, photo: fu.photoURL,
+            plan: "free", createdAt: serverTimestamp(),
+          });
+        }
+        const data = snap.exists() ? snap.data() : { plan: "free" };
+        setIsPro(data.plan === "pro");
+        setUser(fu);
+      } else {
+        setUser(null); setIsPro(false);
+      }
+      setLoadingAuth(false);
+    });
+    return () => unsub();
+  }, []);
+
+  const loginWithGoogle = () => signInWithPopup(auth, googleProvider);
+  const logout = () => signOut(auth);
+
+  return (
+    <AuthCtx.Provider value={{ user, loadingAuth, isPro, loginWithGoogle, logout, saveSimulationFS, getSimulationsFS, deleteSimulationFS }}>
+      {children}
+    </AuthCtx.Provider>
+  );
+}
+function useAuth() {
+  return useContext(AuthCtx);
+}
+
+// ─── USER MENU ────────────────────────────────────────────────────────────────
+function UserMenu() {
+  const { user, isPro, loginWithGoogle, logout } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async () => {
+    setLoading(true);
+    try { await loginWithGoogle(); } catch (e) { console.error(e); }
+    setLoading(false);
   };
 
+  if (!user) return (
+    <button onClick={handleLogin} disabled={loading}
+      style={{ background: `linear-gradient(135deg,${C.accent},#6366F1)`, border: "none", borderRadius: 9, padding: "7px 16px", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6, opacity: loading ? 0.7 : 1 }}>
+      {loading ? "..." : "🔑 Iniciar sesión"}
+    </button>
+  );
+
+  return (
+    <div style={{ position: "relative" }}>
+      <button onClick={() => setOpen(!open)}
+        style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 99, padding: "4px 12px 4px 4px", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, fontFamily: "inherit" }}>
+        <img src={user.photoURL} alt="" width={26} height={26} style={{ borderRadius: "50%", display: "block" }} />
+        <span style={{ fontSize: 12, fontWeight: 600, color: C.text, maxWidth: 100, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.displayName?.split(" ")[0]}</span>
+        {isPro && <span style={{ background: `${C.gold}20`, color: C.gold, fontSize: 9, fontWeight: 700, borderRadius: 5, padding: "1px 6px" }}>PRO</span>}
+        <span style={{ color: C.textMuted, fontSize: 10 }}>▼</span>
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.15 }}
+            style={{ position: "absolute", right: 0, top: "calc(100% + 6px)", background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "6px", minWidth: 180, zIndex: 200, boxShadow: "0 16px 40px rgba(0,0,0,0.5)" }}>
+            <div style={{ padding: "8px 10px 10px", borderBottom: `1px solid ${C.border}`, marginBottom: 4 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: C.text }}>{user.displayName}</div>
+              <div style={{ fontSize: 10, color: C.textMuted }}>{user.email}</div>
+              <div style={{ marginTop: 4, fontSize: 10, color: isPro ? C.gold : C.textMuted, fontWeight: 600 }}>{isPro ? "⭐ Plan PRO" : "Plan Gratuito"}</div>
+            </div>
+            <button onClick={() => { logout(); setOpen(false); }}
+              style={{ width: "100%", background: "transparent", border: "none", borderRadius: 8, padding: "8px 10px", color: C.red, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>
+              🚪 Cerrar sesión
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ─── ROOT ─────────────────────────────────────────────────────────────────────
+function AppInner() {
+  const { loadingAuth } = useAuth();
+  const [view, setView] = useState("landing");
+  const [trialDaysLeft, setTrialDaysLeft] = useState(0);
+
+  if (loadingAuth) return (
+    <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans',system-ui,sans-serif" }}>
+      <div style={{ textAlign: "center" }}>
+        <div style={{ width: 40, height: 40, border: `3px solid ${C.border}`, borderTopColor: C.accent, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} />
+        <div style={{ fontSize: 13, color: C.textMuted }}>Cargando...</div>
+      </div>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+
+  const startTrial = () => { setTrialDaysLeft(3); setView("pro"); };
   const openPro = () => setView("pro");
   const openFree = () => setView("free");
-  const goLanding = () => setView("landing");
 
   if (view === "free") return <FreeCalculator onUpgrade={openPro} onStartTrial={startTrial} />;
   if (view === "pro") return <ProCalculator trialDaysLeft={trialDaysLeft} onUpgrade={openPro} onBackToFree={openFree} />;
   return <Landing onOpenFree={openFree} onOpenPro={openPro} onStartTrial={startTrial} />;
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppInner />
+    </AuthProvider>
+  );
 }
