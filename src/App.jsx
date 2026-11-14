@@ -1684,12 +1684,12 @@ async function deleteSimulationFS(userId, simId) {
 
 // Auth context
 const AuthCtx = createContext(null);
-const LEMON_CHECKOUT_URL = import.meta.env.VITE_LEMON_CHECKOUT_URL || "";
+// Enlace de compra de Lemon Squeezy (modo de prueba). Al pasar a modo real, cambia solo esta línea por el enlace nuevo.
+const LEMON_CHECKOUT_URL = "https://cod-calculator-ten.lemonsqueezy.com/checkout/buy/17de9912-b14d-4efe-8f79-6a225a9c3c1f?media=0&desc=0&discount=0";
 function buildCheckoutUrl(u) {
   if (!LEMON_CHECKOUT_URL) return "";
   try {
     const url = new URL(LEMON_CHECKOUT_URL);
-    url.searchParams.set("embed", "1");
     url.searchParams.set("media", "0");
     url.searchParams.set("desc", "0");
     url.searchParams.set("checkout[email]", u.email || "");
@@ -2342,26 +2342,8 @@ function AppInner() {
   const [view, setView] = useState("landing");
   const [trialDaysLeft, setTrialDaysLeft] = useState(trialLeft);
   const [payMsg, setPayMsg] = useState("");
-  const [paidNow, setPaidNow] = useState(false);
   const justPaidUrl = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("pago") === "ok";
-  const justPaid = justPaidUrl || paidNow;
-
-  // Carga el pago de Lemon Squeezy para abrirlo dentro de la página
-  useEffect(() => {
-    const setup = () => {
-      try {
-        window.createLemonSqueezy && window.createLemonSqueezy();
-        window.LemonSqueezy && window.LemonSqueezy.Setup({
-          eventHandler: (e) => { if (e && e.event === "Checkout.Success") { setPaidNow(true); setView("paywall"); } },
-        });
-      } catch (err) { console.error(err); }
-    };
-    if (window.LemonSqueezy) { setup(); return; }
-    if (document.getElementById("lemonjs")) return;
-    const sc = document.createElement("script");
-    sc.id = "lemonjs"; sc.src = "https://assets.lemonsqueezy.com/lemon.js"; sc.defer = true; sc.onload = setup;
-    document.body.appendChild(sc);
-  }, []);
+  const justPaid = justPaidUrl;
 
   const canPro = isPro || trialDaysLeft > 0;
 
@@ -2401,9 +2383,8 @@ function AppInner() {
     }
     const url = buildCheckoutUrl(u);
     if (!url) { setPayMsg("El pago aún no está configurado. Intenta más tarde."); setView("paywall"); return; }
-    // Abre el pago encima de la página (sin salir). Si no cargó, abre el enlace normal.
-    if (window.LemonSqueezy && window.LemonSqueezy.Url) window.LemonSqueezy.Url.Open(url);
-    else window.location.href = url.replace("embed=1&", "");
+    // Abre la página de pago de Lemon Squeezy; al terminar vuelve a tu página con ?pago=ok
+    window.location.href = url;
   };
 
   const proTrial = isPro ? 0 : trialDaysLeft;
