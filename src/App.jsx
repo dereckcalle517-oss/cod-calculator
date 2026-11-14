@@ -141,21 +141,36 @@ function calcBreakPoints(inputs, R) {
 
 // ─── SHARED COMPONENTS ────────────────────────────────────────────────────────
 function Slider({ label, sublabel, value, onChange, color = C.accent }) {
+  const trackRef = useRef(null);
+  const dragging = useRef(false);
+  const setFromX = (clientX) => {
+    const el = trackRef.current; if (!el) return;
+    const r = el.getBoundingClientRect();
+    const pct = Math.round(((clientX - r.left) / r.width) * 100);
+    onChange(Math.min(100, Math.max(1, pct)));
+  };
+  const onDown = (e) => { dragging.current = true; try { e.currentTarget.setPointerCapture(e.pointerId); } catch {} setFromX(e.clientX); };
+  const onMove = (e) => { if (dragging.current) setFromX(e.clientX); };
+  const onUp = (e) => { dragging.current = false; try { e.currentTarget.releasePointerCapture(e.pointerId); } catch {} };
+  const onKey = (e) => {
+    if (e.key === "ArrowRight" || e.key === "ArrowUp") { e.preventDefault(); onChange(Math.min(100, value + 1)); }
+    if (e.key === "ArrowLeft" || e.key === "ArrowDown") { e.preventDefault(); onChange(Math.max(1, value - 1)); }
+  };
   return (
     <div style={{ marginBottom: 18 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
         <div style={{ flex: 1, marginRight: 12 }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{label}</div>
           {sublabel && <div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>{sublabel}</div>}
         </div>
         <div style={{ background: `${color}22`, border: `1px solid ${color}44`, borderRadius: 8, padding: "3px 12px", fontSize: 14, fontWeight: 700, color, whiteSpace: "nowrap", flexShrink: 0 }}>{value}%</div>
       </div>
-      <div style={{ position: "relative", height: 24, display: "flex", alignItems: "center" }}>
-        <div style={{ position: "absolute", left: 0, right: 0, height: 6, borderRadius: 99, background: C.border }} />
+      <div ref={trackRef} role="slider" tabIndex={0} aria-label={label} aria-valuemin={1} aria-valuemax={100} aria-valuenow={value}
+        onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} onKeyDown={onKey}
+        style={{ position: "relative", height: 40, display: "flex", alignItems: "center", cursor: "pointer", touchAction: "pan-y", userSelect: "none", WebkitUserSelect: "none", outline: "none" }}>
+        <div style={{ position: "absolute", left: 0, right: 0, height: 6, borderRadius: 99, background: C.border, pointerEvents: "none" }} />
         <div style={{ position: "absolute", left: 0, height: 6, width: `${value}%`, borderRadius: 99, background: `linear-gradient(90deg,${color}70,${color})`, pointerEvents: "none" }} />
-        <div style={{ position: "absolute", left: `${value}%`, transform: "translateX(-50%)", width: 20, height: 20, borderRadius: "50%", background: color, border: `3px solid ${C.bg}`, boxShadow: `0 0 12px ${color}`, pointerEvents: "none", zIndex: 1 }} />
-        <input type="range" min={1} max={100} value={value} onChange={e => onChange(Number(e.target.value))}
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0, cursor: "pointer", margin: 0, zIndex: 2, WebkitAppearance: "none" }} />
+        <div style={{ position: "absolute", left: `${value}%`, transform: "translateX(-50%)", width: 24, height: 24, borderRadius: "50%", background: color, border: `3px solid ${C.bg}`, boxShadow: `0 0 12px ${color}`, pointerEvents: "none" }} />
       </div>
     </div>
   );
@@ -351,6 +366,8 @@ function GlobalStyles() {
         [style*="repeat(4"], [style*="repeat(3"] { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important; }
         [style*="1fr 2fr 2fr"], [style*="1fr 1fr 1fr"] { grid-template-columns: minmax(0,1fr) !important; }
         [style*="1fr 1fr"] { grid-template-columns: minmax(0,1fr) minmax(0,1fr) !important; }
+        .stack-m.stack-m { grid-template-columns: minmax(0,1fr) !important; }
+        input, select, textarea { font-size: 16px !important; }
         .m-only { display: inline !important; }
         .m-bar { display: flex !important; }
         .d-only { display: none !important; }
@@ -364,6 +381,7 @@ function GlobalStyles() {
         .pricing-grid { grid-template-columns: 1fr !important; }
         .team-grid { grid-template-columns: 1fr 1fr !important; }
       }
+      @media (max-width: 600px) { .team-grid { grid-template-columns: minmax(0,1fr) !important; } }
     `}</style>
   );
 }
@@ -1226,7 +1244,7 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 4 }}>⚖️ Comparador de Productos</div>
                   <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 14 }}>¿Cuál producto conviene más escalar? Compara rentabilidad lado a lado.</div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+                  <div className="stack-m" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
                     {/* Producto A */}
                     <div style={{ background: `${C.accent}08`, border: `1px solid ${C.accent}25`, borderRadius: 14, padding: "16px" }}>
                       <div style={{ fontSize: 12, fontWeight: 800, color: C.accent, marginBottom: 12 }}>📦 Producto A (actual)</div>
@@ -1542,7 +1560,7 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial }) {
               <span style={{ background: `linear-gradient(135deg,${C.accent},${C.purple})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Se construyó para que tú no lo pierdas.</span>
             </div>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, alignItems: "center", marginBottom: 44 }}>
+          <div className="stack-m" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, alignItems: "center", marginBottom: 44 }}>
             <div>
               <div style={{ background: `${C.red}08`, border: `1px solid ${C.red}20`, borderRadius: 14, padding: "20px", marginBottom: 16 }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: C.red, marginBottom: 7, textTransform: "uppercase", letterSpacing: "0.06em" }}>⚠️ El momento que lo cambió todo</div>
