@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, createContext, useContext } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef, createContext, useContext } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, AreaChart, Area } from "recharts";
 import { initializeApp, getApps } from "firebase/app";
@@ -331,6 +331,7 @@ function GlobalStyles() {
       input[type=range]::-moz-range-thumb { width: 1px; height: 1px; border: none; background: transparent; }
       input[type=number]::-webkit-inner-spin-button,
       input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+      .show-mobile-only { display: none; }
       @keyframes spin { to { transform: rotate(360deg); } }
       @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
       @media (max-width: 900px) {
@@ -338,6 +339,7 @@ function GlobalStyles() {
         .left-panel { position: static !important; }
         .charts-grid { grid-template-columns: 1fr !important; }
         .hide-mobile { display: none !important; }
+        .show-mobile-only { display: block !important; }
         .pricing-grid { grid-template-columns: 1fr !important; }
         .team-grid { grid-template-columns: 1fr 1fr !important; }
       }
@@ -377,7 +379,7 @@ function useCalc(inputs) {
 }
 
 // ─── FREE CALCULATOR ──────────────────────────────────────────────────────────
-function FreeCalculator({ onUpgrade, onStartTrial }) {
+function FreeCalculator({ onUpgrade, onStartTrial, onHome }) {
   const [currencyCode, setCurrencyCode] = useState("USD");
   const currency = CURRENCIES.find(c => c.code === currencyCode) || CURRENCIES[0];
   const fmt = makeFmt(currency.symbol);
@@ -398,10 +400,10 @@ function FreeCalculator({ onUpgrade, onStartTrial }) {
       {/* Header */}
       <div style={{ borderBottom: `1px solid ${C.border}`, background: `${C.surface}EE`, backdropFilter: "blur(20px)", position: "sticky", top: 0, zIndex: 100, padding: "0 16px" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 52 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <button onClick={onHome} title="Ir al inicio" style={{ display: "flex", alignItems: "center", gap: 8, background: "transparent", border: "none", cursor: "pointer", fontFamily: "inherit", color: C.text, padding: 0 }}>
             <div style={{ width: 28, height: 28, borderRadius: 7, background: `linear-gradient(135deg,${C.accent},#6366F1)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>📦</div>
             <div style={{ fontSize: 13, fontWeight: 800 }}>COD Calculator <span style={{ color: C.textMuted, fontSize: 11, fontWeight: 500 }}>— Gratis</span></div>
-          </div>
+          </button>
           <button onClick={onUpgrade} style={{ background: `linear-gradient(135deg,${C.gold},${C.amber})`, border: "none", borderRadius: 9, padding: "7px 16px", color: C.bg, fontSize: 12, fontWeight: 800, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6 }}>
             ⭐ Ir a PRO
           </button>
@@ -447,6 +449,7 @@ function FreeCalculator({ onUpgrade, onStartTrial }) {
               <div style={{ fontSize: 18, fontWeight: 800, color: C.amber }}>40%</div>
             </div>
           </div>
+          <SavedCalcs inputs={inputs} currency={currency} R={R} limit={5} onLoad={(inp, cur) => { setInputs(inp); if (cur) setCurrencyCode(cur); }} />
         </motion.div>
 
         {/* RIGHT */}
@@ -580,7 +583,7 @@ function FreeCalculator({ onUpgrade, onStartTrial }) {
 }
 
 // ─── PRO CALCULATOR ───────────────────────────────────────────────────────────
-function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree }) {
+function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinance }) {
   const [currencyCode, setCurrencyCode] = useState("USD");
   const currency = CURRENCIES.find(c => c.code === currencyCode) || CURRENCIES[0];
   const fmt = makeFmt(currency.symbol);
@@ -764,11 +767,13 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree }) {
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button onClick={onBackToFree} style={{ background: "transparent", border: "none", cursor: "pointer", color: C.textMuted, fontSize: 11, fontFamily: "inherit", padding: "4px 6px" }}>← Gratis</button>
             <div style={{ width: 1, height: 14, background: C.border }} />
-            <div style={{ width: 26, height: 26, borderRadius: 7, background: `linear-gradient(135deg,${C.gold},${C.amber})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13 }}>⭐</div>
-            <div>
-              <div style={{ fontSize: 12, fontWeight: 800 }}>COD Calculator <span style={{ color: C.gold }}>PRO</span></div>
-              <div style={{ fontSize: 9, color: C.textMuted }}>Sistema operativo de dropshipping COD LATAM</div>
-            </div>
+            <button onClick={onHome} title="Ir al inicio" style={{ display: "flex", alignItems: "center", gap: 8, background: "transparent", border: "none", cursor: "pointer", fontFamily: "inherit", color: C.text, padding: 0, textAlign: "left" }}>
+              <div style={{ width: 26, height: 26, borderRadius: 7, background: `linear-gradient(135deg,${C.gold},${C.amber})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13 }}>⭐</div>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 800 }}>COD Calculator <span style={{ color: C.gold }}>PRO</span></div>
+                <div style={{ fontSize: 9, color: C.textMuted }}>Sistema operativo de dropshipping COD LATAM</div>
+              </div>
+            </button>
           </div>
           <div style={{ display: "flex", gap: 7, alignItems: "center" }}>
             <div style={{ background: `${health.score >= 75 ? C.green : health.score >= 50 ? C.amber : C.red}15`, border: `1px solid ${health.score >= 75 ? C.green : health.score >= 50 ? C.amber : C.red}35`, borderRadius: 7, padding: "3px 9px", fontSize: 10, fontWeight: 700, color: health.score >= 75 ? C.green : health.score >= 50 ? C.amber : C.red }}>❤️ {health.score}/100</div>
@@ -779,6 +784,7 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree }) {
         </div>
       </div>
 
+      <ProNav active="calc" onCalc={() => {}} onFinance={onFinance} />
       {trialDaysLeft > 0 && <TrialBanner daysLeft={trialDaysLeft} onUpgrade={onUpgrade} />}
 
       <div className="main-layout" style={{ maxWidth: 1300, margin: "0 auto", padding: "16px 12px 40px", display: "grid", gridTemplateColumns: "320px 1fr", gap: 16, alignItems: "start" }}>
@@ -831,32 +837,7 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree }) {
               <span>= Ganancia</span><span>{fmt(R.gananciaXPedido)}</span>
             </div>
           </div>
-          {/* Simulations */}
-          <div style={{ marginTop: 10 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 7 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: C.text }}>📁 Simulaciones ({sims.length}/10)</div>
-              <button onClick={() => setShowSave(!showSave)} style={{ background: `${C.green}15`, border: `1px solid ${C.green}30`, borderRadius: 7, padding: "4px 9px", color: C.green, fontSize: 10, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>+ Guardar</button>
-            </div>
-            <AnimatePresence>
-              {showSave && (
-                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} style={{ overflow: "hidden", marginBottom: 7 }}>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <input value={simName} onChange={e => setSimName(e.target.value)} onKeyDown={e => e.key === "Enter" && saveSim()} placeholder="Nombre de campaña..." style={{ flex: 1, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "7px 10px", color: C.text, fontSize: 11, fontFamily: "inherit", outline: "none", minWidth: 0 }} />
-                    <button onClick={saveSim} style={{ background: C.green, border: "none", borderRadius: 8, padding: "7px 12px", color: "#fff", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}>OK</button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-            {sims.slice(0, 3).map(s => (
-              <div key={s.id} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "7px 10px", marginBottom: 5, display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.name}</div>
-                  <div style={{ fontSize: 9, color: s.results.gananciaNet >= 0 ? C.green : C.red }}>{s.results.gananciaNet >= 0 ? "+" : ""}{Math.round(s.results.gananciaNet)} · {fmtPct(s.results.margen)}</div>
-                </div>
-                <button onClick={() => setInputs(s.inputs)} style={{ background: `${C.accent}15`, border: "none", borderRadius: 6, padding: "4px 8px", color: C.accent, fontSize: 10, cursor: "pointer", fontFamily: "inherit" }}>↩</button>
-              </div>
-            ))}
-          </div>
+          <SavedCalcs inputs={inputs} currency={currency} R={R} limit={50} onLoad={(inp, cur) => { setInputs(inp); if (cur) setCurrencyCode(cur); }} />
           <button onClick={generatePDF} style={{ width: "100%", marginTop: 10, background: `${C.green}15`, border: `1px solid ${C.green}30`, borderRadius: 10, padding: "9px", color: C.green, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>📄 Generar PDF profesional</button>
         </motion.div>
 
@@ -1758,6 +1739,475 @@ function UserMenu() {
   );
 }
 
+// ─── SAVED CALCS (cálculos guardados por usuario) ─────────────────────────────
+function SavedCalcs({ inputs, currency, R, limit, onLoad }) {
+  const { user } = useAuth();
+  const [list, setList] = useState([]);
+  const [name, setName] = useState("");
+  const [msg, setMsg] = useState("");
+  const [busy, setBusy] = useState(false);
+  const LS = "cod_saved_calcs";
+  const readLocal = () => { try { return JSON.parse(localStorage.getItem(LS) || "[]"); } catch { return []; } };
+
+  const refresh = async () => {
+    if (user) {
+      try { setList(await getSimulationsFS(user.uid)); }
+      catch (e) { console.error(e); setList([]); setMsg("No se pudieron leer tus cálculos de la nube."); }
+      return;
+    }
+    setList(readLocal());
+  };
+  useEffect(() => { refresh(); }, [user?.uid]);
+
+  const save = async () => {
+    if (list.length >= limit) { setMsg(`Llegaste al límite de ${limit} cálculos. Borra alguno para guardar más.`); return; }
+    const sim = {
+      name: name.trim() || `Cálculo ${new Date().toLocaleDateString("es-ES")}`,
+      date: new Date().toLocaleDateString("es-ES"),
+      currency: currency.code,
+      inputs: { ...inputs },
+      results: { gananciaNet: R.gananciaNet || 0, margen: R.margen || 0 },
+    };
+    setBusy(true); setMsg("");
+    try {
+      if (user) await saveSimulationFS(user.uid, sim);
+      else localStorage.setItem(LS, JSON.stringify([{ id: String(Date.now()), ...sim }, ...readLocal()]));
+      setName(""); setMsg("✅ Cálculo guardado");
+      await refresh();
+    } catch (e) { console.error(e); setMsg("Error al guardar: " + (e.code || e.message)); }
+    setBusy(false);
+  };
+
+  const remove = async (id) => {
+    try {
+      if (user) await deleteSimulationFS(user.uid, id);
+      else localStorage.setItem(LS, JSON.stringify(readLocal().filter(s => s.id !== id)));
+      await refresh();
+    } catch (e) { console.error(e); setMsg("Error al borrar: " + (e.code || e.message)); }
+  };
+
+  return (
+    <div style={{ marginTop: 14, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: 12 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+        <div style={{ fontSize: 12, fontWeight: 800, color: C.text }}>💾 Mis cálculos</div>
+        <div style={{ fontSize: 10, color: C.textMuted }}>{list.length}/{limit}</div>
+      </div>
+      <div style={{ display: "flex", gap: 6 }}>
+        <input value={name} onChange={e => setName(e.target.value)} onKeyDown={e => e.key === "Enter" && save()} placeholder="Nombre (ej: Perfume X)"
+          style={{ flex: 1, minWidth: 0, background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 10px", color: C.text, fontSize: 12, fontFamily: "inherit", outline: "none" }} />
+        <button onClick={save} disabled={busy}
+          style={{ background: C.green, border: "none", borderRadius: 8, padding: "8px 12px", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", flexShrink: 0, opacity: busy ? 0.6 : 1 }}>Guardar</button>
+      </div>
+      {!user && <div style={{ fontSize: 10, color: C.amber, marginTop: 6 }}>Inicia sesión para guardarlos en tu cuenta y verlos desde cualquier dispositivo. Ahora se guardan solo en este navegador.</div>}
+      {msg && <div style={{ fontSize: 11, color: msg.startsWith("✅") ? C.green : C.amber, marginTop: 6 }}>{msg}</div>}
+      <div style={{ maxHeight: 230, overflowY: "auto", marginTop: 8 }}>
+        {list.length === 0 && <div style={{ fontSize: 11, color: C.textMuted, padding: "6px 2px" }}>Aún no tienes cálculos guardados.</div>}
+        {list.map(s => (
+          <div key={s.id} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, padding: "7px 9px", marginBottom: 5, display: "flex", alignItems: "center", gap: 6 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.name}</div>
+              <div style={{ fontSize: 9, color: (s.results?.gananciaNet ?? 0) >= 0 ? C.green : C.red }}>
+                {(s.results?.gananciaNet ?? 0) >= 0 ? "+" : "−"}{s.currency || "USD"} {Math.abs(Math.round(s.results?.gananciaNet ?? 0)).toLocaleString("es-ES")} · {fmtPct(s.results?.margen)} · {s.date}
+              </div>
+            </div>
+            <button onClick={() => onLoad(s.inputs, s.currency)} title="Cargar" style={{ background: `${C.accent}15`, border: "none", borderRadius: 6, padding: "4px 8px", color: C.accent, fontSize: 10, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Abrir</button>
+            <button onClick={() => remove(s.id)} title="Borrar" style={{ background: `${C.red}15`, border: "none", borderRadius: 6, padding: "4px 7px", color: C.red, fontSize: 10, cursor: "pointer", fontFamily: "inherit" }}>🗑</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── PRO NAV BAR (Calculadora | Control financiero) ───────────────────────────
+function ProNav({ active, onCalc, onFinance }) {
+  const items = [
+    { id: "calc", label: "🧮 Calculadora", fn: onCalc },
+    { id: "fin", label: "💼 Control financiero", fn: onFinance },
+  ];
+  return (
+    <div style={{ background: C.surface, borderBottom: `1px solid ${C.border}`, padding: "8px 14px" }}>
+      <div style={{ maxWidth: 1300, margin: "0 auto", display: "flex", gap: 6, overflowX: "auto" }}>
+        {items.map(i => (
+          <button key={i.id} onClick={i.fn}
+            style={{ padding: "7px 14px", background: active === i.id ? `${C.gold}18` : "transparent", border: `1px solid ${active === i.id ? C.gold : C.border}`, borderRadius: 9, color: active === i.id ? C.gold : C.textDim, fontSize: 12, fontWeight: active === i.id ? 800 : 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>
+            {i.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── CONTROL FINANCIERO (valor agregado PRO) ──────────────────────────────────
+const FIN_CATS = ["Fondos Ads", "Suscripciones de negocio", "Cloaking / Herramientas", "Productos físicos", "Gastos operativos", "Retiros personales", "Otros"];
+const FIN_COLORS = [C.accent, C.purple, C.cyan, C.amber, C.green, C.red, C.textMuted, "#EC4899", "#14B8A6"];
+const MONTHS_ES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+const monthKey = (d) => (d || "").slice(0, 7);
+const monthLabel = (k) => { const [y, m] = (k || "").split("-"); return m ? `${MONTHS_ES[+m - 1]} ${y}` : k; };
+const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+const uid8 = () => Math.random().toString(36).slice(2, 9) + Date.now().toString(36);
+const sumBy = (arr) => arr.reduce((a, x) => a + (Number(x.amount) || 0), 0);
+const FIN_LS = "cod_finance";
+
+function useFinance() {
+  const { user } = useAuth();
+  const [data, setData] = useState({ expenses: [], funds: [], capital: {} });
+  const [status, setStatus] = useState("loading");
+  const loaded = useRef(false);
+  const dirty = useRef(false);
+  const latest = useRef(data); latest.current = data;
+  const userRef = useRef(user); userRef.current = user;
+
+  useEffect(() => {
+    loaded.current = false; dirty.current = false; setStatus("loading");
+    (async () => {
+      let d = null, failed = false;
+      try {
+        if (user) { const s = await getDoc(doc(db, "users", user.uid, "finance", "data")); if (s.exists()) d = s.data(); }
+        else d = JSON.parse(localStorage.getItem(FIN_LS) || "null");
+      } catch (e) { console.error(e); failed = true; }
+      setData({ expenses: [], funds: [], capital: {}, ...(d || {}) });
+      loaded.current = true; setStatus(failed ? "error" : "saved");
+    })();
+  }, [user?.uid]);
+
+  const persist = async () => {
+    const u = userRef.current;
+    try {
+      if (u) { const { updatedAt, ...clean } = latest.current; await setDoc(doc(db, "users", u.uid, "finance", "data"), { ...clean, updatedAt: serverTimestamp() }); }
+      else localStorage.setItem(FIN_LS, JSON.stringify(latest.current));
+      dirty.current = false; setStatus("saved");
+    } catch (e) { console.error(e); setStatus("error"); }
+  };
+
+  useEffect(() => {
+    if (!loaded.current || !dirty.current) return;
+    setStatus("saving");
+    const t = setTimeout(persist, 700);
+    return () => clearTimeout(t);
+  }, [data]);
+  useEffect(() => () => { if (dirty.current) persist(); }, []);
+
+  const update = (fn) => { dirty.current = true; setData(fn); };
+  return { data, update, status, user };
+}
+
+function FinanceCenter({ onBackToCalc, onHome, onBackToFree }) {
+  const { data, update, status, user } = useFinance();
+  const { expenses, funds, capital } = data;
+  const fmt = makeFmt("$");
+  const curMonth = todayISO().slice(0, 7);
+  const [section, setSection] = useState("resumen");
+  const [month, setMonth] = useState(curMonth);
+  const [catFilter, setCatFilter] = useState("all");
+
+  const months = useMemo(() => {
+    const s = new Set([...expenses.map(e => monthKey(e.date)), ...funds.map(f => monthKey(f.date)), ...Object.keys(capital), curMonth]);
+    return [...s].filter(Boolean).sort();
+  }, [expenses, funds, capital]);
+
+  const stat = (k) => {
+    const g = sumBy(expenses.filter(e => monthKey(e.date) === k));
+    const f = sumBy(funds.filter(x => monthKey(x.date) === k));
+    const c = Number(capital[k]) || 0;
+    const total = c + f;
+    return { g, f, c, total, saldo: total - g, pct: total > 0 ? (g / total) * 100 : 0 };
+  };
+  const cur = stat(month);
+  const saldoRatio = cur.total > 0 ? cur.saldo / cur.total : 1;
+  const saldoColor = cur.total <= 0 ? C.textDim : saldoRatio < 0.2 ? C.red : saldoRatio < 0.5 ? C.amber : C.green;
+
+  const allCats = useMemo(() => [...new Set([...FIN_CATS, ...expenses.map(e => e.category).filter(Boolean)])], [expenses]);
+
+  // forms
+  const [ef, setEf] = useState({ concept: "", date: todayISO(), amount: "", category: FIN_CATS[0] });
+  const [ff, setFf] = useState({ concept: "", date: todayISO(), amount: "", notes: "" });
+  const addExpense = () => {
+    const amount = parseFloat(ef.amount);
+    if (!ef.concept.trim() || !ef.date || !(amount > 0)) return;
+    update(d => ({ ...d, expenses: [{ id: uid8(), concept: ef.concept.trim(), date: ef.date, amount, category: ef.category.trim() || "Otros" }, ...d.expenses] }));
+    setMonth(monthKey(ef.date));
+    setEf({ ...ef, concept: "", amount: "" });
+  };
+  const addFund = () => {
+    const amount = parseFloat(ff.amount);
+    if (!ff.date || !(amount > 0)) return;
+    update(d => ({ ...d, funds: [{ id: uid8(), concept: ff.concept.trim() || "Retiro Dropi", date: ff.date, amount, notes: ff.notes.trim() }, ...d.funds] }));
+    setFf({ ...ff, concept: "", amount: "", notes: "" });
+  };
+  const delExpense = (id) => update(d => ({ ...d, expenses: d.expenses.filter(e => e.id !== id) }));
+  const delFund = (id) => update(d => ({ ...d, funds: d.funds.filter(f => f.id !== id) }));
+  const setCapital = (k, v) => update(d => ({ ...d, capital: { ...d.capital, [k]: v === "" ? 0 : Number(v) } }));
+
+  // styles
+  const card = { background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 16 };
+  const inp = { background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 10px", color: C.text, fontSize: 12, fontFamily: "inherit", outline: "none", minWidth: 0, colorScheme: "dark" };
+  const th = { textAlign: "left", fontSize: 10, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.06em", padding: "8px 8px", borderBottom: `2px solid ${C.accent}`, whiteSpace: "nowrap" };
+  const td = { fontSize: 12, color: C.text, padding: "8px 8px", borderBottom: `1px solid ${C.border}` };
+  const btn = (color) => ({ background: color, border: "none", borderRadius: 8, padding: "9px 14px", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" });
+  const kpi = (label, value, color, sub) => (
+    <div style={{ ...card, borderLeft: `3px solid ${color}` }}>
+      <div style={{ fontSize: 10, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>{label}</div>
+      <div style={{ fontSize: "clamp(20px,3vw,28px)", fontWeight: 900, color, letterSpacing: "-0.02em" }}>{value}</div>
+      {sub && <div style={{ fontSize: 10, color: C.textMuted, marginTop: 4 }}>{sub}</div>}
+    </div>
+  );
+  const MonthSelect = ({ all }) => (
+    <select value={all ? catFilter : month} onChange={e => all ? setCatFilter(e.target.value) : setMonth(e.target.value)} style={{ ...inp, cursor: "pointer" }}>
+      {all && <option value="all">Todos los meses</option>}
+      {[...months].reverse().map(k => <option key={k} value={k}>{monthLabel(k)}</option>)}
+    </select>
+  );
+  const tooltipStyle = { contentStyle: { background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 12, color: C.text }, labelStyle: { color: C.text }, itemStyle: { color: C.text } };
+
+  const SECTIONS = [
+    { id: "resumen", label: "📊 Resumen" },
+    { id: "gastos", label: "🧾 Gastos" },
+    { id: "categorias", label: "🗂 Por categoría" },
+    { id: "historial", label: "📅 Historial" },
+    { id: "fondos", label: "💸 Fondos Dropi" },
+  ];
+
+  // category aggregation
+  const catList = catFilter === "all" ? expenses : expenses.filter(e => monthKey(e.date) === catFilter);
+  const catData = Object.entries(catList.reduce((a, e) => { const c = e.category || "Otros"; a[c] = (a[c] || 0) + (Number(e.amount) || 0); return a; }, {}))
+    .map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+  const catTotal = catData.reduce((a, x) => a + x.value, 0);
+
+  const monthExpenses = expenses.filter(e => monthKey(e.date) === month).sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  const monthFunds = funds.filter(f => monthKey(f.date) === month);
+  const histData = months.map(k => ({ k, label: monthLabel(k), ...stat(k) }));
+
+  const statusText = { loading: "Cargando…", saving: "Guardando…", saved: user ? "☁️ Guardado en tu cuenta" : "💾 Guardado en este navegador", error: "⚠️ Error al guardar" }[status];
+
+  return (
+    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'DM Sans','Inter',system-ui,sans-serif", color: C.text }}>
+      <GlobalStyles />
+      <div style={{ borderBottom: `1px solid ${C.border}`, background: `${C.surface}F0`, backdropFilter: "blur(24px)", position: "sticky", top: 0, zIndex: 100, padding: "0 14px" }}>
+        <div style={{ maxWidth: 1300, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 52 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button onClick={onHome} title="Ir al inicio" style={{ display: "flex", alignItems: "center", gap: 8, background: "transparent", border: "none", cursor: "pointer", fontFamily: "inherit", color: C.text, padding: 0 }}>
+              <div style={{ width: 26, height: 26, borderRadius: 7, background: `linear-gradient(135deg,${C.gold},${C.amber})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13 }}>⭐</div>
+              <div style={{ fontSize: 12, fontWeight: 800 }}>COD Calculator <span style={{ color: C.gold }}>PRO</span></div>
+            </button>
+          </div>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <span className="hide-mobile" style={{ fontSize: 10, color: status === "error" ? C.red : C.textMuted }}>{statusText}</span>
+            <UserMenu />
+          </div>
+        </div>
+      </div>
+      <ProNav active="fin" onCalc={onBackToCalc} onFinance={() => {}} />
+
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "18px 14px 50px" }}>
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: 20, fontWeight: 900, letterSpacing: "-0.02em" }}>💼 Control financiero</div>
+          <div style={{ fontSize: 12, color: C.textMuted, marginTop: 3 }}>Capital, gastos, fondos de Dropi y saldo de tu negocio, mes a mes.</div>
+          {!user && <div style={{ fontSize: 11, color: C.amber, marginTop: 6 }}>Inicia sesión para guardar tus finanzas en tu cuenta. Ahora se guardan solo en este navegador.</div>}
+          <div className="show-mobile-only" style={{ fontSize: 10, color: status === "error" ? C.red : C.textMuted, marginTop: 6 }}>{statusText}</div>
+        </div>
+
+        <div style={{ display: "flex", gap: 5, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
+          {SECTIONS.map(s => (
+            <button key={s.id} onClick={() => setSection(s.id)}
+              style={{ padding: "7px 12px", background: section === s.id ? `${C.gold}15` : C.card, border: `1px solid ${section === s.id ? C.gold : C.border}`, borderRadius: 9, color: section === s.id ? C.gold : C.textDim, fontSize: 11, fontWeight: section === s.id ? 700 : 500, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", flexShrink: 0 }}>{s.label}</button>
+          ))}
+        </div>
+
+        {/* RESUMEN */}
+        {section === "resumen" && (
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+              <div style={{ fontSize: 12, color: C.textDim }}>Mes:</div><MonthSelect />
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 12 }}>
+              {kpi("Capital total del mes", fmt(cur.total), C.gold, `Capital inicial ${fmt(cur.c)} + Fondos Dropi ${fmt(cur.f)}`)}
+              {kpi("Total gastos", fmt(cur.g), C.red, monthLabel(month))}
+              {kpi("Saldo restante", `${cur.saldo < 0 ? "−" : ""}${fmt(cur.saldo)}`, saldoColor, cur.total > 0 ? `${((cur.saldo / cur.total) * 100).toFixed(0)}% del capital disponible` : "Define tu capital inicial en Gastos")}
+            </div>
+            <div style={{ ...card, marginTop: 12 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 8 }}>
+                <span style={{ color: C.textDim }}>Capital utilizado este mes</span>
+                <span style={{ fontWeight: 800, color: saldoColor }}>{cur.pct.toFixed(1)}%</span>
+              </div>
+              <div style={{ height: 10, background: C.border, borderRadius: 99, overflow: "hidden" }}>
+                <div style={{ width: `${Math.min(100, cur.pct)}%`, height: "100%", background: `linear-gradient(90deg,${C.accent},${saldoColor})`, borderRadius: 99, transition: "width 0.4s" }} />
+              </div>
+              <div style={{ fontSize: 10, color: C.textMuted, marginTop: 8 }}>⚠ Saldo en ROJO = menos del 20% del capital · AMARILLO = entre 20% y 50%</div>
+            </div>
+            <div style={{ ...card, marginTop: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 10 }}>⚡ Gastos recientes — {monthLabel(month)}</div>
+              {monthExpenses.length === 0 ? <div style={{ fontSize: 12, color: C.textMuted }}>Aún no hay gastos este mes. Ve a la pestaña “Gastos” para agregar el primero.</div> : (
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 420 }}>
+                    <thead><tr><th style={th}>Descripción</th><th style={th}>Categoría</th><th style={th}>Fecha</th><th style={{ ...th, textAlign: "right" }}>Monto</th></tr></thead>
+                    <tbody>{monthExpenses.slice(0, 6).map(e => (
+                      <tr key={e.id}><td style={td}>{e.concept}</td><td style={{ ...td, color: C.textDim }}>{e.category}</td><td style={{ ...td, color: C.textDim }}>{e.date}</td><td style={{ ...td, textAlign: "right", color: C.red, fontWeight: 700 }}>{fmt(e.amount)}</td></tr>
+                    ))}</tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* GASTOS */}
+        {section === "gastos" && (
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>
+              <div style={{ fontSize: 12, color: C.textDim }}>Mes:</div><MonthSelect />
+              <div style={{ fontSize: 12, color: C.textDim, marginLeft: "auto" }}>Capital inicial del mes:</div>
+              <input type="number" min={0} step="0.01" value={capital[month] ?? ""} onChange={e => setCapital(month, e.target.value)} placeholder="0.00" style={{ ...inp, width: 110 }} />
+            </div>
+            <div style={{ ...card, marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 10 }}>➕ Registrar gasto</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 8 }}>
+                <input placeholder="Concepto (ej: Fondos TikTok Ads)" value={ef.concept} onChange={e => setEf({ ...ef, concept: e.target.value })} style={{ ...inp, gridColumn: "span 2" }} />
+                <input type="date" value={ef.date} onChange={e => setEf({ ...ef, date: e.target.value })} style={inp} />
+                <input type="number" min={0} step="0.01" placeholder="Monto" value={ef.amount} onChange={e => setEf({ ...ef, amount: e.target.value })} onKeyDown={e => e.key === "Enter" && addExpense()} style={inp} />
+                <input list="fin-cats" placeholder="Categoría" value={ef.category} onChange={e => setEf({ ...ef, category: e.target.value })} style={inp} />
+                <datalist id="fin-cats">{allCats.map(c => <option key={c} value={c} />)}</datalist>
+                <button onClick={addExpense} style={btn(C.accent)}>Agregar</button>
+              </div>
+            </div>
+            <div style={card}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
+                <div style={{ fontSize: 13, fontWeight: 800 }}>Gastos de {monthLabel(month)}</div>
+                <div style={{ fontSize: 13, fontWeight: 800, color: C.red }}>{fmt(cur.g)}</div>
+              </div>
+              {monthExpenses.length === 0 ? <div style={{ fontSize: 12, color: C.textMuted }}>No hay gastos registrados en este mes.</div> : (
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 520 }}>
+                    <thead><tr><th style={th}>#</th><th style={th}>Concepto</th><th style={th}>Fecha</th><th style={{ ...th, textAlign: "right" }}>Monto</th><th style={th}>Categoría</th><th style={th}></th></tr></thead>
+                    <tbody>{monthExpenses.map((e, i) => (
+                      <tr key={e.id}>
+                        <td style={{ ...td, color: C.textMuted }}>{monthExpenses.length - i}</td><td style={td}>{e.concept}</td><td style={{ ...td, color: C.textDim }}>{e.date}</td>
+                        <td style={{ ...td, textAlign: "right", color: C.red, fontWeight: 700 }}>{fmt(e.amount)}</td><td style={{ ...td, color: C.textDim }}>{e.category}</td>
+                        <td style={td}><button onClick={() => delExpense(e.id)} title="Borrar" style={{ background: "transparent", border: "none", color: C.red, cursor: "pointer", fontSize: 13 }}>🗑</button></td>
+                      </tr>
+                    ))}</tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* CATEGORIAS */}
+        {section === "categorias" && (
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+              <div style={{ fontSize: 12, color: C.textDim }}>Ver:</div><MonthSelect all />
+            </div>
+            {catData.length === 0 ? <div style={{ ...card, fontSize: 12, color: C.textMuted }}>Aún no hay gastos para analizar.</div> : (
+              <div style={{ display: "grid", gap: 12 }}>
+                <div style={{ ...card, overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 380 }}>
+                    <thead><tr><th style={th}>Categoría</th><th style={{ ...th, textAlign: "right" }}>Total gastado</th><th style={{ ...th, textAlign: "right" }}>% del total</th></tr></thead>
+                    <tbody>
+                      {catData.map((c, i) => (
+                        <tr key={c.name}>
+                          <td style={{ ...td, borderLeft: `3px solid ${FIN_COLORS[i % FIN_COLORS.length]}`, fontWeight: 600 }}>{c.name}</td>
+                          <td style={{ ...td, textAlign: "right", color: FIN_COLORS[i % FIN_COLORS.length], fontWeight: 700 }}>{fmt(c.value)}</td>
+                          <td style={{ ...td, textAlign: "right", color: C.textDim }}>{catTotal > 0 ? ((c.value / catTotal) * 100).toFixed(1) : 0}%</td>
+                        </tr>
+                      ))}
+                      <tr><td style={{ ...td, fontWeight: 800 }}>TOTAL GENERAL</td><td style={{ ...td, textAlign: "right", fontWeight: 800, color: C.accent }}>{fmt(catTotal)}</td><td style={{ ...td, textAlign: "right" }}>100%</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div style={card}>
+                  <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 10 }}>Distribución de gastos por categoría</div>
+                  <ResponsiveContainer width="100%" height={Math.max(220, catData.length * 42)}>
+                    <BarChart data={catData} layout="vertical" margin={{ left: 10, right: 20 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke={C.border} horizontal={false} />
+                      <XAxis type="number" tick={{ fill: C.textMuted, fontSize: 10 }} />
+                      <YAxis type="category" dataKey="name" width={130} tick={{ fill: C.textDim, fontSize: 10 }} />
+                      <Tooltip formatter={(v) => fmt(v)} {...tooltipStyle} cursor={{ fill: "rgba(255,255,255,0.04)" }} />
+                      <Bar dataKey="value" radius={[0, 6, 6, 0]}>{catData.map((c, i) => <Cell key={c.name} fill={FIN_COLORS[i % FIN_COLORS.length]} />)}</Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* HISTORIAL */}
+        {section === "historial" && (
+          <div style={{ display: "grid", gap: 12 }}>
+            <div style={{ ...card, overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 520 }}>
+                <thead><tr><th style={th}>Mes</th><th style={{ ...th, textAlign: "right" }}>Total gastado</th><th style={{ ...th, textAlign: "right" }}>Fondos Dropi</th><th style={{ ...th, textAlign: "right" }}>Capital</th><th style={{ ...th, textAlign: "right" }}>Saldo</th></tr></thead>
+                <tbody>{histData.map(h => (
+                  <tr key={h.k}>
+                    <td style={{ ...td, fontWeight: 600 }}>{h.label}</td>
+                    <td style={{ ...td, textAlign: "right", color: C.red, fontWeight: 700 }}>{fmt(h.g)}</td>
+                    <td style={{ ...td, textAlign: "right", color: C.green, fontWeight: 700 }}>{fmt(h.f)}</td>
+                    <td style={{ ...td, textAlign: "right", color: C.amber, fontWeight: 700 }}>{fmt(h.c)}</td>
+                    <td style={{ ...td, textAlign: "right", color: C.accent, fontWeight: 700 }}>{h.saldo < 0 ? "−" : ""}{fmt(h.saldo)}</td>
+                  </tr>
+                ))}</tbody>
+              </table>
+            </div>
+            <div style={card}>
+              <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 10 }}>Gastos por mes</div>
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={histData} margin={{ left: 0, right: 10 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={C.border} vertical={false} />
+                  <XAxis dataKey="label" tick={{ fill: C.textDim, fontSize: 10 }} />
+                  <YAxis tick={{ fill: C.textMuted, fontSize: 10 }} />
+                  <Tooltip formatter={(v) => fmt(v)} {...tooltipStyle} cursor={{ fill: "rgba(255,255,255,0.04)" }} />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Bar dataKey="g" name="Total gastado" fill={C.red} radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="f" name="Fondos Dropi" fill={C.green} radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
+
+        {/* FONDOS DROPI */}
+        {section === "fondos" && (
+          <div>
+            <div style={{ ...card, marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 10 }}>➕ Registrar retiro de Dropi</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 8 }}>
+                <input placeholder="Concepto (opcional)" value={ff.concept} onChange={e => setFf({ ...ff, concept: e.target.value })} style={inp} />
+                <input type="date" value={ff.date} onChange={e => setFf({ ...ff, date: e.target.value })} style={inp} />
+                <input type="number" min={0} step="0.01" placeholder="Monto retirado" value={ff.amount} onChange={e => setFf({ ...ff, amount: e.target.value })} style={inp} />
+                <input placeholder="Notas" value={ff.notes} onChange={e => setFf({ ...ff, notes: e.target.value })} onKeyDown={e => e.key === "Enter" && addFund()} style={inp} />
+                <button onClick={addFund} style={btn(C.green)}>Agregar</button>
+              </div>
+            </div>
+            <div style={card}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
+                <div style={{ fontSize: 13, fontWeight: 800 }}>Historial de fondos recuperados</div>
+                <div style={{ fontSize: 13, fontWeight: 800, color: C.green }}>{fmt(sumBy(funds))}</div>
+              </div>
+              {funds.length === 0 ? <div style={{ fontSize: 12, color: C.textMuted }}>Aún no registras retiros de Dropi.</div> : (
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 480 }}>
+                    <thead><tr><th style={{ ...th, borderBottomColor: C.green }}>Concepto</th><th style={{ ...th, borderBottomColor: C.green }}>Fecha</th><th style={{ ...th, borderBottomColor: C.green, textAlign: "right" }}>Monto retirado</th><th style={{ ...th, borderBottomColor: C.green }}>Notas</th><th style={{ ...th, borderBottomColor: C.green }}></th></tr></thead>
+                    <tbody>{[...funds].sort((a, b) => (b.date || "").localeCompare(a.date || "")).map(f => (
+                      <tr key={f.id}>
+                        <td style={td}>{f.concept}</td><td style={{ ...td, color: C.textDim }}>{f.date}</td>
+                        <td style={{ ...td, textAlign: "right", color: C.green, fontWeight: 700 }}>{fmt(f.amount)}</td><td style={{ ...td, color: C.textDim }}>{f.notes}</td>
+                        <td style={td}><button onClick={() => delFund(f.id)} title="Borrar" style={{ background: "transparent", border: "none", color: C.red, cursor: "pointer", fontSize: 13 }}>🗑</button></td>
+                      </tr>
+                    ))}</tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── ROOT ─────────────────────────────────────────────────────────────────────
 function AppInner() {
   const { loadingAuth } = useAuth();
@@ -1778,8 +2228,10 @@ function AppInner() {
   const openPro = () => setView("pro");
   const openFree = () => setView("free");
 
-  if (view === "free") return <FreeCalculator onUpgrade={openPro} onStartTrial={startTrial} />;
-  if (view === "pro") return <ProCalculator trialDaysLeft={trialDaysLeft} onUpgrade={openPro} onBackToFree={openFree} />;
+  const goHome = () => { setView("landing"); window.scrollTo(0, 0); };
+  if (view === "free") return <FreeCalculator onUpgrade={openPro} onStartTrial={startTrial} onHome={goHome} />;
+  if (view === "pro") return <ProCalculator trialDaysLeft={trialDaysLeft} onUpgrade={openPro} onBackToFree={openFree} onHome={goHome} onFinance={() => setView("finance")} />;
+  if (view === "finance") return <FinanceCenter onBackToCalc={openPro} onHome={goHome} />;
   return <Landing onOpenFree={openFree} onOpenPro={openPro} onStartTrial={startTrial} />;
 }
 
