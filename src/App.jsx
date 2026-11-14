@@ -1940,6 +1940,17 @@ function FinanceCenter({ onBackToCalc, onHome, onBackToFree }) {
   const delFund = (id) => update(d => ({ ...d, funds: d.funds.filter(f => f.id !== id) }));
   const setCapital = (k, v) => update(d => ({ ...d, capital: { ...d.capital, [k]: v === "" ? 0 : Number(v) } }));
 
+  const needsSetup = status !== "loading" && !data.setupDone && Object.keys(capital).length === 0 && expenses.length === 0;
+  const [setupAmt, setSetupAmt] = useState("");
+  const [setupDate, setSetupDate] = useState(todayISO());
+  const finishSetup = () => {
+    const v = parseFloat(setupAmt);
+    if (!(v >= 0) || setupAmt === "" || !setupDate) return;
+    const k = monthKey(setupDate);
+    update(d => ({ ...d, setupDone: true, capital: { ...d.capital, [k]: v } }));
+    setMonth(k);
+  };
+
   // styles
   const card = { background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 16 };
   const inp = { background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 10px", color: C.text, fontSize: 12, fontFamily: "inherit", outline: "none", minWidth: 0, colorScheme: "dark" };
@@ -2008,6 +2019,20 @@ function FinanceCenter({ onBackToCalc, onHome, onBackToFree }) {
           <div className="show-mobile-only" style={{ fontSize: 10, color: status === "error" ? C.red : C.textMuted, marginTop: 6 }}>{statusText}</div>
         </div>
 
+        {needsSetup && (
+          <div style={{ ...card, maxWidth: 480, margin: "30px auto", textAlign: "center", border: `1px solid ${C.gold}40` }}>
+            <div style={{ fontSize: 34, marginBottom: 8 }}>💰</div>
+            <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 6 }}>Empecemos por tu capital</div>
+            <div style={{ fontSize: 12, color: C.textDim, lineHeight: 1.6, marginBottom: 16 }}>¿Con cuánto dinero cuenta tu negocio hoy? Es tu punto de partida: a partir de ahí se calculan tus gastos, fondos de Dropi y saldo.</div>
+            <div style={{ textAlign: "left", fontSize: 11, color: C.textMuted, marginBottom: 4 }}>Capital actual ($)</div>
+            <input type="number" min={0} step="0.01" placeholder="Ej: 1500" value={setupAmt} onChange={e => setSetupAmt(e.target.value)} onKeyDown={e => e.key === "Enter" && finishSetup()} style={{ ...inp, width: "100%", fontSize: 18, fontWeight: 700, marginBottom: 12 }} />
+            <div style={{ textAlign: "left", fontSize: 11, color: C.textMuted, marginBottom: 4 }}>Fecha desde la que empiezas a llevar el control</div>
+            <input type="date" value={setupDate} onChange={e => setSetupDate(e.target.value)} style={{ ...inp, width: "100%", marginBottom: 16 }} />
+            <button onClick={finishSetup} style={{ ...btn(`linear-gradient(135deg,${C.gold},${C.amber})`), width: "100%", color: C.bg, fontWeight: 800, fontSize: 13 }}>Guardar y empezar</button>
+            <div style={{ fontSize: 10, color: C.textMuted, marginTop: 10 }}>Podrás cambiarlo cuando quieras en la pestaña “Gastos”.</div>
+          </div>
+        )}
+        <div style={{ display: needsSetup ? "none" : "block" }}>
         <div style={{ display: "flex", gap: 5, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
           {SECTIONS.map(s => (
             <button key={s.id} onClick={() => setSection(s.id)}
@@ -2022,7 +2047,7 @@ function FinanceCenter({ onBackToCalc, onHome, onBackToFree }) {
               <div style={{ fontSize: 12, color: C.textDim }}>Mes:</div><MonthSelect />
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 12 }}>
-              {kpi("Capital total del mes", fmt(cur.total), C.gold, `Capital inicial ${fmt(cur.c)} + Fondos Dropi ${fmt(cur.f)}`)}
+              {kpi("Capital total del mes", fmt(cur.total), C.gold, `Capital inicial ${fmt(cur.c)} + Fondos Dropi ${fmt(cur.f)} · edítalo en “Gastos”`)}
               {kpi("Total gastos", fmt(cur.g), C.red, monthLabel(month))}
               {kpi("Saldo restante", `${cur.saldo < 0 ? "−" : ""}${fmt(cur.saldo)}`, saldoColor, cur.total > 0 ? `${((cur.saldo / cur.total) * 100).toFixed(0)}% del capital disponible` : "Define tu capital inicial en Gastos")}
             </div>
@@ -2203,6 +2228,7 @@ function FinanceCenter({ onBackToCalc, onHome, onBackToFree }) {
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   );
