@@ -7,16 +7,16 @@ import { getFirestore, doc, getDoc, setDoc, collection, addDoc, getDocs, deleteD
 
 // ─── THEME ────────────────────────────────────────────────────────────────────
 const C = {
-  bg: "#070B14", surface: "#0B111D", card: "#0F1726", cardHover: "#142033",
-  border: "#1C2940", borderBright: "#2A3B5A",
-  accent: "#4F8BFF", accentGlow: "rgba(79,139,255,0.18)", accentDim: "rgba(79,139,255,0.10)",
+  bg: "#0B0B0C", surface: "#121214", card: "#1A1A1D", cardHover: "#222226",
+  border: "#2A2A2E", borderBright: "#3A3A40",
+  accent: "#8AA6E6", accentGlow: "rgba(138,166,230,0.14)", accentDim: "rgba(138,166,230,0.10)",
   green: "#22C55E", greenGlow: "rgba(34,197,94,0.16)",
   red: "#EF4444", redGlow: "rgba(239,68,68,0.16)",
   amber: "#F59E0B", amberGlow: "rgba(245,158,11,0.16)",
-  purple: "#8B9CC4", purpleGlow: "rgba(139,156,196,0.16)",
+  purple: "#A1A1AA", purpleGlow: "rgba(161,161,170,0.16)",
   cyan: "#38BDF8", cyanGlow: "rgba(56,189,248,0.16)",
   gold: "#E8B93C",
-  text: "#F2F6FF", textMuted: "#62779A", textDim: "#9DB0CE",
+  text: "#F5F5F5", textMuted: "#7A7A83", textDim: "#B0B0B8",
 };
 
 // ─── ICONOS Y MARCA ───────────────────────────────────────────────────────────
@@ -39,7 +39,7 @@ function Logo({ size = 28 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true" style={{ display: "block", flexShrink: 0 }}>
       <rect width="32" height="32" rx="8" fill="#FFFFFF" />
-      <path d="M9 23V9l14 14V9" fill="none" stroke="#070B14" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9 23V9l14 14V9" fill="none" stroke="#0B0B0C" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
       <circle cx="23" cy="9" r="2.4" fill="#E8B93C" />
     </svg>
   );
@@ -385,8 +385,8 @@ function GlobalStyles() {
     <style>{`
       * { box-sizing: border-box; }
       @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-      html, body { width: 100%; overflow-x: clip; background: #070B14; color-scheme: dark; }
-      body { margin: 0 !important; display: block !important; place-items: initial !important; min-width: 0 !important; background: #070B14; font-family: 'Plus Jakarta Sans','Inter',system-ui,sans-serif; -webkit-font-smoothing: antialiased; letter-spacing: -0.005em; }
+      html, body { width: 100%; overflow-x: clip; background: #0B0B0C; color-scheme: dark; }
+      body { margin: 0 !important; display: block !important; place-items: initial !important; min-width: 0 !important; background: #0B0B0C; font-family: 'Plus Jakarta Sans','Inter',system-ui,sans-serif; -webkit-font-smoothing: antialiased; letter-spacing: -0.005em; }
       button, input, select, textarea { font-family: inherit; }
       #root { max-width: none !important; width: 100% !important; margin: 0 !important; padding: 0 !important; text-align: left !important; border: 0 !important; border-inline: 0 !important; display: block !important; min-height: 0 !important; place-content: initial !important; box-shadow: none !important; }
       html { scroll-behavior: smooth; }
@@ -397,15 +397,15 @@ function GlobalStyles() {
       input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
       .show-mobile-only { display: none; }
       .m-only { display: none; }
-      .shell { display: grid; grid-template-columns: 244px minmax(0,1fr); min-height: 100vh; background: #070B14; }
-      .shell-side { position: sticky; top: 0; height: 100vh; border-right: 1px solid #1C2940; background: #0B111D; padding: 18px 14px; display: flex; flex-direction: column; gap: 22px; }
+      .shell { display: grid; grid-template-columns: 244px minmax(0,1fr); min-height: 100vh; background: #0B0B0C; }
+      .shell-side { position: sticky; top: 0; height: 100vh; border-right: 1px solid #2A2A2E; background: #121214; padding: 18px 14px; display: flex; flex-direction: column; gap: 22px; }
       .nav-item { display: flex; align-items: center; gap: 11px; width: 100%; background: transparent; border: none; color: #A3A3A3; font-family: inherit; font-weight: 600; font-size: 13px; padding: 10px 12px; border-radius: 10px; cursor: pointer; text-align: left; }
-      .nav-item:hover { background: #142033; color: #fff; }
-      .nav-item.on { background: rgba(79,139,255,0.13); color: #fff; }
-      .nav-item.on svg { color: #4F8BFF; }
-      [style*="background: rgb(15, 23, 38)"] { box-shadow: inset 0 1px 0 rgba(255,255,255,0.045); }
-      .nav-sep { height: 1px; background: #1C2940; margin: 10px 4px; }
-      .shell-top { position: sticky; top: 0; z-index: 100; height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 18px; background: rgba(7,11,20,0.92); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid #1C2940; }
+      .nav-item:hover { background: #222226; color: #fff; }
+      .nav-item.on { background: rgba(255,255,255,0.08); color: #fff; }
+      .nav-item.on svg { color: #8AA6E6; }
+      [style*="background: rgb(26, 26, 29)"] { box-shadow: inset 0 1px 0 rgba(255,255,255,0.045); }
+      .nav-sep { height: 1px; background: #2A2A2E; margin: 10px 4px; }
+      .shell-top { position: sticky; top: 0; z-index: 100; height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 18px; background: rgba(11,11,12,0.92); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid #2A2A2E; }
       .shell-top-l { display: none; }
       .shell-tabs-m { display: none; }
       @media (max-width: 900px) {
@@ -414,7 +414,7 @@ function GlobalStyles() {
         .shell-side { display: none; }
         .shell-top { padding: 0 12px; }
         .shell-top-l { display: block; }
-        .shell-tabs-m { display: flex; gap: 6px; padding: 8px 12px; border-bottom: 1px solid #1C2940; overflow-x: auto; background: #0B111D; }
+        .shell-tabs-m { display: flex; gap: 6px; padding: 8px 12px; border-bottom: 1px solid #2A2A2E; overflow-x: auto; background: #121214; }
       }
       @keyframes spin { to { transform: rotate(360deg); } }
       @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
@@ -950,7 +950,8 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
               {/* ── RESULTADOS ── */}
               {tab === "resultados" && (
                 <div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 9, marginBottom: 12 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: C.text, margin: "4px 0 10px" }}>Pedidos</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10, marginBottom: 22 }}>
                     {[
                       { label: "Totales", val: fmtNum(inputs.pedidos), color: C.accent, icon: "📋" },
                       { label: "Confirmados", val: fmtNum(R.confirmados), color: C.accent, icon: "✅" },
@@ -958,25 +959,46 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
                       { label: "Devoluciones", val: fmtNum(R.devoluciones), color: C.red, icon: "↩️" },
                     ].map((m, i) => (
                       <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "13px 12px" }}>
-                        <div style={{ fontSize: 9, color: C.textMuted, fontWeight: 600, marginBottom: 6 }}><Ic n={m.icon} /> {m.label}</div>
+                        <div style={{ fontSize: 11, color: C.textDim, fontWeight: 600, marginBottom: 7 }}><Ic n={m.icon} /> {m.label}</div>
                         <div style={{ fontSize: 20, fontWeight: 800, color: m.color }}>{m.val}</div>
                       </div>
                     ))}
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 9, marginBottom: 12 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: C.text, margin: "4px 0 10px" }}>Ingresos y gastos</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10, marginBottom: 22 }}>
                     {[
                       { label: "Ingresos totales", val: fmt(R.ingresosBrutos), color: C.green, icon: "📈" },
                       { label: "Gastos totales", val: fmt(R.gastosTotales), color: C.red, icon: "📉" },
                       { label: "Ganancia/pedido", val: fmt(R.gananciaXPedido), color: R.gananciaXPedido >= 0 ? C.green : C.red, icon: "💰" },
+                    ].map((m, i) => (
+                      <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "13px 12px" }}>
+                        <div style={{ fontSize: 11, color: C.textDim, fontWeight: 600, marginBottom: 7 }}><Ic n={m.icon} /> {m.label}</div>
+                        <div style={{ fontSize: 17, fontWeight: 800, color: m.color }}>{m.val}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: C.text, margin: "4px 0 10px" }}>Publicidad y comisión</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10, marginBottom: 22 }}>
+                    {[
                       { label: "ROAS actual", val: `${R.roas.toFixed(2)}x`, color: C.accent, icon: "🎯" },
                       { label: "ROAS Break Even", val: `${R.roasBreakEven.toFixed(2)}x`, color: C.amber, icon: "⚖️" },
                       { label: "Comisión Dropi", val: fmt(R.totalDropi), color: C.purple, icon: "🏢" },
+                    ].map((m, i) => (
+                      <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "13px 12px" }}>
+                        <div style={{ fontSize: 11, color: C.textDim, fontWeight: 600, marginBottom: 7 }}><Ic n={m.icon} /> {m.label}</div>
+                        <div style={{ fontSize: 17, fontWeight: 800, color: m.color }}>{m.val}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: C.text, margin: "4px 0 10px" }}>Dónde pierdes dinero</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10, marginBottom: 22 }}>
+                    {[
                       { label: "Pérdidas dev.", val: fmt(R.totalPerdidaDev), color: C.red, icon: "💸" },
                       { label: "Perdido en ads", val: fmt(R.perdidaCPA_dev + R.perdidaCPA_noc), color: C.red, icon: "📣" },
                       { label: "Perdido logística", val: fmt(R.perdidaFlete_dev), color: C.amber, icon: "🚚" },
                     ].map((m, i) => (
                       <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "13px 12px" }}>
-                        <div style={{ fontSize: 9, color: C.textMuted, fontWeight: 600, marginBottom: 6 }}><Ic n={m.icon} /> {m.label}</div>
+                        <div style={{ fontSize: 11, color: C.textDim, fontWeight: 600, marginBottom: 7 }}><Ic n={m.icon} /> {m.label}</div>
                         <div style={{ fontSize: 17, fontWeight: 800, color: m.color }}>{m.val}</div>
                       </div>
                     ))}
@@ -1471,8 +1493,7 @@ function HeroPreview() {
   ];
   return (
     <div style={{ position: "relative" }}>
-      <div aria-hidden="true" style={{ position: "absolute", inset: "-60px -40px", background: `radial-gradient(closest-side, ${C.accentGlow}, transparent)`, pointerEvents: "none" }} />
-      <div aria-hidden="true" style={{ position: "relative", background: C.card, border: `1px solid ${C.borderBright}`, borderRadius: 16, padding: 22, boxShadow: "0 40px 90px rgba(0,0,0,0.5)" }}>
+            <div aria-hidden="true" style={{ position: "relative", background: C.card, border: `1px solid ${C.borderBright}`, borderRadius: 16, padding: 22, boxShadow: "0 40px 90px rgba(0,0,0,0.5)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: C.textDim }}>Campaña de ejemplo</div>
           <div style={{ fontSize: 11, fontWeight: 600, color: C.green, background: `${C.green}14`, border: `1px solid ${C.green}30`, borderRadius: 99, padding: "3px 10px" }}>Seguro · 92/100</div>
