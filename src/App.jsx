@@ -2318,6 +2318,7 @@ function Paywall({ onUpgrade, onStartTrial, onHome, trialAvailable, message, jus
   const { user } = useAuth();
   return (
     <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'DM Sans','Inter',system-ui,sans-serif", color: C.text, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <GlobalStyles />
       <div style={{ maxWidth: 440, width: "100%", background: C.card, border: `1px solid ${C.gold}40`, borderRadius: 16, padding: 28, textAlign: "center" }}>
         <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 6 }}>{justPaid ? "Activando tu plan PRO" : "PRO es para suscriptores"}</div>
         <div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.6, marginBottom: 18 }}>
@@ -2362,29 +2363,73 @@ function CheckoutView({ onBack, onDone }) {
     return () => { alive = false; };
   }, []);
   useEffect(() => { if (isPro) onDone(); }, [isPro]);
+
+  const feats = ["Salud y riesgo de cada producto", "Benchmarks y pérdida invisible", "Escenarios y comparador A/B", "Asesor IA y reporte en PDF", "Control financiero completo"];
+  const steps = [
+    { t: "Hoy", d: "Empiezas 3 días gratis. No se cobra nada.", c: C.green },
+    { t: "Día 4", d: "Se cobra $5.99 al mes.", c: C.gold },
+    { t: "Siempre", d: "Cancelas cuando quieras, en un clic.", c: C.accent },
+  ];
+  const wrap = { minHeight: "100vh", background: C.bg, fontFamily: "'DM Sans','Inter',system-ui,sans-serif", color: C.text };
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'DM Sans','Inter',system-ui,sans-serif", color: C.text, padding: "24px 16px" }}>
-      <div style={{ maxWidth: 900, margin: "0 auto" }}>
-        <button onClick={onBack} style={{ background: "transparent", border: "none", color: C.textMuted, fontSize: 13, cursor: "pointer", fontFamily: "inherit", marginBottom: 16 }}>← Volver</button>
+    <div style={wrap}>
+      <GlobalStyles />
+      <div style={{ borderBottom: `1px solid ${C.border}`, background: C.surface }}>
+        <div style={{ maxWidth: 1040, margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <button onClick={onBack} style={{ background: "transparent", border: "none", color: C.textDim, fontSize: 13, cursor: "pointer", fontFamily: "inherit", padding: 0 }}>← Volver</button>
+          <div style={{ fontSize: 12, color: C.textMuted, display: "flex", alignItems: "center", gap: 6 }}>🔒 Pago seguro</div>
+        </div>
+      </div>
+      <div style={{ maxWidth: 1040, margin: "0 auto", padding: "32px 20px 56px" }}>
         {paid ? (
           <div style={{ maxWidth: 440, margin: "60px auto", background: C.card, border: `1px solid ${C.gold}40`, borderRadius: 16, padding: 28, textAlign: "center" }}>
+            <div style={{ width: 36, height: 36, border: `3px solid ${C.border}`, borderTopColor: C.gold, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} />
             <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>Activando tu plan PRO</div>
-            <div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.6 }}>Recibimos tu pago. Tu cuenta se activa en unos segundos; esta pantalla cambia sola.</div>
+            <div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.6 }}>Recibimos tu pago. Esta pantalla cambia sola en unos segundos.</div>
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))", gap: 20, alignItems: "start" }}>
-            <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 24 }}>
-              <div style={{ fontSize: 13, color: C.gold, fontWeight: 700, marginBottom: 6 }}>Plan PRO</div>
-              <div style={{ fontSize: 34, fontWeight: 800, marginBottom: 4 }}>$5.99<span style={{ fontSize: 13, color: C.textMuted, fontWeight: 500 }}> / mes</span></div>
-              <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 16 }}>Cancelas cuando quieras.{user ? ` Cuenta: ${user.email}` : ""}</div>
-              <div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.9 }}>✓ Salud y riesgo<br />✓ Benchmarks y pérdida invisible<br />✓ Escenarios y comparador A/B<br />✓ Asesor IA y PDF<br />✓ Control financiero</div>
+          <>
+            <h1 style={{ fontSize: 26, fontWeight: 800, margin: "0 0 6px", letterSpacing: "-0.02em" }}>Activa tu plan PRO</h1>
+            <p style={{ fontSize: 14, color: C.textDim, margin: "0 0 26px" }}>Prueba gratis 3 días. Sin compromiso.</p>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))", gap: 24, alignItems: "start" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 16, minWidth: 0 }}>
+                <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 22 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
+                    <div style={{ fontSize: 15, fontWeight: 700 }}>Nexus COD PRO</div>
+                    <div style={{ fontSize: 22, fontWeight: 800 }}>$5.99<span style={{ fontSize: 12, color: C.textMuted, fontWeight: 500 }}>/mes</span></div>
+                  </div>
+                  {user && user.email && <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 16, overflowWrap: "anywhere" }}>{user.email}</div>}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 9, borderTop: `1px solid ${C.border}`, paddingTop: 16 }}>
+                    {feats.map(f => (
+                      <div key={f} style={{ display: "flex", gap: 10, fontSize: 13, color: C.textDim, lineHeight: 1.4 }}>
+                        <span style={{ color: C.green, fontWeight: 800 }}>✓</span><span>{f}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 22 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14 }}>Cómo funciona</div>
+                  {steps.map((st, i) => (
+                    <div key={st.t} style={{ display: "flex", gap: 12, marginBottom: i < steps.length - 1 ? 14 : 0 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: st.c, marginTop: 6, flexShrink: 0 }} />
+                      <div><div style={{ fontSize: 13, fontWeight: 700 }}>{st.t}</div><div style={{ fontSize: 12, color: C.textMuted, lineHeight: 1.5 }}>{st.d}</div></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ background: C.card, border: `1px solid ${C.borderBright}`, borderRadius: 14, padding: "8px 18px 18px", minHeight: 240 }}>
+                  {state === "loading" && <div style={{ fontSize: 13, color: C.textMuted, padding: 16 }}>Cargando pago seguro…</div>}
+                  {state === "error" && <div style={{ fontSize: 13, color: C.amber, padding: 16, lineHeight: 1.6 }}>No pudimos cargar el pago. Revisa tu conexión e intenta de nuevo.</div>}
+                  <div className="paddle-checkout" />
+                </div>
+                <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: "6px 18px", marginTop: 14, fontSize: 11, color: C.textMuted }}>
+                  <span>🔒 Cifrado SSL</span><span>💳 Visa · Mastercard · PayPal</span><span>↩ Cancela cuando quieras</span>
+                </div>
+              </div>
             </div>
-            <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 16, minHeight: 200 }}>
-              {state === "loading" && <div style={{ fontSize: 13, color: C.textMuted, padding: 12 }}>Cargando pago seguro…</div>}
-              {state === "error" && <div style={{ fontSize: 13, color: C.amber, padding: 12, lineHeight: 1.6 }}>No pudimos cargar el pago. Revisa tu conexión e intenta de nuevo.</div>}
-              <div className="paddle-checkout" />
-            </div>
-          </div>
+          </>
         )}
       </div>
     </div>
