@@ -7,16 +7,16 @@ import { getFirestore, doc, getDoc, setDoc, collection, addDoc, getDocs, deleteD
 
 // ─── THEME ────────────────────────────────────────────────────────────────────
 const C = {
-  bg: "#0A0A0A", surface: "#0E0E0E", card: "#111111", cardHover: "#181818",
-  border: "#222222", borderBright: "#303030",
-  accent: "#8AA6E6", accentGlow: "rgba(138,166,230,0.14)", accentDim: "rgba(138,166,230,0.07)",
+  bg: "#070B14", surface: "#0B111D", card: "#0F1726", cardHover: "#142033",
+  border: "#1C2940", borderBright: "#2A3B5A",
+  accent: "#4F8BFF", accentGlow: "rgba(79,139,255,0.18)", accentDim: "rgba(79,139,255,0.10)",
   green: "#22C55E", greenGlow: "rgba(34,197,94,0.16)",
   red: "#EF4444", redGlow: "rgba(239,68,68,0.16)",
   amber: "#F59E0B", amberGlow: "rgba(245,158,11,0.16)",
-  purple: "#A1A1AA", purpleGlow: "rgba(161,161,170,0.16)",
+  purple: "#8B9CC4", purpleGlow: "rgba(139,156,196,0.16)",
   cyan: "#38BDF8", cyanGlow: "rgba(56,189,248,0.16)",
   gold: "#E8B93C",
-  text: "#FFFFFF", textMuted: "#737373", textDim: "#A3A3A3",
+  text: "#F2F6FF", textMuted: "#62779A", textDim: "#9DB0CE",
 };
 
 // ─── ICONOS Y MARCA ───────────────────────────────────────────────────────────
@@ -39,7 +39,7 @@ function Logo({ size = 28 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true" style={{ display: "block", flexShrink: 0 }}>
       <rect width="32" height="32" rx="8" fill="#FFFFFF" />
-      <path d="M9 23V9l14 14V9" fill="none" stroke="#0A0A0A" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9 23V9l14 14V9" fill="none" stroke="#070B14" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
       <circle cx="23" cy="9" r="2.4" fill="#E8B93C" />
     </svg>
   );
@@ -385,8 +385,8 @@ function GlobalStyles() {
     <style>{`
       * { box-sizing: border-box; }
       @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-      html, body { width: 100%; overflow-x: clip; background: #0A0A0A; color-scheme: dark; }
-      body { margin: 0 !important; display: block !important; place-items: initial !important; min-width: 0 !important; background: #0A0A0A; font-family: 'Plus Jakarta Sans','Inter',system-ui,sans-serif; -webkit-font-smoothing: antialiased; letter-spacing: -0.005em; }
+      html, body { width: 100%; overflow-x: clip; background: #070B14; color-scheme: dark; }
+      body { margin: 0 !important; display: block !important; place-items: initial !important; min-width: 0 !important; background: #070B14; font-family: 'Plus Jakarta Sans','Inter',system-ui,sans-serif; -webkit-font-smoothing: antialiased; letter-spacing: -0.005em; }
       button, input, select, textarea { font-family: inherit; }
       #root { max-width: none !important; width: 100% !important; margin: 0 !important; padding: 0 !important; text-align: left !important; border: 0 !important; border-inline: 0 !important; display: block !important; min-height: 0 !important; place-content: initial !important; box-shadow: none !important; }
       html { scroll-behavior: smooth; }
@@ -397,13 +397,15 @@ function GlobalStyles() {
       input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
       .show-mobile-only { display: none; }
       .m-only { display: none; }
-      .shell { display: grid; grid-template-columns: 244px minmax(0,1fr); min-height: 100vh; background: #0A0A0A; }
-      .shell-side { position: sticky; top: 0; height: 100vh; border-right: 1px solid #222; background: #0E0E0E; padding: 18px 14px; display: flex; flex-direction: column; gap: 22px; }
+      .shell { display: grid; grid-template-columns: 244px minmax(0,1fr); min-height: 100vh; background: #070B14; }
+      .shell-side { position: sticky; top: 0; height: 100vh; border-right: 1px solid #1C2940; background: #0B111D; padding: 18px 14px; display: flex; flex-direction: column; gap: 22px; }
       .nav-item { display: flex; align-items: center; gap: 11px; width: 100%; background: transparent; border: none; color: #A3A3A3; font-family: inherit; font-weight: 600; font-size: 13px; padding: 10px 12px; border-radius: 10px; cursor: pointer; text-align: left; }
-      .nav-item:hover { background: #171717; color: #fff; }
-      .nav-item.on { background: #1D1D1D; color: #fff; }
-      .nav-sep { height: 1px; background: #222; margin: 10px 4px; }
-      .shell-top { position: sticky; top: 0; z-index: 100; height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 18px; background: rgba(10,10,10,0.92); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid #222; }
+      .nav-item:hover { background: #142033; color: #fff; }
+      .nav-item.on { background: rgba(79,139,255,0.13); color: #fff; }
+      .nav-item.on svg { color: #4F8BFF; }
+      [style*="background: rgb(15, 23, 38)"] { box-shadow: inset 0 1px 0 rgba(255,255,255,0.045); }
+      .nav-sep { height: 1px; background: #1C2940; margin: 10px 4px; }
+      .shell-top { position: sticky; top: 0; z-index: 100; height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 18px; background: rgba(7,11,20,0.92); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid #1C2940; }
       .shell-top-l { display: none; }
       .shell-tabs-m { display: none; }
       @media (max-width: 900px) {
@@ -412,7 +414,7 @@ function GlobalStyles() {
         .shell-side { display: none; }
         .shell-top { padding: 0 12px; }
         .shell-top-l { display: block; }
-        .shell-tabs-m { display: flex; gap: 6px; padding: 8px 12px; border-bottom: 1px solid #222; overflow-x: auto; background: #0E0E0E; }
+        .shell-tabs-m { display: flex; gap: 6px; padding: 8px 12px; border-bottom: 1px solid #1C2940; overflow-x: auto; background: #0B111D; }
       }
       @keyframes spin { to { transform: rotate(360deg); } }
       @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
@@ -583,7 +585,7 @@ function FreeCalculator({ onUpgrade, onStartTrial, onHome, onOpenPro }) {
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
             style={{ background: isProfit ? `${C.green}0A` : `${C.red}0A`, border: `1.5px solid ${isProfit ? C.green : C.red}40`, borderRadius: 16, padding: "18px 20px", marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14 }}>
             <div>
-              <div style={{ fontSize: 10, color: C.textMuted, marginBottom: 4 }}><Rich>{isProfit ? "✦ Ganancia neta total" : "⚠ Pérdida neta total"}</Rich></div>
+              <div style={{ fontSize: 12, color: C.textDim, marginBottom: 6, fontWeight: 600 }}><Rich>{isProfit ? "✦ Ganancia neta total" : "⚠ Pérdida neta total"}</Rich></div>
               <div style={{ fontSize: "clamp(26px,4vw,40px)", fontWeight: 700, letterSpacing: "-0.03em", color: isProfit ? C.green : C.red, lineHeight: 1 }}>{isProfit ? "" : "−"}{fmt(R.gananciaNet)}</div>
               <div style={{ fontSize: 11, color: C.textMuted, marginTop: 4 }}>Margen: <span style={{ fontWeight: 700, color: isProfit ? C.green : C.red }}>{fmtPct(R.margen)}</span> · <Flag c={currency.flag} /> {currency.code}</div>
             </div>
@@ -627,7 +629,7 @@ function FreeCalculator({ onUpgrade, onStartTrial, onHome, onOpenPro }) {
           {/* Simple chart */}
           <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px", marginBottom: 14 }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 12 }}>Flujo de pedidos</div>
-            <ResponsiveContainer width="100%" height={180}>
+            <ResponsiveContainer width="100%" height={230}>
               <PieChart>
                 <Pie data={pieData} cx="50%" cy="45%" innerRadius={40} outerRadius={65} paddingAngle={3} dataKey="value">
                   {pieData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
@@ -919,10 +921,10 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
         <div>
           {/* Big result */}
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-            style={{ background: isProfit ? `${C.green}0A` : `${C.red}0A`, border: `1.5px solid ${isProfit ? C.green : C.red}40`, borderRadius: 16, padding: "16px 20px", marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14 }}>
+            style={{ background: isProfit ? `${C.green}12` : `${C.red}12`, border: `1px solid ${isProfit ? C.green : C.red}50`, boxShadow: `0 18px 50px ${isProfit ? C.green : C.red}14`, borderRadius: 16, padding: "22px 24px", marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14 }}>
             <div>
-              <div style={{ fontSize: 10, color: C.textMuted, marginBottom: 4 }}><Rich>{isProfit ? "✦ Ganancia neta total" : "⚠ Pérdida neta total"}</Rich></div>
-              <div style={{ fontSize: "clamp(24px,4vw,40px)", fontWeight: 700, letterSpacing: "-0.03em", color: isProfit ? C.green : C.red, lineHeight: 1 }}>{isProfit ? "" : "−"}{fmt(R.gananciaNet)}</div>
+              <div style={{ fontSize: 12, color: C.textDim, marginBottom: 6, fontWeight: 600 }}><Rich>{isProfit ? "✦ Ganancia neta total" : "⚠ Pérdida neta total"}</Rich></div>
+              <div style={{ fontSize: "clamp(30px,4.6vw,54px)", fontWeight: 700, letterSpacing: "-0.03em", color: isProfit ? C.green : C.red, lineHeight: 1 }}>{isProfit ? "" : "−"}{fmt(R.gananciaNet)}</div>
               <div style={{ fontSize: 11, color: C.textMuted, marginTop: 4 }}>Margen: <span style={{ fontWeight: 700, color: isProfit ? C.green : C.red }}>{fmtPct(R.margen)}</span> · <Flag c={currency.flag} /> {currency.code}</div>
             </div>
             <div style={{ textAlign: "right", flexShrink: 0 }}>
@@ -936,7 +938,7 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
           <div style={{ display: "flex", gap: 5, marginBottom: 16, overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch" }}>
             {TABS.map(t => (
               <button key={t.id} onClick={() => setTab(t.id)}
-                style={{ padding: "7px 12px", background: tab === t.id ? `${C.gold}15` : C.card, border: `1px solid ${tab === t.id ? C.gold : C.border}`, borderRadius: 9, color: tab === t.id ? C.gold : C.textDim, fontSize: 11, fontWeight: tab === t.id ? 700 : 500, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", transition: "all 0.2s", flexShrink: 0 }}>
+                style={{ padding: "7px 12px", background: tab === t.id ? `${C.accent}1F` : C.card, border: `1px solid ${tab === t.id ? C.accent : C.border}`, borderRadius: 9, color: tab === t.id ? C.text : C.textDim, fontSize: 11, fontWeight: tab === t.id ? 700 : 500, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", transition: "all 0.2s", flexShrink: 0 }}>
                 <Rich>{t.label}</Rich>
               </button>
             ))}
@@ -983,7 +985,7 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
                   <div className="charts-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                     <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 13, padding: "14px 12px" }}>
                       <div style={{ fontSize: 12, fontWeight: 700, color: C.textDim, marginBottom: 10 }}>Flujo de pedidos</div>
-                      <ResponsiveContainer width="100%" height={170}>
+                      <ResponsiveContainer width="100%" height={230}>
                         <PieChart>
                           <Pie data={[{ name: "Entregados", value: Math.max(0, Math.round(R.entregados)), color: C.green }, { name: "Devoluciones", value: Math.max(0, Math.round(R.devoluciones)), color: C.red }, { name: "No confirmados", value: Math.max(0, Math.round(R.noConfirmados)), color: C.textMuted }]} cx="50%" cy="45%" innerRadius={38} outerRadius={60} paddingAngle={3} dataKey="value">
                             {[C.green, C.red, C.textMuted].map((color, i) => <Cell key={i} fill={color} />)}
@@ -995,8 +997,8 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
                     </div>
                     <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 13, padding: "14px 12px" }}>
                       <div style={{ fontSize: 12, fontWeight: 700, color: C.textDim, marginBottom: 10 }}>Ingresos vs Gastos</div>
-                      <ResponsiveContainer width="100%" height={170}>
-                        <BarChart data={[{ name: "Ingresos", value: R.ingresosBrutos, fill: C.green }, { name: "Gastos", value: R.gastosTotales, fill: C.red }, { name: "Ganancia", value: Math.max(0, R.gananciaNet), fill: C.accent }]} barSize={28} margin={{ top: 4, right: 4, left: 4, bottom: 4 }}>
+                      <ResponsiveContainer width="100%" height={230}>
+                        <BarChart data={[{ name: "Ingresos", value: R.ingresosBrutos, fill: C.green }, { name: "Gastos", value: R.gastosTotales, fill: C.red }, { name: "Ganancia", value: Math.max(0, R.gananciaNet), fill: C.accent }]} barSize={44} margin={{ top: 4, right: 4, left: 4, bottom: 4 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke={C.border} vertical={false} />
                           <XAxis dataKey="name" tick={{ fill: C.textMuted, fontSize: 9 }} axisLine={false} tickLine={false} />
                           <YAxis hide />
@@ -1461,39 +1463,41 @@ Sé brutal y honesto. Usa números. Máximo 400 palabras.`;
 // ─── LANDING PAGE ─────────────────────────────────────────────────────────────
 function HeroPreview() {
   const rows = [
-    { l: "Ingresos", v: "$1.754,51", w: 100, c: C.green },
-    { l: "Gastos", v: "$1.156,36", w: 66, c: C.red },
-    { l: "Ganancia", v: "$598,15", w: 34, c: C.accent },
+    { l: "Ingresos por ventas", v: "$1.754,51", w: 100, c: C.green },
+    { l: "Publicidad (CPA)", v: "−$400,00", w: 23, c: C.amber },
+    { l: "Envío perdido en devoluciones", v: "−$78,75", w: 6, c: C.red },
+    { l: "Comisión de Dropi", v: "−$43,86", w: 4, c: C.purple },
+    { l: "Ganancia neta", v: "$598,15", w: 34, c: C.accent },
   ];
   return (
-    <div aria-hidden="true" style={{ background: C.card, border: `1px solid ${C.borderBright}`, borderRadius: 16, padding: 22, boxShadow: "0 40px 90px rgba(0,0,0,0.55)" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: C.textDim }}>Campaña de ejemplo</div>
-        <div style={{ fontSize: 11, fontWeight: 600, color: C.green, background: `${C.green}14`, border: `1px solid ${C.green}30`, borderRadius: 99, padding: "3px 10px" }}>Seguro · 92/100</div>
-      </div>
-      <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 4 }}>Ganancia neta</div>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 20 }}>
-        <div style={{ fontSize: 40, fontWeight: 700, letterSpacing: "-0.03em", color: C.green }}>$598,15</div>
-        <div style={{ fontSize: 13, color: C.textDim }}>margen 34,1%</div>
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 10, marginBottom: 20 }}>
-        {[["Confirmados", "75"], ["Entregados", "49"], ["Devueltos", "26"]].map(([l, v]) => (
-          <div key={l} style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 12px" }}>
-            <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 2 }}>{l}</div>
-            <div style={{ fontSize: 20, fontWeight: 700 }}>{v}</div>
+    <div style={{ position: "relative" }}>
+      <div aria-hidden="true" style={{ position: "absolute", inset: "-60px -40px", background: `radial-gradient(closest-side, ${C.accentGlow}, transparent)`, pointerEvents: "none" }} />
+      <div aria-hidden="true" style={{ position: "relative", background: C.card, border: `1px solid ${C.borderBright}`, borderRadius: 16, padding: 22, boxShadow: "0 40px 90px rgba(0,0,0,0.5)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: C.textDim }}>Campaña de ejemplo</div>
+          <div style={{ fontSize: 11, fontWeight: 600, color: C.green, background: `${C.green}14`, border: `1px solid ${C.green}30`, borderRadius: 99, padding: "3px 10px" }}>Seguro · 92/100</div>
+        </div>
+        <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 4 }}>Ganancia neta</div>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 20 }}>
+          <div style={{ fontSize: 40, fontWeight: 700, letterSpacing: "-0.03em", color: C.green }}>$598,15</div>
+          <div style={{ fontSize: 13, color: C.textDim }}>margen 34,1%</div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 10, marginBottom: 20 }}>
+          {[["Confirmados", "75"], ["Entregados", "49"], ["Devueltos", "26"]].map(([l, v]) => (
+            <div key={l} style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 12px" }}>
+              <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 2 }}>{l}</div>
+              <div style={{ fontSize: 20, fontWeight: 700 }}>{v}</div>
+            </div>
+          ))}
+        </div>
+        {rows.map(r => (
+          <div key={r.l} style={{ marginBottom: 12 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 10, fontSize: 12, marginBottom: 5 }}>
+              <span style={{ color: C.textDim }}>{r.l}</span><span style={{ color: C.text, fontWeight: 600, whiteSpace: "nowrap" }}>{r.v}</span>
+            </div>
+            <div style={{ height: 6, borderRadius: 99, background: C.border }}><div style={{ width: `${r.w}%`, height: "100%", borderRadius: 99, background: r.c }} /></div>
           </div>
         ))}
-      </div>
-      {rows.map(r => (
-        <div key={r.l} style={{ marginBottom: 12 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 5 }}>
-            <span style={{ color: C.textDim }}>{r.l}</span><span style={{ color: C.text, fontWeight: 600 }}>{r.v}</span>
-          </div>
-          <div style={{ height: 6, borderRadius: 99, background: C.border }}><div style={{ width: `${r.w}%`, height: "100%", borderRadius: 99, background: r.c }} /></div>
-        </div>
-      ))}
-      <div style={{ marginTop: 18, paddingTop: 16, borderTop: `1px solid ${C.border}`, display: "flex", justifyContent: "space-between", fontSize: 12 }}>
-        <span style={{ color: C.textMuted }}>Pérdida invisible detectada</span><span style={{ color: C.amber, fontWeight: 600 }}>$212,40 al mes</span>
       </div>
     </div>
   );
@@ -1527,7 +1531,7 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
               Deja de perder dinero en campañas que parecen rentables y no lo son
             </h1>
             <p style={{ fontSize: 16, color: C.textDim, maxWidth: 500, margin: "0 0 32px", lineHeight: 1.7 }}>
-              Calcula tu ganancia real con devoluciones, confirmaciones, comisión de Dropi y publicidad. Recibe un puntaje de salud, benchmarks de LATAM y un simulador para escalar sin perder.
+              Calcula tu ganancia real con todo incluido: costo de envío, CPA de publicidad, devoluciones y comisión de Dropi. Recibe un puntaje de salud, benchmarks de LATAM y un simulador para escalar sin perder.
             </p>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
               <button onClick={onStartTrial} style={{ background: C.gold, border: "none", borderRadius: 10, padding: "13px 24px", color: C.bg, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
@@ -1547,6 +1551,30 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
         </div>
         <div style={{ maxWidth: 1100, margin: "44px auto 0", fontSize: 12, color: C.textMuted, lineHeight: 1.9 }}>
           Disponible en {CURRENCIES.map(c => c.code).join(", ")}.
+        </div>
+      </section>
+
+      {/* Costos incluidos */}
+      <section style={{ padding: "16px 20px 72px" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto 36px" }}>
+            <h2 style={{ fontSize: "clamp(24px,3.2vw,34px)", fontWeight: 700, letterSpacing: "-0.03em", margin: "0 0 10px", lineHeight: 1.15 }}>Cada costo que se come tu ganancia, ya incluido</h2>
+            <p style={{ fontSize: 15, color: C.textDim, lineHeight: 1.7, margin: 0 }}>Casi todos calculan solo precio menos costo del producto. Nexus COD descuenta todo lo que de verdad sale de tu bolsillo.</p>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(230px,1fr))", gap: 14 }}>
+            {[
+              { i: "truck", t: "Costo de envío", d: "El flete de cada pedido entregado y el que pierdes cada vez que hay una devolución." },
+              { i: "megaphone", t: "CPA de publicidad", d: "Lo que gastas por pedido generado, incluido lo invertido en pedidos que nunca se confirman o se devuelven." },
+              { i: "undo", t: "Confirmaciones y devoluciones", d: "Cuántos pedidos se confirman, cuántos llegan de verdad y cuánto te cuesta cada devolución." },
+              { i: "building", t: "Comisión de Dropi", d: "La comisión por cada pedido entregado, descontada de tu ganancia real." },
+            ].map(x => (
+              <div key={x.t} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 22 }}>
+                <div style={{ width: 38, height: 38, borderRadius: 10, background: C.accentDim, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16, fontSize: 18 }}><Ic n={x.i} size={19} /></div>
+                <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 6 }}>{x.t}</div>
+                <div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.65 }}>{x.d}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -2182,7 +2210,7 @@ function FinanceCenter({ onBackToCalc, onHome, onBackToFree }) {
         <div style={{ display: "flex", gap: 5, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
           {SECTIONS.map(s => (
             <button key={s.id} onClick={() => setSection(s.id)}
-              style={{ padding: "7px 12px", background: section === s.id ? `${C.gold}15` : C.card, border: `1px solid ${section === s.id ? C.gold : C.border}`, borderRadius: 9, color: section === s.id ? C.gold : C.textDim, fontSize: 11, fontWeight: section === s.id ? 700 : 500, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", flexShrink: 0 }}><Rich>{s.label}</Rich></button>
+              style={{ padding: "7px 12px", background: section === s.id ? `${C.accent}1F` : C.card, border: `1px solid ${section === s.id ? C.accent : C.border}`, borderRadius: 9, color: section === s.id ? C.text : C.textDim, fontSize: 11, fontWeight: section === s.id ? 700 : 500, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", flexShrink: 0 }}><Rich>{s.label}</Rich></button>
           ))}
         </div>
 
