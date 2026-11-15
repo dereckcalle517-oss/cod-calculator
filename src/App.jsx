@@ -31,6 +31,80 @@ function prefInputs() {
 }
 const ACCOUNT_EVT = "nx:account";
 const openAccount = () => window.dispatchEvent(new Event(ACCOUNT_EVT));
+const SUPPORT_EMAIL = "soporte@nexuscod.com";
+const LEGAL_PATHS = { terms: "/terminos", privacy: "/privacidad", refund: "/reembolsos" };
+const legalFromPath = () => { try { const p = window.location.pathname.replace(/\/+$/, ""); return Object.keys(LEGAL_PATHS).find(k => LEGAL_PATHS[k] === p) || null; } catch { return null; } };
+const openLegal = (k) => { try { window.history.pushState({}, "", LEGAL_PATHS[k]); } catch {} window.dispatchEvent(new CustomEvent("nx:legal", { detail: k })); window.scrollTo(0, 0); };
+try { const r = new URLSearchParams(window.location.search).get("ref"); if (r && /^[a-z0-9]{4,16}$/i.test(r)) localStorage.setItem("nx_ref", r.toLowerCase()); } catch {}
+async function refApi(user, action, extra) {
+  const token = await user.getIdToken();
+  const r = await fetch("/api/referral", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ action, ...(extra || {}) }) });
+  if (!r.ok) throw new Error(String(r.status));
+  return r.json();
+}
+const refUrlFor = (code) => `${window.location.origin}/${code ? `?ref=${code}` : ""}`;
+function useMyRefCode() {
+  const { user } = useAuth();
+  const [code, setCode] = useState(() => { try { return localStorage.getItem("nx_my_ref") || ""; } catch { return ""; } });
+  useEffect(() => {
+    if (!user || code) return;
+    refApi(user, "status").then(d => { if (d && d.code) { setCode(d.code); try { localStorage.setItem("nx_my_ref", d.code); } catch {} } }).catch(() => {});
+  }, [user && user.uid]);
+  return code;
+}
+
+// ─── COMPARTIR RESULTADO (imagen) ──────────────────────────────────
+async function buildShareImage({ R, inputs, fmt, url }) {
+  try { await document.fonts.ready; } catch {}
+  const W = 1080, H = 1080, c = document.createElement("canvas"); c.width = W; c.height = H;
+  const x = c.getContext("2d"), F = "'Plus Jakarta Sans', 'Inter', system-ui, sans-serif";
+  const rr = (X, Y, w, h, r, fill, stroke) => { x.beginPath(); x.roundRect(X, Y, w, h, r); if (fill) { x.fillStyle = fill; x.fill(); } if (stroke) { x.strokeStyle = stroke; x.lineWidth = 2; x.stroke(); } };
+  const t = (txt, X, Y, size, color, weight = 700, align = "left") => { x.font = `${weight} ${size}px ${F}`; x.fillStyle = color; x.textAlign = align; x.fillText(txt, X, Y); };
+  x.fillStyle = "#0B0B0C"; x.fillRect(0, 0, W, H);
+  rr(60, 60, 960, 960, 36, "#121214", "#2A2A2E");
+  rr(110, 108, 52, 52, 14, "#F5F5F5"); t("N", 136, 148, 34, "#0B0B0C", 800, "center");
+  t("Nexus COD", 180, 148, 34, "#F5F5F5", 800);
+  t("Resultado de mi campaña", 970, 146, 26, "#7A7A83", 600, "right");
+  const profit = R.gananciaNet >= 0, pc = profit ? "#22C55E" : "#EF4444";
+  rr(110, 200, 860, 230, 28, profit ? "#22C55E14" : "#EF444414", profit ? "#22C55E55" : "#EF444455");
+  t(profit ? "Ganancia neta" : "Pérdida neta", 150, 262, 28, "#B0B0B8", 600);
+  t(`${profit ? "" : "−"}${fmt(Math.abs(R.gananciaNet))}`, 150, 366, 96, pc, 800);
+  t(`Margen ${R.margen.toFixed(1)}%  ·  ${inputs.pedidos} pedidos`, 150, 408, 26, "#7A7A83", 600);
+  rr(110, 460, 420, 230, 28, "#1A1A1D", "#2A2A2E");
+  t("Mi CPA real", 144, 520, 26, "#7A7A83", 600);
+  t(fmt(R.cpaReal), 144, 610, 72, R.cpaReal > R.cpaMax ? "#EF4444" : "#F5F5F5", 800);
+  t(`Ads Manager decía ${fmt(inputs.cpa)}`, 144, 658, 24, "#B0B0B8", 600);
+  rr(550, 460, 420, 230, 28, "#1A1A1D", "#2A2A2E");
+  t("CPA máximo", 584, 520, 26, "#7A7A83", 600);
+  t(fmt(R.cpaMax), 584, 610, 72, "#F5F5F5", 800);
+  t("Para no perder dinero", 584, 658, 24, "#B0B0B8", 600);
+  rr(110, 720, 860, 150, 28, "#1A1A1D", "#2A2A2E");
+  const cols = [[inputs.pedidos, "Pedidos", "#8AA6E6"], [Math.round(R.confirmados), "Confirmados", "#8AA6E6"], [Math.round(R.entregados), "Entregados", "#22C55E"], [Math.round(R.devoluciones), "Devueltos", "#EF4444"]];
+  cols.forEach(([v, l, col], i) => { const cx = 110 + 860 / 8 + i * (860 / 4); t(String(v), cx, 796, 52, col, 800, "center"); t(l, cx, 838, 24, "#7A7A83", 600, "center"); });
+  t("Calcula tu CPA real gratis", 540, 930, 30, "#F5F5F5", 700, "center");
+  t(url.replace(/^https?:\/\//, ""), 540, 976, 26, "#8AA6E6", 600, "center");
+  return await new Promise(res => c.toBlob(res, "image/png"));
+}
+function ShareButton({ R, inputs, fmt, style }) {
+  const code = useMyRefCode();
+  const [msg, setMsg] = useState("");
+  const go = async () => {
+    const url = refUrlFor(code);
+    const text = `Mi CPA real es ${fmt(R.cpaReal)} (Ads Manager decía ${fmt(inputs.cpa)}). Calcula el tuyo: ${url}`;
+    try {
+      const blob = await buildShareImage({ R, inputs, fmt, url });
+      const file = new File([blob], "mi-cpa-real.png", { type: "image/png" });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], text }); setMsg("Compartido"); }
+      else { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "mi-cpa-real.png"; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); setMsg("Imagen descargada"); }
+    } catch (e) { if (!(e && e.name === "AbortError")) setMsg("No se pudo compartir"); }
+    setTimeout(() => setMsg(""), 2500);
+  };
+  return (
+    <button onClick={go} style={{ background: "transparent", border: `1px solid ${C.borderBright}`, borderRadius: 10, padding: "8px 14px", color: C.text, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 7, ...style }}>
+      <Ic n="download" size={14} /> {msg || "Compartir resultado"}
+    </button>
+  );
+}
 
 // ─── ICONOS Y MARCA ───────────────────────────────────────────────────────────
 const ICON_PATHS = {"user":"<path d=\"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2\"/><circle cx=\"12\" cy=\"7\" r=\"4\"/>","download":"<path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><polyline points=\"7 10 12 15 17 10\"/><line x1=\"12\" x2=\"12\" y1=\"15\" y2=\"3\"/>","message":"<path d=\"M7.9 20A9 9 0 1 0 4 16.1L2 22Z\"/>","chart": "<path d=\"M3 3v18h18\"/><path d=\"M18 17V9\"/><path d=\"M13 17V5\"/><path d=\"M8 17v-3\"/>", "trendUp": "<polyline points=\"22 7 13.5 15.5 8.5 10.5 2 17\"/><polyline points=\"16 7 22 7 22 13\"/>", "trendDown": "<polyline points=\"22 17 13.5 8.5 8.5 13.5 2 7\"/><polyline points=\"16 17 22 17 22 11\"/>", "target": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><circle cx=\"12\" cy=\"12\" r=\"6\"/><circle cx=\"12\" cy=\"12\" r=\"2\"/>", "box": "<path d=\"M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z\"/><path d=\"M12 22V12\"/><path d=\"m3.3 7 8.7 5 8.7-5\"/>", "zap": "<path d=\"M13 2 3 14h9l-1 8 10-12h-9z\"/>", "alert": "<path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\"/><path d=\"M12 9v4\"/><path d=\"M12 17h.01\"/>", "megaphone": "<path d=\"m3 11 18-5v12L3 14v-3z\"/><path d=\"M11.6 16.8a3 3 0 1 1-5.8-1.6\"/>", "checkCircle": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m9 12 2 2 4-4\"/>", "check": "<path d=\"M20 6 9 17l-5-5\"/>", "x": "<path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/>", "dollar": "<line x1=\"12\" x2=\"12\" y1=\"2\" y2=\"22\"/><path d=\"M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6\"/>", "bot": "<path d=\"M12 8V4H8\"/><rect width=\"16\" height=\"12\" x=\"4\" y=\"8\" rx=\"2\"/><path d=\"M2 14h2\"/><path d=\"M20 14h2\"/><path d=\"M15 13v2\"/><path d=\"M9 13v2\"/>", "trophy": "<path d=\"M6 9H4.5a2.5 2.5 0 0 1 0-5H6\"/><path d=\"M18 9h1.5a2.5 2.5 0 0 0 0-5H18\"/><path d=\"M4 22h16\"/><path d=\"M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22\"/><path d=\"M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22\"/><path d=\"M18 2H6v7a6 6 0 0 0 12 0V2Z\"/>", "search": "<circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/>", "file": "<path d=\"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z\"/><path d=\"M14 2v4a2 2 0 0 0 2 2h4\"/><path d=\"M10 9H8\"/><path d=\"M16 13H8\"/><path d=\"M16 17H8\"/>", "clipboard": "<rect width=\"8\" height=\"4\" x=\"8\" y=\"2\" rx=\"1\"/><path d=\"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2\"/>", "receipt": "<path d=\"M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z\"/><path d=\"M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8\"/><path d=\"M12 17.5v-11\"/>", "mail": "<rect width=\"20\" height=\"16\" x=\"2\" y=\"4\" rx=\"2\"/><path d=\"m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7\"/>", "scale": "<path d=\"m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z\"/><path d=\"m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z\"/><path d=\"M7 21h10\"/><path d=\"M12 3v18\"/><path d=\"M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2\"/>", "truck": "<path d=\"M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2\"/><path d=\"M15 18H9\"/><path d=\"M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14\"/><circle cx=\"17\" cy=\"18\" r=\"2\"/><circle cx=\"7\" cy=\"18\" r=\"2\"/>", "phone": "<path d=\"M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z\"/>", "activity": "<path d=\"M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2\"/>", "layers": "<path d=\"M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z\"/><path d=\"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65\"/><path d=\"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65\"/>", "trash": "<path d=\"M3 6h18\"/><path d=\"M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6\"/><path d=\"M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2\"/>", "rocket": "<path d=\"M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z\"/><path d=\"m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z\"/><path d=\"M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0\"/><path d=\"M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5\"/>", "sliders": "<line x1=\"21\" x2=\"14\" y1=\"4\" y2=\"4\"/><line x1=\"10\" x2=\"3\" y1=\"4\" y2=\"4\"/><line x1=\"21\" x2=\"12\" y1=\"12\" y2=\"12\"/><line x1=\"8\" x2=\"3\" y1=\"12\" y2=\"12\"/><line x1=\"21\" x2=\"16\" y1=\"20\" y2=\"20\"/><line x1=\"12\" x2=\"3\" y1=\"20\" y2=\"20\"/><line x1=\"14\" x2=\"14\" y1=\"2\" y2=\"6\"/><line x1=\"8\" x2=\"8\" y1=\"10\" y2=\"14\"/><line x1=\"16\" x2=\"16\" y1=\"18\" y2=\"22\"/>", "tag": "<path d=\"M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z\"/><circle cx=\"7.5\" cy=\"7.5\" r=\".5\" fill=\"currentColor\"/>", "repeat": "<path d=\"m17 2 4 4-4 4\"/><path d=\"M3 11v-1a4 4 0 0 1 4-4h14\"/><path d=\"m7 22-4-4 4-4\"/><path d=\"M21 13v1a4 4 0 0 1-4 4H3\"/>", "gift": "<rect x=\"3\" y=\"8\" width=\"18\" height=\"4\" rx=\"1\"/><path d=\"M12 8v13\"/><path d=\"M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7\"/><path d=\"M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5\"/>", "save": "<path d=\"M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z\"/><path d=\"M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7\"/><path d=\"M7 3v4a1 1 0 0 0 1 1h7\"/>", "briefcase": "<path d=\"M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16\"/><rect width=\"20\" height=\"14\" x=\"2\" y=\"6\" rx=\"2\"/>", "plus": "<path d=\"M5 12h14\"/><path d=\"M12 5v14\"/>", "lock": "<rect width=\"18\" height=\"11\" x=\"3\" y=\"11\" rx=\"2\" ry=\"2\"/><path d=\"M7 11V7a5 5 0 0 1 10 0v4\"/>", "dot": "<circle cx=\"12\" cy=\"12\" r=\"6\" fill=\"currentColor\" stroke=\"none\"/>", "globe": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20\"/><path d=\"M2 12h20\"/>", "undo": "<path d=\"M9 14 4 9l5-5\"/><path d=\"M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11\"/>", "building": "<rect width=\"16\" height=\"20\" x=\"4\" y=\"2\" rx=\"2\" ry=\"2\"/><path d=\"M9 22v-4h6v4\"/><path d=\"M8 6h.01\"/><path d=\"M16 6h.01\"/><path d=\"M12 6h.01\"/><path d=\"M12 10h.01\"/><path d=\"M12 14h.01\"/><path d=\"M16 10h.01\"/><path d=\"M16 14h.01\"/><path d=\"M8 10h.01\"/><path d=\"M8 14h.01\"/>", "bulb": "<path d=\"M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5\"/><path d=\"M9 18h6\"/><path d=\"M10 22h4\"/>", "sparkles": "<path d=\"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z\"/>", "folder": "<path d=\"M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z\"/>", "key": "<path d=\"m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4\"/><path d=\"m21 2-9.6 9.6\"/><circle cx=\"7.5\" cy=\"15.5\" r=\"5.5\"/>", "logout": "<path d=\"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4\"/><polyline points=\"16 17 21 12 16 7\"/><line x1=\"21\" x2=\"9\" y1=\"12\" y2=\"12\"/>", "calculator": "<rect width=\"16\" height=\"20\" x=\"4\" y=\"2\" rx=\"2\"/><line x1=\"8\" x2=\"16\" y1=\"6\" y2=\"6\"/><line x1=\"16\" x2=\"16\" y1=\"14\" y2=\"18\"/><path d=\"M16 10h.01\"/><path d=\"M12 10h.01\"/><path d=\"M8 10h.01\"/><path d=\"M12 14h.01\"/><path d=\"M8 14h.01\"/><path d=\"M12 18h.01\"/><path d=\"M8 18h.01\"/>", "calendar": "<path d=\"M8 2v4\"/><path d=\"M16 2v4\"/><rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\"/><path d=\"M3 10h18\"/>", "cloud": "<path d=\"M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z\"/>", "card": "<rect width=\"20\" height=\"14\" x=\"2\" y=\"5\" rx=\"2\"/><line x1=\"2\" x2=\"22\" y1=\"10\" y2=\"10\"/>", "star": "<polygon points=\"12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2\"/>", "wallet": "<path d=\"M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1\"/><path d=\"M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4\"/>", "menu": "<line x1=\"4\" x2=\"20\" y1=\"6\" y2=\"6\"/><line x1=\"4\" x2=\"20\" y1=\"12\" y2=\"12\"/><line x1=\"4\" x2=\"20\" y1=\"18\" y2=\"18\"/>", "home": "<path d=\"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8\"/><path d=\"M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\"/>", "arrowLeft": "<path d=\"m12 19-7-7 7-7\"/><path d=\"M19 12H5\"/>"};
@@ -540,6 +614,7 @@ function CpaCard({ R, inputs, fmt }) {
       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: C.textMuted, marginTop: 8 }}>
         <span>{fmt(0)}</span><span style={{ color: col, fontWeight: 700 }}>{over ? "Estás por encima del límite" : `Margen de ${fmt(Math.max(0, R.cpaMax - inputs.cpa))} por pedido`}</span><span>{fmt(R.cpaMax * 1.25)}</span>
       </div>
+      <div style={{ marginTop: 14 }}><ShareButton R={R} inputs={inputs} fmt={fmt} /></div>
     </motion.div>
   );
 }
@@ -553,6 +628,10 @@ function CpaTab({ inputs, R, fmt }) {
   const td = { fontSize: 13, textAlign: "right", padding: "9px 10px", whiteSpace: "nowrap" };
   return (
     <div style={{ display: "grid", gap: 14 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        <div style={{ fontSize: 13, color: C.textDim }}>Tu CPA real: <b style={{ color: C.text }}>{fmt(R.cpaReal)}</b> · CPA máximo: <b style={{ color: C.text }}>{fmt(R.cpaMax)}</b></div>
+        <ShareButton R={R} inputs={inputs} fmt={fmt} />
+      </div>
       <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 16 }}>
         <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>Desglose de CPA</div>
         <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 14, lineHeight: 1.5 }}>Qué CPA debes ver en tu Ads Manager según la ganancia que quieres. Tu CPA máximo es {fmt(R.cpaMax)}.</div>
@@ -1675,6 +1754,7 @@ function HeroPreview() {
 }
 
 function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
+  const cpaEx = (() => { const inp = { costo: 8, precio: 35.99, envio: 5, cpa: 4, pedidos: 100, pctConfirmados: 75, pctEntregados: 65, recupera: true }; return { cpa: inp.cpa, r: useCalcPure(inp), f: makeFmt("$") }; })();
   return (
     <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Plus Jakarta Sans','Inter',system-ui,sans-serif", color: C.text }}>
       <nav style={{ borderBottom: `1px solid ${C.border}`, background: `${C.surface}EE`, backdropFilter: "blur(20px)", position: "sticky", top: 0, zIndex: 100, padding: "0 20px" }}>
@@ -1722,6 +1802,42 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
         </div>
         <div style={{ maxWidth: 1100, margin: "44px auto 0", fontSize: 12, color: C.textMuted, lineHeight: 1.9 }}>
           Disponible en {CURRENCIES.map(c => c.code).join(", ")}.
+        </div>
+      </section>
+
+      {/* CPA real */}
+      <section style={{ padding: "8px 20px 72px" }}>
+        <div className="hero-grid" style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 56, alignItems: "center" }}>
+          <div>
+            <h2 style={{ fontSize: "clamp(26px,3.4vw,38px)", fontWeight: 700, letterSpacing: "-0.03em", margin: "0 0 14px", lineHeight: 1.12 }}>Tu Ads Manager dice $4. Tu CPA real es $8,21.</h2>
+            <p style={{ fontSize: 15, color: C.textDim, lineHeight: 1.75, margin: "0 0 14px", maxWidth: 480 }}>En contraentrega no cuenta cada pedido que genera tu anuncio, sino los que se entregan. Si de 100 pedidos solo llegan 49, lo que gastaste en los 100 lo pagan esos 49.</p>
+            <p style={{ fontSize: 15, color: C.textDim, lineHeight: 1.75, margin: "0 0 24px", maxWidth: 480 }}>Nexus COD te dice tu CPA real y el CPA máximo que puedes pagar sin perder dinero, para que sepas cuándo escalar y cuándo apagar.</p>
+            <button onClick={onOpenFree} style={{ background: C.text, border: "none", borderRadius: 10, padding: "12px 22px", color: C.bg, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Calcular mi CPA real</button>
+          </div>
+          <div style={{ background: C.card, border: `1px solid ${C.borderBright}`, borderRadius: 18, padding: 22 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 12, marginBottom: 14 }}>
+              <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: "14px 16px" }}>
+                <div style={{ fontSize: 12, color: C.textMuted, fontWeight: 600, marginBottom: 6 }}>Lo que ves en Ads Manager</div>
+                <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: "-0.03em" }}>{cpaEx.f(cpaEx.cpa)}</div>
+              </div>
+              <div style={{ background: `${C.red}12`, border: `1px solid ${C.red}40`, borderRadius: 12, padding: "14px 16px" }}>
+                <div style={{ fontSize: 12, color: C.textDim, fontWeight: 600, marginBottom: 6 }}>Tu CPA real</div>
+                <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: "-0.03em", color: C.red }}>{cpaEx.f(cpaEx.r.cpaReal)}</div>
+              </div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4,minmax(0,1fr))", gap: 8, marginBottom: 14, textAlign: "center" }}>
+              {[[100, "Pedidos", C.accent], [75, "Confirmados", C.accent], [Math.round(cpaEx.r.ent), "Entregados", C.green], [Math.round(100 - cpaEx.r.ent), "Sin entregar", C.red]].map(([v, l, col]) => (
+                <div key={l} style={{ background: C.surface, borderRadius: 10, padding: "10px 4px" }}>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: col }}>{v}</div>
+                  <div style={{ fontSize: 10, color: C.textMuted, marginTop: 2 }}>{l}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ fontSize: 12, color: C.textMuted, lineHeight: 1.6, marginBottom: 12 }}>{cpaEx.f(400)} de publicidad entre {String(cpaEx.r.ent.toFixed(2)).replace(".", ",")} pedidos entregados.</div>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", borderTop: `1px solid ${C.border}`, paddingTop: 12, fontSize: 13 }}>
+              <span style={{ color: C.textDim }}>CPA máximo para no perder</span><b>{cpaEx.f(cpaEx.r.cpaMax)}</b>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -1947,9 +2063,10 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
           </div>
           <div style={{ display: "flex", gap: 16, fontSize: 11, color: C.textMuted, flexWrap: "wrap" }}>
             <a href="#nosotros" style={{ color: C.textMuted, textDecoration: "none" }}>Quiénes somos</a>
-            <span style={{ cursor: "pointer" }}>Términos</span>
-            <span style={{ cursor: "pointer" }}>Privacidad</span>
-            <span style={{ cursor: "pointer" }}>Contacto</span>
+            <a href="/terminos" onClick={e => { e.preventDefault(); openLegal("terms"); }} style={{ color: C.textMuted, textDecoration: "none" }}>Términos</a>
+            <a href="/privacidad" onClick={e => { e.preventDefault(); openLegal("privacy"); }} style={{ color: C.textMuted, textDecoration: "none" }}>Privacidad</a>
+            <a href="/reembolsos" onClick={e => { e.preventDefault(); openLegal("refund"); }} style={{ color: C.textMuted, textDecoration: "none" }}>Reembolsos</a>
+            <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: C.textMuted, textDecoration: "none" }}>Contacto</a>
           </div>
           <div style={{ fontSize: 11, color: C.textMuted }}>© 2026 Nexus COD Pro · LATAM</div>
         </div>
@@ -2035,6 +2152,10 @@ function AuthProvider({ children }) {
         // Mostrar la sesión de inmediato, sin esperar a Firestore
         setUser(fu);
         setLoadingAuth(false);
+        try {
+          const rc = localStorage.getItem("nx_ref");
+          if (rc) refApi(fu, "claim", { code: rc }).catch(() => {}).finally(() => { try { localStorage.removeItem("nx_ref"); } catch {} });
+        } catch {}
         const userRef = doc(db, "users", fu.uid);
         try {
           const snap = await getDoc(userRef);
@@ -2052,7 +2173,7 @@ function AuthProvider({ children }) {
         unsubDoc = onSnapshot(userRef,
           (s) => {
             const d = s.data() || {};
-            setIsPro(d.plan === "pro"); setPortalUrl(d.customerPortalUrl || ""); setProfile(d);
+            setIsPro(d.plan === "pro" && (d.lsStatus !== "bonus" || (!!d.proUntil && new Date(d.proUntil) > new Date()))); setPortalUrl(d.customerPortalUrl || ""); setProfile(d);
             if (d.prefs) { try { localStorage.setItem(PREFS_KEY, JSON.stringify(d.prefs)); } catch {} }
           },
           (err) => { console.error(err); setIsPro(false); });
@@ -2632,6 +2753,125 @@ function FinanceCenter({ onBackToCalc, onHome, onBackToFree }) {
 function fmtLongDate(d) {
   try { return d.toLocaleDateString("es", { day: "numeric", month: "long", year: "numeric" }); } catch { return ""; }
 }
+
+// ─── REFERIDOS ─────────────────────────────────────────────────────
+function ReferralPanel({ panel, btnMain, btnGhost, inp }) {
+  const { user } = useAuth();
+  const [d, setD] = useState(null);
+  const [err, setErr] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [okMsg, setOkMsg] = useState("");
+  const load = () => refApi(user, "status").then(x => { setD(x); setErr(""); if (x.code) { try { localStorage.setItem("nx_my_ref", x.code); } catch {} } }).catch(() => setErr("No pudimos cargar tus referidos. Intenta de nuevo."));
+  useEffect(() => { if (user) load(); }, [user && user.uid]);
+  const link = d && d.code ? refUrlFor(d.code) : "";
+  const copy = async () => { try { await navigator.clipboard.writeText(link); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch {} };
+  const redeem = async () => {
+    setBusy(true); setErr(""); setOkMsg("");
+    try { const r = await refApi(user, "redeem"); setOkMsg(`Listo, activamos ${r.days} días de PRO.`); await load(); }
+    catch { setErr("No se pudieron activar los días. Intenta de nuevo."); }
+    setBusy(false);
+  };
+  const tile = (v, l) => (<div style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, padding: "12px 14px" }}><div style={{ fontSize: 12, color: C.textMuted, marginBottom: 3 }}>{l}</div><div style={{ fontSize: 20, fontWeight: 800 }}>{v}</div></div>);
+  return (<>
+    <div style={panel}>
+      <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>Gana 15 días de PRO por cada amigo que se suscriba</div>
+      <div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.65, marginBottom: 18 }}>Comparte tu enlace. Cuando tu amigo se suscribe y pasan sus 3 días de garantía, se guardan 15 días de PRO en tu cuenta. Puedes guardar hasta 30 días y activarlos cuando quieras.</div>
+      {!d && !err && <div style={{ fontSize: 13, color: C.textMuted }}>Cargando…</div>}
+      {err && <div style={{ fontSize: 13, color: C.red, marginBottom: 12 }}>{err}</div>}
+      {d && (<>
+        <label style={{ fontSize: 12, color: C.textDim, fontWeight: 600, marginBottom: 6, display: "block" }} htmlFor="reflink">Tu enlace personal</label>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+          <input id="reflink" readOnly value={link} onFocus={e => e.target.select()} style={{ ...inp, flex: "1 1 240px", width: "auto" }} />
+          <button onClick={copy} style={btnMain}>{copied ? "Copiado" : "Copiar enlace"}</button>
+          <a href={`https://wa.me/?text=${encodeURIComponent(`Calcula tu CPA real en contraentrega con Nexus COD: ${link}`)}`} target="_blank" rel="noreferrer" style={{ ...btnGhost, textDecoration: "none", display: "inline-flex", alignItems: "center" }}>Compartir por WhatsApp</a>
+        </div>
+      </>)}
+    </div>
+    {d && (
+      <div style={panel}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12, marginBottom: 18 }}>
+          {tile(d.registered, "Se registraron")}{tile(d.paid, "Se suscribieron")}{tile(`${d.bank} de ${d.cap}`, "Días guardados")}
+        </div>
+        {d.pending > 0 && <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 14, lineHeight: 1.6 }}>{d.pending} {d.pending === 1 ? "referido está" : "referidos están"} en su periodo de garantía de 3 días. Te acreditamos al terminar.</div>}
+        <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+          <button onClick={redeem} disabled={!d.canRedeem || busy} style={{ ...btnMain, background: C.gold, opacity: d.canRedeem && !busy ? 1 : 0.4, cursor: d.canRedeem && !busy ? "pointer" : "not-allowed" }}>{busy ? "Activando…" : `Activar ${d.bank} días de PRO`}</button>
+          {d.bank > 0 && d.blocked && <span style={{ fontSize: 12, color: C.amber }}>Disponible cuando termine tu suscripción actual.</span>}
+          {okMsg && <span style={{ fontSize: 12, color: C.green }}>{okMsg}</span>}
+        </div>
+      </div>
+    )}
+  </>);
+}
+
+// ─── PÁGINAS LEGALES ───────────────────────────────────────────────
+const LEGAL_UPDATED = "15 de noviembre de 2026";
+const LEGAL = {
+  terms: { title: "Términos y condiciones", sections: [
+    ["1. Quiénes somos", ["Nexus COD es una herramienta en línea para calcular la rentabilidad de negocios de contraentrega (COD). Es operada desde Ecuador. Puedes escribirnos a " + SUPPORT_EMAIL + "."]],
+    ["2. Aceptación", ["Al usar Nexus COD o crear una cuenta aceptas estos términos. Si no estás de acuerdo, no uses el servicio. Debes ser mayor de 18 años."]],
+    ["3. El servicio", ["Nexus COD ofrece una calculadora gratuita y un plan de pago llamado PRO con funciones adicionales (análisis, benchmarks, escenarios, asesor de IA, control financiero y otras).", "Los resultados son estimaciones basadas en los datos que tú ingresas y en supuestos generales, como la comisión de Dropi y el costo de envío de devoluciones. No son asesoría financiera, contable ni legal. Las decisiones que tomes con ellos son tu responsabilidad."]],
+    ["4. Tu cuenta", ["Para guardar cálculos y activar PRO inicias sesión con Google. Eres responsable de la actividad de tu cuenta. Puedes eliminarla cuando quieras desde Mi cuenta."]],
+    ["5. Suscripción PRO y pagos", ["PRO cuesta $5.99 USD al mes y se renueva automáticamente hasta que lo canceles. Incluye una prueba gratis de 3 días.", "Los pagos los procesa Paddle, que actúa como vendedor autorizado (merchant of record) y se encarga del cobro, los impuestos aplicables y las facturas. En tu estado de cuenta verás el cargo a nombre de Paddle.", "Puedes cancelar en cualquier momento desde Mi cuenta. Conservas PRO hasta el final del periodo ya pagado y no se te cobra de nuevo.", "Podemos cambiar el precio con aviso previo. El cambio aplica a partir de tu siguiente renovación."]],
+    ["6. Reembolsos", ["Ofrecemos garantía de reembolso de 3 días en tu primer pago. Los detalles están en la política de reembolsos."]],
+    ["7. Programa de referidos", ["Si invitas a alguien con tu enlace y se suscribe, recibes 15 días de PRO una vez pasados los 3 días de garantía de su primer pago. Puedes guardar hasta 30 días y activarlos cuando no tengas una suscripción activa. Los días no tienen valor en dinero, no se transfieren y se anulan si el pago del referido se reembolsa. Podemos cancelar premios por abuso, como referirte a ti mismo o crear cuentas falsas."]],
+    ["8. Uso aceptable", ["No puedes usar el servicio para fines ilegales, intentar acceder a cuentas ajenas, extraer datos de forma masiva, vulnerar la seguridad ni revender el servicio sin autorización."]],
+    ["9. Propiedad intelectual", ["Nexus COD, su diseño y su código son nuestros. Tus datos siguen siendo tuyos: nos das permiso solo para almacenarlos y mostrarlos dentro del servicio."]],
+    ["10. Disponibilidad y límite de responsabilidad", ["Nos esforzamos por mantener el servicio disponible, pero no garantizamos que funcione sin interrupciones ni errores. En la medida permitida por la ley, no somos responsables por pérdidas indirectas ni por decisiones de negocio tomadas con base en los resultados, y nuestra responsabilidad total se limita a lo que hayas pagado en los últimos 3 meses."]],
+    ["11. Cambios", ["Podemos actualizar estos términos. Si el cambio es importante te avisaremos en la aplicación. Seguir usando el servicio significa que aceptas la versión nueva."]],
+    ["12. Ley aplicable", ["Estos términos se rigen por las leyes de Ecuador. Para cualquier reclamo, escríbenos primero a " + SUPPORT_EMAIL + " y buscaremos resolverlo."]],
+  ]},
+  privacy: { title: "Política de privacidad", sections: [
+    ["1. Qué datos recogemos", ["Cuenta: nombre, correo y foto de tu cuenta de Google cuando inicias sesión.", "Contenido que guardas: tus cálculos, tu control financiero, tus preferencias y el nombre de tu negocio.", "Suscripción: estado de tu plan y fechas de cobro. No vemos ni guardamos el número de tu tarjeta; el pago lo maneja Paddle.", "Referidos: tu código y el código de quien te invitó, si entraste por un enlace.", "En tu navegador guardamos preferencias y cálculos de la versión gratis (almacenamiento local)."]],
+    ["2. Para qué los usamos", ["Para darte el servicio, guardar tu trabajo, activar tu plan PRO, gestionar referidos y atenderte cuando nos escribes. No vendemos tus datos ni los usamos para publicidad de terceros."]],
+    ["3. Con quién los compartimos", ["Google (Firebase) para inicio de sesión y almacenamiento. Paddle para pagos y facturación. Vercel para alojar la aplicación. Google Fonts para cargar la tipografía. Cada uno trata los datos según su propia política. Los datos de pago se rigen por la política de privacidad de Paddle (paddle.com)."]],
+    ["4. Cuánto tiempo los guardamos", ["Mientras tengas la cuenta. Si la eliminas, borramos tu perfil, tus cálculos y tu control financiero. Paddle puede conservar registros de facturación el tiempo que la ley le exija."]],
+    ["5. Tus derechos", ["Puedes acceder a tus datos, corregirlos, descargarlos y eliminarlos. Todo esto lo haces tú mismo en Mi cuenta (pestañas Perfil y Datos y privacidad). Si necesitas algo más, escríbenos a " + SUPPORT_EMAIL + ". Respetamos los derechos que reconoce la Ley Orgánica de Protección de Datos Personales de Ecuador."]],
+    ["6. Seguridad", ["Usamos conexiones cifradas y reglas de acceso para que cada persona solo vea sus propios datos. Ningún sistema es 100% seguro, pero trabajamos para proteger tu información."]],
+    ["7. Menores", ["El servicio es para mayores de 18 años. No recogemos datos de menores a sabiendas."]],
+    ["8. Cambios y contacto", ["Si cambiamos esta política, actualizaremos la fecha de esta página. Dudas: " + SUPPORT_EMAIL + "."]],
+  ]},
+  refund: { title: "Política de reembolsos", sections: [
+    ["1. Garantía de 3 días", ["Si PRO no es para ti, puedes pedir el reembolso completo de tu primer pago dentro de los 3 días siguientes al cobro."]],
+    ["2. Qué cubre", ["Solo el primer pago de la suscripción. Las renovaciones mensuales no se reembolsan, pero puedes cancelar cuando quieras para que no se cobren más. Si usas la prueba gratis de 3 días y cancelas antes de que termine, no se te cobra nada."]],
+    ["3. Cómo pedirlo", ["Escribe a " + SUPPORT_EMAIL + " desde el correo de tu cuenta, o usa el enlace Solicitar reembolso en Mi cuenta > Suscripción. Revisamos la solicitud en un máximo de 2 días hábiles."]],
+    ["4. Cómo se paga", ["El reembolso lo procesa Paddle al mismo método de pago que usaste. Según tu banco, puede tardar entre 5 y 10 días hábiles en verse reflejado."]],
+    ["5. Qué pasa con tu cuenta", ["Al reembolsarse, tu suscripción se cancela y tu cuenta vuelve al plan gratuito. Conservas tus cálculos guardados, hasta el límite del plan gratis."]],
+    ["6. Referidos", ["Si el pago de un referido se reembolsa dentro de los 3 días, los días de PRO que habrían correspondido al referente no se acreditan."]],
+  ]},
+};
+function LegalView({ kind, onHome }) {
+  const doc = LEGAL[kind] || LEGAL.terms;
+  const tabs = [["terms", "Términos"], ["privacy", "Privacidad"], ["refund", "Reembolsos"]];
+  return (
+    <div style={{ minHeight: "100vh", background: C.bg, color: C.text, fontFamily: "'Plus Jakarta Sans','Inter',system-ui,sans-serif" }}>
+      <GlobalStyles />
+      <div style={{ borderBottom: `1px solid ${C.border}`, background: C.surface }}>
+        <div style={{ maxWidth: 820, margin: "0 auto", padding: "0 20px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Brand onClick={onHome} size={28} />
+          <button onClick={onHome} style={{ background: "transparent", border: `1px solid ${C.borderBright}`, borderRadius: 9, padding: "7px 14px", color: C.text, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Volver al inicio</button>
+        </div>
+      </div>
+      <div style={{ maxWidth: 820, margin: "0 auto", padding: "32px 20px 80px" }}>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 24 }}>
+          {tabs.map(([k, l]) => (
+            <a key={k} href={LEGAL_PATHS[k]} onClick={e => { e.preventDefault(); openLegal(k); }} style={{ padding: "7px 14px", borderRadius: 9, fontSize: 13, fontWeight: 600, textDecoration: "none", color: kind === k ? C.bg : C.textDim, background: kind === k ? C.text : C.card, border: `1px solid ${kind === k ? C.text : C.border}` }}>{l}</a>
+          ))}
+        </div>
+        <h1 style={{ fontSize: "clamp(26px,4vw,34px)", fontWeight: 700, letterSpacing: "-0.03em", margin: "0 0 6px" }}>{doc.title}</h1>
+        <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 28 }}>Última actualización: {LEGAL_UPDATED}</div>
+        {doc.sections.map(([h, ps]) => (
+          <div key={h} style={{ marginBottom: 24 }}>
+            <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 8px" }}>{h}</h2>
+            {ps.map((t, i) => <p key={i} style={{ fontSize: 14, color: C.textDim, lineHeight: 1.75, margin: "0 0 10px" }}>{t}</p>)}
+          </div>
+        ))}
+        <div style={{ marginTop: 36, paddingTop: 18, borderTop: `1px solid ${C.border}`, fontSize: 12, color: C.textMuted }}>Nexus COD · Ecuador · <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: C.textDim }}>{SUPPORT_EMAIL}</a></div>
+      </div>
+    </div>
+  );
+}
+
 function AccountView({ trialDaysLeft, onUpgrade, onHome, onCalc, onFinance, onBackToFree }) {
   const { user, isPro, profile, portalUrl, loginWithGoogle, logout } = useAuth();
   const [tab, setTab] = useState("perfil");
@@ -2665,7 +2905,8 @@ function AccountView({ trialDaysLeft, onUpgrade, onHome, onCalc, onFinance, onBa
   const endDate = cancelAt || until;
   let plan = { name: "Plan gratuito", chip: "Gratis", tone: C.textDim, note: "Estás usando la versión gratis de Nexus COD." };
   if (isPro) {
-    plan = willCancel ? { name: "Plan PRO", chip: "Cancelada", tone: C.amber, note: endDate ? `Conservas PRO hasta el ${fmtLongDate(endDate)}. Después no se te cobrará más.` : "Tu suscripción está cancelada." }
+    plan = st === "bonus" ? { name: "Plan PRO", chip: "Bonus de referidos", tone: C.gold, note: until ? `Tienes PRO gratis hasta el ${fmtLongDate(until)}.` : "Tienes PRO gratis por tus referidos." }
+      : willCancel ? { name: "Plan PRO", chip: "Cancelada", tone: C.amber, note: endDate ? `Conservas PRO hasta el ${fmtLongDate(endDate)}. Después no se te cobrará más.` : "Tu suscripción está cancelada." }
       : st === "past_due" ? { name: "Plan PRO", chip: "Pago pendiente", tone: C.red, note: "No pudimos cobrar tu último pago. Actualiza tu método de pago para no perder PRO." }
       : st === "trialing" ? { name: "Plan PRO", chip: "En prueba", tone: C.green, note: nextBill ? `Tu primer cobro de $5.99 será el ${fmtLongDate(nextBill)}.` : "Estás en tu prueba gratis." }
       : { name: "Plan PRO", chip: "Activa", tone: C.green, note: nextBill ? `Próximo cobro de $5.99 el ${fmtLongDate(nextBill)}.` : "Tu suscripción está activa." };
@@ -2716,9 +2957,9 @@ function AccountView({ trialDaysLeft, onUpgrade, onHome, onCalc, onFinance, onBa
   const lbl = { fontSize: 12, color: C.textDim, fontWeight: 600, marginBottom: 6, display: "block" };
   const btnMain = { background: C.text, border: "none", borderRadius: 10, padding: "10px 18px", color: C.bg, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" };
   const btnGhost = { background: "transparent", border: `1px solid ${C.borderBright}`, borderRadius: 10, padding: "10px 18px", color: C.text, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", textDecoration: "none", display: "inline-block" };
-  const tabs = [{ id: "perfil", l: "Perfil", i: "user" }, { id: "suscripcion", l: "Suscripción", i: "card" }, { id: "preferencias", l: "Preferencias", i: "sliders" }, { id: "datos", l: "Datos y privacidad", i: "lock" }];
+  const tabs = [{ id: "perfil", l: "Perfil", i: "user" }, { id: "suscripcion", l: "Suscripción", i: "card" }, { id: "referidos", l: "Referidos", i: "gift" }, { id: "preferencias", l: "Preferencias", i: "sliders" }, { id: "datos", l: "Datos y privacidad", i: "lock" }];
   const created = (profile && profile.createdAt && profile.createdAt.toDate && profile.createdAt.toDate()) || (user && user.metadata && user.metadata.creationTime ? new Date(user.metadata.creationTime) : null);
-  const canDelete = !(isPro && !willCancel);
+  const canDelete = !(isPro && !willCancel && st !== "bonus");
 
   return (
     <AppShell active="acct" onHome={onHome} onCalc={onCalc} onFinance={onFinance} onBackToFree={onBackToFree}>
@@ -2784,7 +3025,7 @@ function AccountView({ trialDaysLeft, onUpgrade, onHome, onCalc, onFinance, onBa
                 <span style={{ fontSize: 11, fontWeight: 700, color: plan.tone, background: `${plan.tone}1A`, border: `1px solid ${plan.tone}40`, borderRadius: 99, padding: "4px 12px" }}>{plan.chip}</span>
               </div>
               <div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.6, marginBottom: 20 }}>{plan.note}</div>
-              {isPro ? (<>
+              {isPro && st !== "bonus" ? (<>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 12, marginBottom: 22 }}>
                   <div style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, padding: "12px 14px" }}><div style={{ fontSize: 12, color: C.textMuted, marginBottom: 3 }}>Precio</div><div style={{ fontWeight: 700 }}>$5.99 al mes</div></div>
                   <div style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, padding: "12px 14px" }}><div style={{ fontSize: 12, color: C.textMuted, marginBottom: 3 }}>{willCancel ? "Acceso hasta" : "Próximo cobro"}</div><div style={{ fontWeight: 700 }}>{(willCancel ? endDate : nextBill) ? fmtLongDate(willCancel ? endDate : nextBill) : "—"}</div></div>
@@ -2795,6 +3036,7 @@ function AccountView({ trialDaysLeft, onUpgrade, onHome, onCalc, onFinance, onBa
                   {willCancel && <button onClick={onUpgrade} style={{ ...btnMain, background: C.gold }}>Reactivar PRO</button>}
                 </div>
                 <div style={{ fontSize: 12, color: C.textMuted, marginTop: 18, lineHeight: 1.6 }}>Los pagos los procesa Paddle, nuestro vendedor oficial. En tu estado de cuenta verás el cobro a nombre de Paddle.</div>
+                <div style={{ fontSize: 12, color: C.textMuted, marginTop: 10, lineHeight: 1.6 }}>Tienes 3 días de garantía desde tu primer pago. <a href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Solicitud de reembolso - Nexus COD")}&body=${encodeURIComponent(`Hola, quiero solicitar el reembolso de mi primer pago.\n\nCorreo de mi cuenta: ${user.email}`)}`} style={{ color: C.text, fontWeight: 600 }}>Solicitar reembolso</a> · <a href="/reembolsos" onClick={e => { e.preventDefault(); openLegal("refund"); }} style={{ color: C.textDim }}>Ver política</a></div>
               </>) : (<>
                 <div style={{ display: "flex", flexDirection: "column", gap: 9, marginBottom: 22 }}>
                   {["Salud de campaña y riesgo", "Benchmarks de LATAM y pérdida invisible", "Escenarios y comparador A/B", "Asesor IA y reporte en PDF", "Control financiero completo"].map(f => (
@@ -2805,6 +3047,8 @@ function AccountView({ trialDaysLeft, onUpgrade, onHome, onCalc, onFinance, onBa
               </>)}
             </div>
           </>)}
+
+          {tab === "referidos" && <ReferralPanel panel={panel} btnMain={btnMain} btnGhost={btnGhost} inp={inp} />}
 
           {tab === "preferencias" && (
             <div style={panel}>
@@ -2859,9 +3103,7 @@ function AccountView({ trialDaysLeft, onUpgrade, onHome, onCalc, onFinance, onBa
             </div>
           </>)}
 
-          {SUPPORT_URL && (
-            <div style={{ marginTop: 8, fontSize: 13, color: C.textDim }}>¿Necesitas ayuda? <a href={SUPPORT_URL} target="_blank" rel="noreferrer" style={{ color: C.text, fontWeight: 600 }}>Escríbenos</a></div>
-          )}
+          <div style={{ marginTop: 8, fontSize: 13, color: C.textDim }}>¿Necesitas ayuda? <a href={SUPPORT_URL || `mailto:${SUPPORT_EMAIL}`} target="_blank" rel="noreferrer" style={{ color: C.text, fontWeight: 600 }}>Escríbenos</a></div>
         </>)}
       </div>
     </AppShell>
@@ -2981,6 +3223,9 @@ function CheckoutView({ onBack, onDone }) {
                 <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: "6px 18px", marginTop: 14, fontSize: 11, color: C.textMuted }}>
                   <span><Ic n="🔒" /> Cifrado SSL</span><span><Ic n="💳" /> Visa · Mastercard · PayPal</span><span><Ic n="↩" /> Cancela cuando quieras</span>
                 </div>
+                <div style={{ textAlign: "center", marginTop: 12, fontSize: 11, color: C.textMuted, lineHeight: 1.7 }}>
+                  Al suscribirte aceptas los <a href="/terminos" onClick={e => { e.preventDefault(); openLegal("terms"); }} style={{ color: C.textDim }}>Términos</a>, la <a href="/privacidad" onClick={e => { e.preventDefault(); openLegal("privacy"); }} style={{ color: C.textDim }}>Privacidad</a> y la <a href="/reembolsos" onClick={e => { e.preventDefault(); openLegal("refund"); }} style={{ color: C.textDim }}>política de reembolsos</a> (3 días en tu primer pago).
+                </div>
               </div>
             </div>
           </>
@@ -3002,13 +3247,20 @@ const trialUsed = () => { try { return !!localStorage.getItem(TRIAL_KEY); } catc
 
 function AppInner() {
   const { user, isPro, loadingAuth, loginWithGoogle } = useAuth();
-  const [view, setView] = useState("landing");
+  const [view, setView] = useState(() => (legalFromPath() ? "legal" : "landing"));
+  const [legalKind, setLegalKind] = useState(legalFromPath);
   const [trialDaysLeft, setTrialDaysLeft] = useState(trialLeft);
   const [payMsg, setPayMsg] = useState("");
   const justPaidUrl = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("pago") === "ok";
   const justPaid = justPaidUrl;
 
   const canPro = isPro || trialDaysLeft > 0;
+  useEffect(() => {
+    const h = (e) => { setLegalKind(e.detail); setView("legal"); };
+    const pop = () => { const k = legalFromPath(); if (k) { setLegalKind(k); setView("legal"); } else setView(v => (v === "legal" ? "landing" : v)); };
+    window.addEventListener("nx:legal", h); window.addEventListener("popstate", pop);
+    return () => { window.removeEventListener("nx:legal", h); window.removeEventListener("popstate", pop); };
+  }, []);
   useEffect(() => { const h = () => setView("account"); window.addEventListener(ACCOUNT_EVT, h); return () => window.removeEventListener(ACCOUNT_EVT, h); }, []);
 
   // Si el pago llega mientras se espera, entra a PRO solo
@@ -3036,7 +3288,7 @@ function AppInner() {
   const openPro = () => { if (canPro) setView("pro"); else { setPayMsg(""); setView("paywall"); } };
   const openFree = () => setView("free");
   const openFinance = () => { if (canPro) setView("finance"); else { setPayMsg(""); setView("paywall"); } };
-  const goHome = () => { setView("landing"); window.scrollTo(0, 0); };
+  const goHome = () => { try { if (window.location.pathname !== "/") window.history.pushState({}, "", "/"); } catch {} setView("landing"); window.scrollTo(0, 0); };
 
   // Ir a pagar: pide sesión (para saber a qué cuenta activar PRO) y abre el pago dentro de la página
   const upgrade = async () => {
@@ -3051,6 +3303,7 @@ function AppInner() {
 
   const proTrial = isPro ? 0 : trialDaysLeft;
   if ((view === "pro" || view === "finance") && !canPro) return <Paywall onUpgrade={upgrade} onStartTrial={startTrial} onHome={goHome} trialAvailable={!trialUsed()} message={payMsg} justPaid={false} />;
+  if (view === "legal") return <LegalView kind={legalKind || "terms"} onHome={goHome} />;
   if (view === "checkout") return <CheckoutView onBack={goHome} onDone={() => setView("pro")} />;
   if (view === "paywall") return <Paywall onUpgrade={upgrade} onStartTrial={startTrial} onHome={goHome} trialAvailable={!trialUsed()} message={payMsg} justPaid={justPaid && !isPro} />;
   if (view === "account") return <AccountView trialDaysLeft={proTrial} onUpgrade={upgrade} onHome={goHome} onCalc={openPro} onFinance={openFinance} onBackToFree={openFree} />;
