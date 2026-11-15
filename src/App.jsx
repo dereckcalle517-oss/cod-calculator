@@ -19,8 +19,21 @@ const C = {
   text: "#F5F5F5", textMuted: "#7A7A83", textDim: "#B0B0B8",
 };
 
+// ─── CUENTA: constantes ───────────────────────────────────────────────────────
+const PREFS_KEY = "cod_prefs";
+const SUPPORT_URL = ""; // Pon aquí tu enlace de soporte, por ejemplo "https://wa.me/573001234567". Si queda vacío, no se muestra.
+function readPrefs() { try { return JSON.parse(localStorage.getItem(PREFS_KEY) || "{}") || {}; } catch { return {}; } }
+function prefInputs() {
+  const p = readPrefs(); const o = {};
+  ["envio", "pctConfirmados", "pctEntregados"].forEach(k => { if (typeof p[k] === "number" && isFinite(p[k])) o[k] = p[k]; });
+  if (typeof p.recupera === "boolean") o.recupera = p.recupera;
+  return o;
+}
+const ACCOUNT_EVT = "nx:account";
+const openAccount = () => window.dispatchEvent(new Event(ACCOUNT_EVT));
+
 // ─── ICONOS Y MARCA ───────────────────────────────────────────────────────────
-const ICON_PATHS = {"chart": "<path d=\"M3 3v18h18\"/><path d=\"M18 17V9\"/><path d=\"M13 17V5\"/><path d=\"M8 17v-3\"/>", "trendUp": "<polyline points=\"22 7 13.5 15.5 8.5 10.5 2 17\"/><polyline points=\"16 7 22 7 22 13\"/>", "trendDown": "<polyline points=\"22 17 13.5 8.5 8.5 13.5 2 7\"/><polyline points=\"16 17 22 17 22 11\"/>", "target": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><circle cx=\"12\" cy=\"12\" r=\"6\"/><circle cx=\"12\" cy=\"12\" r=\"2\"/>", "box": "<path d=\"M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z\"/><path d=\"M12 22V12\"/><path d=\"m3.3 7 8.7 5 8.7-5\"/>", "zap": "<path d=\"M13 2 3 14h9l-1 8 10-12h-9z\"/>", "alert": "<path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\"/><path d=\"M12 9v4\"/><path d=\"M12 17h.01\"/>", "megaphone": "<path d=\"m3 11 18-5v12L3 14v-3z\"/><path d=\"M11.6 16.8a3 3 0 1 1-5.8-1.6\"/>", "checkCircle": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m9 12 2 2 4-4\"/>", "check": "<path d=\"M20 6 9 17l-5-5\"/>", "x": "<path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/>", "dollar": "<line x1=\"12\" x2=\"12\" y1=\"2\" y2=\"22\"/><path d=\"M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6\"/>", "bot": "<path d=\"M12 8V4H8\"/><rect width=\"16\" height=\"12\" x=\"4\" y=\"8\" rx=\"2\"/><path d=\"M2 14h2\"/><path d=\"M20 14h2\"/><path d=\"M15 13v2\"/><path d=\"M9 13v2\"/>", "trophy": "<path d=\"M6 9H4.5a2.5 2.5 0 0 1 0-5H6\"/><path d=\"M18 9h1.5a2.5 2.5 0 0 0 0-5H18\"/><path d=\"M4 22h16\"/><path d=\"M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22\"/><path d=\"M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22\"/><path d=\"M18 2H6v7a6 6 0 0 0 12 0V2Z\"/>", "search": "<circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/>", "file": "<path d=\"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z\"/><path d=\"M14 2v4a2 2 0 0 0 2 2h4\"/><path d=\"M10 9H8\"/><path d=\"M16 13H8\"/><path d=\"M16 17H8\"/>", "clipboard": "<rect width=\"8\" height=\"4\" x=\"8\" y=\"2\" rx=\"1\"/><path d=\"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2\"/>", "receipt": "<path d=\"M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z\"/><path d=\"M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8\"/><path d=\"M12 17.5v-11\"/>", "mail": "<rect width=\"20\" height=\"16\" x=\"2\" y=\"4\" rx=\"2\"/><path d=\"m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7\"/>", "scale": "<path d=\"m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z\"/><path d=\"m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z\"/><path d=\"M7 21h10\"/><path d=\"M12 3v18\"/><path d=\"M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2\"/>", "truck": "<path d=\"M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2\"/><path d=\"M15 18H9\"/><path d=\"M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14\"/><circle cx=\"17\" cy=\"18\" r=\"2\"/><circle cx=\"7\" cy=\"18\" r=\"2\"/>", "phone": "<path d=\"M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z\"/>", "activity": "<path d=\"M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2\"/>", "layers": "<path d=\"M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z\"/><path d=\"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65\"/><path d=\"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65\"/>", "trash": "<path d=\"M3 6h18\"/><path d=\"M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6\"/><path d=\"M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2\"/>", "rocket": "<path d=\"M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z\"/><path d=\"m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z\"/><path d=\"M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0\"/><path d=\"M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5\"/>", "sliders": "<line x1=\"21\" x2=\"14\" y1=\"4\" y2=\"4\"/><line x1=\"10\" x2=\"3\" y1=\"4\" y2=\"4\"/><line x1=\"21\" x2=\"12\" y1=\"12\" y2=\"12\"/><line x1=\"8\" x2=\"3\" y1=\"12\" y2=\"12\"/><line x1=\"21\" x2=\"16\" y1=\"20\" y2=\"20\"/><line x1=\"12\" x2=\"3\" y1=\"20\" y2=\"20\"/><line x1=\"14\" x2=\"14\" y1=\"2\" y2=\"6\"/><line x1=\"8\" x2=\"8\" y1=\"10\" y2=\"14\"/><line x1=\"16\" x2=\"16\" y1=\"18\" y2=\"22\"/>", "tag": "<path d=\"M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z\"/><circle cx=\"7.5\" cy=\"7.5\" r=\".5\" fill=\"currentColor\"/>", "repeat": "<path d=\"m17 2 4 4-4 4\"/><path d=\"M3 11v-1a4 4 0 0 1 4-4h14\"/><path d=\"m7 22-4-4 4-4\"/><path d=\"M21 13v1a4 4 0 0 1-4 4H3\"/>", "gift": "<rect x=\"3\" y=\"8\" width=\"18\" height=\"4\" rx=\"1\"/><path d=\"M12 8v13\"/><path d=\"M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7\"/><path d=\"M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5\"/>", "save": "<path d=\"M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z\"/><path d=\"M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7\"/><path d=\"M7 3v4a1 1 0 0 0 1 1h7\"/>", "briefcase": "<path d=\"M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16\"/><rect width=\"20\" height=\"14\" x=\"2\" y=\"6\" rx=\"2\"/>", "plus": "<path d=\"M5 12h14\"/><path d=\"M12 5v14\"/>", "lock": "<rect width=\"18\" height=\"11\" x=\"3\" y=\"11\" rx=\"2\" ry=\"2\"/><path d=\"M7 11V7a5 5 0 0 1 10 0v4\"/>", "dot": "<circle cx=\"12\" cy=\"12\" r=\"6\" fill=\"currentColor\" stroke=\"none\"/>", "globe": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20\"/><path d=\"M2 12h20\"/>", "undo": "<path d=\"M9 14 4 9l5-5\"/><path d=\"M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11\"/>", "building": "<rect width=\"16\" height=\"20\" x=\"4\" y=\"2\" rx=\"2\" ry=\"2\"/><path d=\"M9 22v-4h6v4\"/><path d=\"M8 6h.01\"/><path d=\"M16 6h.01\"/><path d=\"M12 6h.01\"/><path d=\"M12 10h.01\"/><path d=\"M12 14h.01\"/><path d=\"M16 10h.01\"/><path d=\"M16 14h.01\"/><path d=\"M8 10h.01\"/><path d=\"M8 14h.01\"/>", "bulb": "<path d=\"M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5\"/><path d=\"M9 18h6\"/><path d=\"M10 22h4\"/>", "sparkles": "<path d=\"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z\"/>", "folder": "<path d=\"M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z\"/>", "key": "<path d=\"m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4\"/><path d=\"m21 2-9.6 9.6\"/><circle cx=\"7.5\" cy=\"15.5\" r=\"5.5\"/>", "logout": "<path d=\"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4\"/><polyline points=\"16 17 21 12 16 7\"/><line x1=\"21\" x2=\"9\" y1=\"12\" y2=\"12\"/>", "calculator": "<rect width=\"16\" height=\"20\" x=\"4\" y=\"2\" rx=\"2\"/><line x1=\"8\" x2=\"16\" y1=\"6\" y2=\"6\"/><line x1=\"16\" x2=\"16\" y1=\"14\" y2=\"18\"/><path d=\"M16 10h.01\"/><path d=\"M12 10h.01\"/><path d=\"M8 10h.01\"/><path d=\"M12 14h.01\"/><path d=\"M8 14h.01\"/><path d=\"M12 18h.01\"/><path d=\"M8 18h.01\"/>", "calendar": "<path d=\"M8 2v4\"/><path d=\"M16 2v4\"/><rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\"/><path d=\"M3 10h18\"/>", "cloud": "<path d=\"M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z\"/>", "card": "<rect width=\"20\" height=\"14\" x=\"2\" y=\"5\" rx=\"2\"/><line x1=\"2\" x2=\"22\" y1=\"10\" y2=\"10\"/>", "star": "<polygon points=\"12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2\"/>", "wallet": "<path d=\"M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1\"/><path d=\"M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4\"/>", "menu": "<line x1=\"4\" x2=\"20\" y1=\"6\" y2=\"6\"/><line x1=\"4\" x2=\"20\" y1=\"12\" y2=\"12\"/><line x1=\"4\" x2=\"20\" y1=\"18\" y2=\"18\"/>", "home": "<path d=\"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8\"/><path d=\"M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\"/>", "arrowLeft": "<path d=\"m12 19-7-7 7-7\"/><path d=\"M19 12H5\"/>"};
+const ICON_PATHS = {"user":"<path d=\"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2\"/><circle cx=\"12\" cy=\"7\" r=\"4\"/>","download":"<path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><polyline points=\"7 10 12 15 17 10\"/><line x1=\"12\" x2=\"12\" y1=\"15\" y2=\"3\"/>","message":"<path d=\"M7.9 20A9 9 0 1 0 4 16.1L2 22Z\"/>","chart": "<path d=\"M3 3v18h18\"/><path d=\"M18 17V9\"/><path d=\"M13 17V5\"/><path d=\"M8 17v-3\"/>", "trendUp": "<polyline points=\"22 7 13.5 15.5 8.5 10.5 2 17\"/><polyline points=\"16 7 22 7 22 13\"/>", "trendDown": "<polyline points=\"22 17 13.5 8.5 8.5 13.5 2 7\"/><polyline points=\"16 17 22 17 22 11\"/>", "target": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><circle cx=\"12\" cy=\"12\" r=\"6\"/><circle cx=\"12\" cy=\"12\" r=\"2\"/>", "box": "<path d=\"M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z\"/><path d=\"M12 22V12\"/><path d=\"m3.3 7 8.7 5 8.7-5\"/>", "zap": "<path d=\"M13 2 3 14h9l-1 8 10-12h-9z\"/>", "alert": "<path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\"/><path d=\"M12 9v4\"/><path d=\"M12 17h.01\"/>", "megaphone": "<path d=\"m3 11 18-5v12L3 14v-3z\"/><path d=\"M11.6 16.8a3 3 0 1 1-5.8-1.6\"/>", "checkCircle": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m9 12 2 2 4-4\"/>", "check": "<path d=\"M20 6 9 17l-5-5\"/>", "x": "<path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/>", "dollar": "<line x1=\"12\" x2=\"12\" y1=\"2\" y2=\"22\"/><path d=\"M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6\"/>", "bot": "<path d=\"M12 8V4H8\"/><rect width=\"16\" height=\"12\" x=\"4\" y=\"8\" rx=\"2\"/><path d=\"M2 14h2\"/><path d=\"M20 14h2\"/><path d=\"M15 13v2\"/><path d=\"M9 13v2\"/>", "trophy": "<path d=\"M6 9H4.5a2.5 2.5 0 0 1 0-5H6\"/><path d=\"M18 9h1.5a2.5 2.5 0 0 0 0-5H18\"/><path d=\"M4 22h16\"/><path d=\"M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22\"/><path d=\"M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22\"/><path d=\"M18 2H6v7a6 6 0 0 0 12 0V2Z\"/>", "search": "<circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/>", "file": "<path d=\"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z\"/><path d=\"M14 2v4a2 2 0 0 0 2 2h4\"/><path d=\"M10 9H8\"/><path d=\"M16 13H8\"/><path d=\"M16 17H8\"/>", "clipboard": "<rect width=\"8\" height=\"4\" x=\"8\" y=\"2\" rx=\"1\"/><path d=\"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2\"/>", "receipt": "<path d=\"M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z\"/><path d=\"M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8\"/><path d=\"M12 17.5v-11\"/>", "mail": "<rect width=\"20\" height=\"16\" x=\"2\" y=\"4\" rx=\"2\"/><path d=\"m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7\"/>", "scale": "<path d=\"m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z\"/><path d=\"m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z\"/><path d=\"M7 21h10\"/><path d=\"M12 3v18\"/><path d=\"M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2\"/>", "truck": "<path d=\"M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2\"/><path d=\"M15 18H9\"/><path d=\"M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14\"/><circle cx=\"17\" cy=\"18\" r=\"2\"/><circle cx=\"7\" cy=\"18\" r=\"2\"/>", "phone": "<path d=\"M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z\"/>", "activity": "<path d=\"M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2\"/>", "layers": "<path d=\"M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z\"/><path d=\"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65\"/><path d=\"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65\"/>", "trash": "<path d=\"M3 6h18\"/><path d=\"M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6\"/><path d=\"M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2\"/>", "rocket": "<path d=\"M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z\"/><path d=\"m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z\"/><path d=\"M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0\"/><path d=\"M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5\"/>", "sliders": "<line x1=\"21\" x2=\"14\" y1=\"4\" y2=\"4\"/><line x1=\"10\" x2=\"3\" y1=\"4\" y2=\"4\"/><line x1=\"21\" x2=\"12\" y1=\"12\" y2=\"12\"/><line x1=\"8\" x2=\"3\" y1=\"12\" y2=\"12\"/><line x1=\"21\" x2=\"16\" y1=\"20\" y2=\"20\"/><line x1=\"12\" x2=\"3\" y1=\"20\" y2=\"20\"/><line x1=\"14\" x2=\"14\" y1=\"2\" y2=\"6\"/><line x1=\"8\" x2=\"8\" y1=\"10\" y2=\"14\"/><line x1=\"16\" x2=\"16\" y1=\"18\" y2=\"22\"/>", "tag": "<path d=\"M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z\"/><circle cx=\"7.5\" cy=\"7.5\" r=\".5\" fill=\"currentColor\"/>", "repeat": "<path d=\"m17 2 4 4-4 4\"/><path d=\"M3 11v-1a4 4 0 0 1 4-4h14\"/><path d=\"m7 22-4-4 4-4\"/><path d=\"M21 13v1a4 4 0 0 1-4 4H3\"/>", "gift": "<rect x=\"3\" y=\"8\" width=\"18\" height=\"4\" rx=\"1\"/><path d=\"M12 8v13\"/><path d=\"M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7\"/><path d=\"M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5\"/>", "save": "<path d=\"M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z\"/><path d=\"M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7\"/><path d=\"M7 3v4a1 1 0 0 0 1 1h7\"/>", "briefcase": "<path d=\"M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16\"/><rect width=\"20\" height=\"14\" x=\"2\" y=\"6\" rx=\"2\"/>", "plus": "<path d=\"M5 12h14\"/><path d=\"M12 5v14\"/>", "lock": "<rect width=\"18\" height=\"11\" x=\"3\" y=\"11\" rx=\"2\" ry=\"2\"/><path d=\"M7 11V7a5 5 0 0 1 10 0v4\"/>", "dot": "<circle cx=\"12\" cy=\"12\" r=\"6\" fill=\"currentColor\" stroke=\"none\"/>", "globe": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20\"/><path d=\"M2 12h20\"/>", "undo": "<path d=\"M9 14 4 9l5-5\"/><path d=\"M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11\"/>", "building": "<rect width=\"16\" height=\"20\" x=\"4\" y=\"2\" rx=\"2\" ry=\"2\"/><path d=\"M9 22v-4h6v4\"/><path d=\"M8 6h.01\"/><path d=\"M16 6h.01\"/><path d=\"M12 6h.01\"/><path d=\"M12 10h.01\"/><path d=\"M12 14h.01\"/><path d=\"M16 10h.01\"/><path d=\"M16 14h.01\"/><path d=\"M8 10h.01\"/><path d=\"M8 14h.01\"/>", "bulb": "<path d=\"M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5\"/><path d=\"M9 18h6\"/><path d=\"M10 22h4\"/>", "sparkles": "<path d=\"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z\"/>", "folder": "<path d=\"M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z\"/>", "key": "<path d=\"m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4\"/><path d=\"m21 2-9.6 9.6\"/><circle cx=\"7.5\" cy=\"15.5\" r=\"5.5\"/>", "logout": "<path d=\"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4\"/><polyline points=\"16 17 21 12 16 7\"/><line x1=\"21\" x2=\"9\" y1=\"12\" y2=\"12\"/>", "calculator": "<rect width=\"16\" height=\"20\" x=\"4\" y=\"2\" rx=\"2\"/><line x1=\"8\" x2=\"16\" y1=\"6\" y2=\"6\"/><line x1=\"16\" x2=\"16\" y1=\"14\" y2=\"18\"/><path d=\"M16 10h.01\"/><path d=\"M12 10h.01\"/><path d=\"M8 10h.01\"/><path d=\"M12 14h.01\"/><path d=\"M8 14h.01\"/><path d=\"M12 18h.01\"/><path d=\"M8 18h.01\"/>", "calendar": "<path d=\"M8 2v4\"/><path d=\"M16 2v4\"/><rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\"/><path d=\"M3 10h18\"/>", "cloud": "<path d=\"M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z\"/>", "card": "<rect width=\"20\" height=\"14\" x=\"2\" y=\"5\" rx=\"2\"/><line x1=\"2\" x2=\"22\" y1=\"10\" y2=\"10\"/>", "star": "<polygon points=\"12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2\"/>", "wallet": "<path d=\"M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1\"/><path d=\"M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4\"/>", "menu": "<line x1=\"4\" x2=\"20\" y1=\"6\" y2=\"6\"/><line x1=\"4\" x2=\"20\" y1=\"12\" y2=\"12\"/><line x1=\"4\" x2=\"20\" y1=\"18\" y2=\"18\"/>", "home": "<path d=\"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8\"/><path d=\"M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\"/>", "arrowLeft": "<path d=\"m12 19-7-7 7-7\"/><path d=\"M19 12H5\"/>"};
 const EMOJI_MAP = {"📊": "chart", "📈": "trendUp", "📉": "trendDown", "🎯": "target", "📦": "box", "⚡": "zap", "⚠": "alert", "🚨": "alert", "📣": "megaphone", "✅": "checkCircle", "✓": "check", "✔": "check", "✗": "x", "✖": "x", "💰": "dollar", "💸": "dollar", "🤖": "bot", "🏆": "trophy", "🔍": "search", "📄": "file", "📋": "clipboard", "🧾": "receipt", "📬": "mail", "⚖": "scale", "🚚": "truck", "📞": "phone", "❤": "activity", "🎭": "layers", "🗑": "trash", "🚀": "rocket", "⚙": "sliders", "🏷": "tag", "🔁": "repeat", "🔄": "repeat", "🎁": "gift", "💾": "save", "💼": "briefcase", "➕": "plus", "🔒": "lock", "🔴": "dot", "🟡": "dot", "🟢": "dot", "🌎": "globe", "↩": "undo", "🏢": "building", "💡": "bulb", "✨": "sparkles", "✦": "sparkles", "📁": "folder", "🗂": "folder", "🔑": "key", "🚪": "logout", "🧮": "calculator", "📅": "calendar", "☁": "cloud", "💳": "card", "⭐": "star"};
 function Ic({ n, size = "1.1em", style }) {
   const name = ICON_PATHS[n] ? n : EMOJI_MAP[String(n || "").replace(/\uFE0F/g, "")];
@@ -476,10 +489,10 @@ function useCalc(inputs) {
 
 // ─── FREE CALCULATOR ──────────────────────────────────────────────────────────
 function FreeCalculator({ onUpgrade, onStartTrial, onHome, onOpenPro }) {
-  const [currencyCode, setCurrencyCode] = useState("USD");
+  const [currencyCode, setCurrencyCode] = useState(() => readPrefs().currency || "USD");
   const currency = CURRENCIES.find(c => c.code === currencyCode) || CURRENCIES[0];
   const fmt = makeFmt(currency.symbol);
-  const [inputs, setInputs] = useState({ costo: 8, precio: 35.99, envio: 5, cpa: 4, pedidos: 100, pctConfirmados: 75, pctEntregados: 65, recupera: true });
+  const [inputs, setInputs] = useState(() => ({ ...{ costo: 8, precio: 35.99, envio: 5, cpa: 4, pedidos: 100, pctConfirmados: 75, pctEntregados: 65, recupera: true }, ...prefInputs() }));
   const set = (key) => (val) => setInputs(p => ({ ...p, [key]: val }));
   const R = useCalc(inputs);
   const health = calcHealth(inputs, R);
@@ -678,10 +691,10 @@ function FreeCalculator({ onUpgrade, onStartTrial, onHome, onOpenPro }) {
 
 // ─── PRO CALCULATOR ───────────────────────────────────────────────────────────
 function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinance }) {
-  const [currencyCode, setCurrencyCode] = useState("USD");
+  const [currencyCode, setCurrencyCode] = useState(() => readPrefs().currency || "USD");
   const currency = CURRENCIES.find(c => c.code === currencyCode) || CURRENCIES[0];
   const fmt = makeFmt(currency.symbol);
-  const [inputs, setInputs] = useState({ costo: 8, precio: 35.99, envio: 5, cpa: 4, pedidos: 100, pctConfirmados: 75, pctEntregados: 65, recupera: true });
+  const [inputs, setInputs] = useState(() => ({ ...{ costo: 8, precio: 35.99, envio: 5, cpa: 4, pedidos: 100, pctConfirmados: 75, pctEntregados: 65, recupera: true }, ...prefInputs() }));
   const set = (key) => (val) => setInputs(p => ({ ...p, [key]: val }));
   const R = useCalc(inputs);
   const health = calcHealth(inputs, R);
@@ -1875,6 +1888,7 @@ function AuthProvider({ children }) {
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [isPro, setIsPro] = useState(false);
   const [portalUrl, setPortalUrl] = useState("");
+  const [profile, setProfile] = useState(null);
 
   useEffect(() => {
     let unsubDoc = null;
@@ -1899,10 +1913,14 @@ function AuthProvider({ children }) {
         }
         // Escucha el plan en tiempo real: cambia a PRO solo cuando el webhook de pago lo confirma
         unsubDoc = onSnapshot(userRef,
-          (s) => { const d = s.data() || {}; setIsPro(d.plan === "pro"); setPortalUrl(d.customerPortalUrl || ""); },
+          (s) => {
+            const d = s.data() || {};
+            setIsPro(d.plan === "pro"); setPortalUrl(d.customerPortalUrl || ""); setProfile(d);
+            if (d.prefs) { try { localStorage.setItem(PREFS_KEY, JSON.stringify(d.prefs)); } catch {} }
+          },
           (err) => { console.error(err); setIsPro(false); });
       } else {
-        setUser(null); setIsPro(false); setPortalUrl("");
+        setUser(null); setIsPro(false); setPortalUrl(""); setProfile(null);
       }
       setLoadingAuth(false);
     });
@@ -1913,7 +1931,7 @@ function AuthProvider({ children }) {
   const logout = () => signOut(auth);
 
   return (
-    <AuthCtx.Provider value={{ user, loadingAuth, isPro, portalUrl, loginWithGoogle, logout, saveSimulationFS, getSimulationsFS, deleteSimulationFS }}>
+    <AuthCtx.Provider value={{ user, loadingAuth, isPro, portalUrl, profile, loginWithGoogle, logout, saveSimulationFS, getSimulationsFS, deleteSimulationFS }}>
       {children}
     </AuthCtx.Provider>
   );
@@ -1959,12 +1977,10 @@ function UserMenu() {
               <div style={{ fontSize: 10, color: C.textMuted }}>{user.email}</div>
               <div style={{ marginTop: 4, fontSize: 10, color: isPro ? C.gold : C.textMuted, fontWeight: 600 }}>{isPro ? "Plan PRO" : "Plan Gratuito"}</div>
             </div>
-            {isPro && portalUrl && (
-              <a href={portalUrl} target="_blank" rel="noreferrer"
-                style={{ display: "block", width: "100%", borderRadius: 8, padding: "8px 10px", color: C.text, fontSize: 12, fontWeight: 600, textDecoration: "none", boxSizing: "border-box" }}>
-                Cancelar suscripción
-              </a>
-            )}
+            <button onClick={() => { setOpen(false); openAccount(); }}
+              style={{ width: "100%", background: "transparent", border: "none", borderRadius: 8, padding: "8px 10px", color: C.text, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>
+              <Ic n="user" /> Mi cuenta
+            </button>
             <button onClick={() => { logout(); setOpen(false); }}
               style={{ width: "100%", background: "transparent", border: "none", borderRadius: 8, padding: "8px 10px", color: C.red, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>
               <Ic n="🚪" /> Cerrar sesión
@@ -2072,6 +2088,7 @@ function AppShell({ active, onHome, onCalc, onFinance, onBackToFree, right, chil
             <button key={i.id} className={"nav-item" + (active === i.id ? " on" : "")} onClick={i.fn}><Ic n={i.icon} size={17} /> {i.label}</button>
           ))}
           <div className="nav-sep" />
+          <button className={"nav-item" + (active === "acct" ? " on" : "")} onClick={openAccount}><Ic n="user" size={17} /> Mi cuenta</button>
           {onBackToFree && <button className="nav-item" onClick={onBackToFree}><Ic n="arrowLeft" size={17} /> Versión gratis</button>}
           <button className="nav-item" onClick={onHome}><Ic n="home" size={17} /> Inicio</button>
         </nav>
@@ -2079,11 +2096,11 @@ function AppShell({ active, onHome, onCalc, onFinance, onBackToFree, right, chil
       <div style={{ minWidth: 0 }}>
         <div className="shell-top">
           <div className="shell-top-l"><Brand onClick={onHome} size={26} pro /></div>
-          <div className="hide-mobile" style={{ fontSize: 13, color: C.textDim, fontWeight: 600 }}>{active === "fin" ? "Control financiero" : "Calculadora"}</div>
+          <div className="hide-mobile" style={{ fontSize: 13, color: C.textDim, fontWeight: 600 }}>{active === "fin" ? "Control financiero" : active === "acct" ? "Mi cuenta" : "Calculadora"}</div>
           <div style={{ display: "flex", gap: 7, alignItems: "center" }}>{right}<UserMenu /></div>
         </div>
         <div className="shell-tabs-m">
-          {items.map(i => (
+          {[...items, { id: "acct", label: "Mi cuenta", icon: "user", fn: openAccount }].map(i => (
             <button key={i.id} onClick={i.fn} style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 14px", background: active === i.id ? C.cardHover : "transparent", border: `1px solid ${active === i.id ? C.borderBright : C.border}`, borderRadius: 9, color: active === i.id ? C.text : C.textDim, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}><Ic n={i.icon} size={15} /> {i.label}</button>
           ))}
         </div>
@@ -2474,6 +2491,246 @@ function FinanceCenter({ onBackToCalc, onHome, onBackToFree }) {
 }
 
 // ─── ROOT ─────────────────────────────────────────────────────────────────────
+// ─── MI CUENTA ────────────────────────────────────────────────────────────────
+function fmtLongDate(d) {
+  try { return d.toLocaleDateString("es", { day: "numeric", month: "long", year: "numeric" }); } catch { return ""; }
+}
+function AccountView({ trialDaysLeft, onUpgrade, onHome, onCalc, onFinance, onBackToFree }) {
+  const { user, isPro, profile, portalUrl, loginWithGoogle, logout } = useAuth();
+  const [tab, setTab] = useState("perfil");
+  const [business, setBusiness] = useState("");
+  const [bizMsg, setBizMsg] = useState("");
+  const [prefs, setPrefs] = useState(() => ({ currency: "USD", envio: 5, pctConfirmados: 75, pctEntregados: 65, recupera: true, ...readPrefs() }));
+  const [prefMsg, setPrefMsg] = useState("");
+  const [usage, setUsage] = useState({ calcs: null, expenses: null });
+  const [confirm, setConfirm] = useState("");
+  const [busy, setBusy] = useState("");
+  const [err, setErr] = useState("");
+  const limit = isPro ? 50 : 5;
+
+  useEffect(() => { if (profile && profile.businessName != null) setBusiness(profile.businessName); }, [profile && profile.businessName]);
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      let calcs = null, expenses = null;
+      try { calcs = (await getSimulationsFS(user.uid)).length; } catch {}
+      try { const f = await getDoc(doc(db, "users", user.uid, "finance", "data")); expenses = f.exists() ? (f.data().expenses || []).length : 0; } catch {}
+      setUsage({ calcs, expenses });
+    })();
+  }, [user && user.uid]);
+
+  const st = (profile && profile.lsStatus) || "";
+  const toDate = (v) => { if (!v) return null; const d = new Date(v); return isNaN(d) ? null : d; };
+  const until = toDate(profile && profile.proUntil);
+  const nextBill = toDate(profile && profile.nextBillAt) || until;
+  const cancelAt = toDate(profile && profile.cancelAt);
+  const willCancel = isPro && (st === "canceled" || !!cancelAt);
+  const endDate = cancelAt || until;
+  let plan = { name: "Plan gratuito", chip: "Gratis", tone: C.textDim, note: "Estás usando la versión gratis de Nexus COD." };
+  if (isPro) {
+    plan = willCancel ? { name: "Plan PRO", chip: "Cancelada", tone: C.amber, note: endDate ? `Conservas PRO hasta el ${fmtLongDate(endDate)}. Después no se te cobrará más.` : "Tu suscripción está cancelada." }
+      : st === "past_due" ? { name: "Plan PRO", chip: "Pago pendiente", tone: C.red, note: "No pudimos cobrar tu último pago. Actualiza tu método de pago para no perder PRO." }
+      : st === "trialing" ? { name: "Plan PRO", chip: "En prueba", tone: C.green, note: nextBill ? `Tu primer cobro de $5.99 será el ${fmtLongDate(nextBill)}.` : "Estás en tu prueba gratis." }
+      : { name: "Plan PRO", chip: "Activa", tone: C.green, note: nextBill ? `Próximo cobro de $5.99 el ${fmtLongDate(nextBill)}.` : "Tu suscripción está activa." };
+  } else if (trialDaysLeft > 0) {
+    plan = { name: "Prueba gratis de PRO", chip: "En prueba", tone: C.gold, note: `Te quedan ${trialDaysLeft} ${trialDaysLeft === 1 ? "día" : "días"} de PRO sin costo.` };
+  }
+
+  const saveBusiness = async () => {
+    try { await setDoc(doc(db, "users", user.uid), { businessName: business.trim() }, { merge: true }); setBizMsg("Guardado"); }
+    catch { setBizMsg("No se pudo guardar"); }
+    setTimeout(() => setBizMsg(""), 2500);
+  };
+  const clampN = (v, a, b) => Math.min(b, Math.max(a, Number(v) || 0));
+  const savePrefs = async () => {
+    const p = { currency: prefs.currency, envio: Math.max(0, Number(prefs.envio) || 0), pctConfirmados: clampN(prefs.pctConfirmados, 0, 100), pctEntregados: clampN(prefs.pctEntregados, 0, 100), recupera: !!prefs.recupera };
+    try { localStorage.setItem(PREFS_KEY, JSON.stringify(p)); } catch {}
+    if (user) { try { await setDoc(doc(db, "users", user.uid), { prefs: p }, { merge: true }); } catch (e) { console.error(e); } }
+    setPrefs(p); setPrefMsg("Preferencias guardadas. Se aplican la próxima vez que abras la calculadora.");
+    setTimeout(() => setPrefMsg(""), 4000);
+  };
+  const exportData = async () => {
+    setBusy("export"); setErr("");
+    try {
+      const sims = await getSimulationsFS(user.uid).catch(() => []);
+      const fin = await getDoc(doc(db, "users", user.uid, "finance", "data")).then(x => x.exists() ? x.data() : null).catch(() => null);
+      const clean = (o) => JSON.parse(JSON.stringify(o || {}, (k, v) => (v && typeof v === "object" && typeof v.toDate === "function" ? v.toDate().toISOString() : v)));
+      const out = { exportado: new Date().toISOString(), cuenta: { correo: user.email, nombre: user.displayName, negocio: profile && profile.businessName || "", preferencias: readPrefs() }, calculos_guardados: clean(sims), control_financiero: clean(fin) };
+      const url = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type: "application/json" }));
+      const a = document.createElement("a"); a.href = url; a.download = "nexus-cod-mis-datos.json"; a.click(); URL.revokeObjectURL(url);
+    } catch (e) { console.error(e); setErr("No se pudieron exportar tus datos. Intenta de nuevo."); }
+    setBusy("");
+  };
+  const deleteAccount = async () => {
+    setBusy("delete"); setErr("");
+    try {
+      const token = await user.getIdToken();
+      const r = await fetch("/api/delete-account", { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+      if (r.status === 409) { setErr("Primero cancela tu suscripción PRO. Después podrás eliminar la cuenta."); setBusy(""); return; }
+      if (!r.ok) throw new Error("fail");
+      ["cod_prefs", "cod_saved_calcs", "cod_finance", "cod_trial_start"].forEach(k => { try { localStorage.removeItem(k); } catch {} });
+      try { await logout(); } catch {}
+      window.location.href = "/";
+    } catch (e) { console.error(e); setErr("No se pudo eliminar la cuenta. Intenta de nuevo o escríbenos."); setBusy(""); }
+  };
+
+  const panel = { background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 24, marginBottom: 16 };
+  const inp = { width: "100%", boxSizing: "border-box", background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, padding: "11px 13px", color: C.text, fontSize: 14, fontFamily: "inherit", outline: "none" };
+  const lbl = { fontSize: 12, color: C.textDim, fontWeight: 600, marginBottom: 6, display: "block" };
+  const btnMain = { background: C.text, border: "none", borderRadius: 10, padding: "10px 18px", color: C.bg, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" };
+  const btnGhost = { background: "transparent", border: `1px solid ${C.borderBright}`, borderRadius: 10, padding: "10px 18px", color: C.text, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", textDecoration: "none", display: "inline-block" };
+  const tabs = [{ id: "perfil", l: "Perfil", i: "user" }, { id: "suscripcion", l: "Suscripción", i: "card" }, { id: "preferencias", l: "Preferencias", i: "sliders" }, { id: "datos", l: "Datos y privacidad", i: "lock" }];
+  const created = (profile && profile.createdAt && profile.createdAt.toDate && profile.createdAt.toDate()) || (user && user.metadata && user.metadata.creationTime ? new Date(user.metadata.creationTime) : null);
+  const canDelete = !(isPro && !willCancel);
+
+  return (
+    <AppShell active="acct" onHome={onHome} onCalc={onCalc} onFinance={onFinance} onBackToFree={onBackToFree}>
+      <GlobalStyles />
+      <div style={{ maxWidth: 860, margin: "0 auto", padding: "28px 16px 60px" }}>
+        <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.03em", margin: "0 0 18px" }}>Mi cuenta</h1>
+        {!user ? (
+          <div style={{ ...panel, textAlign: "center", padding: 36 }}>
+            <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>Inicia sesión para ver tu cuenta</div>
+            <div style={{ fontSize: 13, color: C.textDim, marginBottom: 20 }}>Aquí verás tu perfil, tu suscripción y tus preferencias.</div>
+            <button onClick={() => loginWithGoogle().catch(() => {})} style={btnMain}>Iniciar sesión con Google</button>
+          </div>
+        ) : (<>
+          <div style={{ display: "flex", gap: 4, borderBottom: `1px solid ${C.border}`, marginBottom: 22, overflowX: "auto" }}>
+            {tabs.map(t => (
+              <button key={t.id} onClick={() => setTab(t.id)} style={{ display: "flex", alignItems: "center", gap: 8, background: "transparent", border: "none", borderBottom: `2px solid ${tab === t.id ? C.text : "transparent"}`, padding: "10px 14px", color: tab === t.id ? C.text : C.textMuted, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", marginBottom: -1 }}><Ic n={t.i} size={15} /> {t.l}</button>
+            ))}
+          </div>
+
+          {tab === "perfil" && (<>
+            <div style={panel}>
+              <div style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap", marginBottom: 22 }}>
+                {user.photoURL ? <img src={user.photoURL} alt="" width={64} height={64} style={{ borderRadius: "50%", display: "block" }} /> : <div style={{ width: 64, height: 64, borderRadius: "50%", background: C.cardHover }} />}
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 18, fontWeight: 700 }}>{user.displayName}</div>
+                  <div style={{ fontSize: 13, color: C.textDim, overflowWrap: "anywhere" }}>{user.email}</div>
+                </div>
+                <span style={{ marginLeft: "auto", fontSize: 11, fontWeight: 700, color: isPro ? C.bg : C.textDim, background: isPro ? C.gold : "transparent", border: isPro ? "none" : `1px solid ${C.borderBright}`, borderRadius: 99, padding: "4px 12px" }}>{isPro ? "PRO" : "Gratis"}</span>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: 16 }}>
+                <div><span style={lbl}>Correo</span><div style={{ ...inp, color: C.textDim, overflowWrap: "anywhere" }}>{user.email}</div></div>
+                <div><span style={lbl}>Miembro desde</span><div style={{ ...inp, color: C.textDim }}>{created ? fmtLongDate(created) : "—"}</div></div>
+              </div>
+              <div style={{ marginTop: 16 }}>
+                <label style={lbl} htmlFor="biz">Nombre de tu negocio o tienda (opcional)</label>
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  <input id="biz" value={business} onChange={e => setBusiness(e.target.value)} placeholder="Ej: Decán Parfums" style={{ ...inp, flex: "1 1 220px", width: "auto" }} />
+                  <button onClick={saveBusiness} style={btnMain}>Guardar</button>
+                </div>
+                {bizMsg && <div style={{ fontSize: 12, color: bizMsg === "Guardado" ? C.green : C.red, marginTop: 8 }}>{bizMsg}</div>}
+              </div>
+            </div>
+            <div style={panel}>
+              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 14 }}>Tu uso</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 12 }}>
+                <div style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, padding: "14px 16px" }}>
+                  <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 4 }}>Cálculos guardados</div>
+                  <div style={{ fontSize: 22, fontWeight: 700 }}>{usage.calcs == null ? "—" : usage.calcs} <span style={{ fontSize: 13, color: C.textMuted, fontWeight: 500 }}>de {limit}</span></div>
+                </div>
+                <div style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, padding: "14px 16px" }}>
+                  <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 4 }}>Gastos registrados</div>
+                  <div style={{ fontSize: 22, fontWeight: 700 }}>{usage.expenses == null ? "—" : usage.expenses}</div>
+                </div>
+              </div>
+            </div>
+            <button onClick={() => logout().then(onHome)} style={{ ...btnGhost, color: C.red }}><Ic n="logout" /> Cerrar sesión</button>
+          </>)}
+
+          {tab === "suscripcion" && (<>
+            <div style={panel}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 10 }}>
+                <div style={{ fontSize: 20, fontWeight: 700 }}>{plan.name}</div>
+                <span style={{ fontSize: 11, fontWeight: 700, color: plan.tone, background: `${plan.tone}1A`, border: `1px solid ${plan.tone}40`, borderRadius: 99, padding: "4px 12px" }}>{plan.chip}</span>
+              </div>
+              <div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.6, marginBottom: 20 }}>{plan.note}</div>
+              {isPro ? (<>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 12, marginBottom: 22 }}>
+                  <div style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, padding: "12px 14px" }}><div style={{ fontSize: 12, color: C.textMuted, marginBottom: 3 }}>Precio</div><div style={{ fontWeight: 700 }}>$5.99 al mes</div></div>
+                  <div style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, padding: "12px 14px" }}><div style={{ fontSize: 12, color: C.textMuted, marginBottom: 3 }}>{willCancel ? "Acceso hasta" : "Próximo cobro"}</div><div style={{ fontWeight: 700 }}>{(willCancel ? endDate : nextBill) ? fmtLongDate(willCancel ? endDate : nextBill) : "—"}</div></div>
+                </div>
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  {profile && profile.updatePaymentUrl && <a href={profile.updatePaymentUrl} target="_blank" rel="noreferrer" style={btnGhost}>Actualizar método de pago</a>}
+                  {!willCancel && portalUrl && <a href={portalUrl} target="_blank" rel="noreferrer" style={{ ...btnGhost, color: C.red }}>Cancelar suscripción</a>}
+                  {willCancel && <button onClick={onUpgrade} style={{ ...btnMain, background: C.gold }}>Reactivar PRO</button>}
+                </div>
+                <div style={{ fontSize: 12, color: C.textMuted, marginTop: 18, lineHeight: 1.6 }}>Los pagos los procesa Paddle, nuestro vendedor oficial. En tu estado de cuenta verás el cobro a nombre de Paddle.</div>
+              </>) : (<>
+                <div style={{ display: "flex", flexDirection: "column", gap: 9, marginBottom: 22 }}>
+                  {["Salud de campaña y riesgo", "Benchmarks de LATAM y pérdida invisible", "Escenarios y comparador A/B", "Asesor IA y reporte en PDF", "Control financiero completo"].map(f => (
+                    <div key={f} style={{ display: "flex", gap: 10, fontSize: 13, color: C.textDim }}><span style={{ color: C.green }}><Ic n="✓" /></span>{f}</div>
+                  ))}
+                </div>
+                <button onClick={onUpgrade} style={{ ...btnMain, background: C.gold }}>Activar PRO por $5.99 al mes</button>
+              </>)}
+            </div>
+          </>)}
+
+          {tab === "preferencias" && (
+            <div style={panel}>
+              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>Valores por defecto de la calculadora</div>
+              <div style={{ fontSize: 13, color: C.textDim, marginBottom: 20, lineHeight: 1.6 }}>Guarda lo que usas siempre para no escribirlo cada vez.</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 16 }}>
+                <div><label style={lbl} htmlFor="pcur">Moneda</label>
+                  <select id="pcur" value={prefs.currency} onChange={e => setPrefs({ ...prefs, currency: e.target.value })} style={inp}>
+                    {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}
+                  </select></div>
+                <div><label style={lbl} htmlFor="penv">Costo de envío habitual</label>
+                  <input id="penv" type="number" min="0" step="0.01" value={prefs.envio} onChange={e => setPrefs({ ...prefs, envio: e.target.value })} style={inp} /></div>
+                <div><label style={lbl} htmlFor="pcon">Confirmados habituales (%)</label>
+                  <input id="pcon" type="number" min="0" max="100" value={prefs.pctConfirmados} onChange={e => setPrefs({ ...prefs, pctConfirmados: e.target.value })} style={inp} /></div>
+                <div><label style={lbl} htmlFor="pent">Entregados habituales (%)</label>
+                  <input id="pent" type="number" min="0" max="100" value={prefs.pctEntregados} onChange={e => setPrefs({ ...prefs, pctEntregados: e.target.value })} style={inp} /></div>
+              </div>
+              <div style={{ marginTop: 18 }}>
+                <span style={lbl}>¿Recuperas el producto en las devoluciones?</span>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {[[true, "Sí recupero"], [false, "No recupero"]].map(([v, l]) => (
+                    <button key={l} onClick={() => setPrefs({ ...prefs, recupera: v })} style={{ ...btnGhost, padding: "9px 16px", background: prefs.recupera === v ? C.cardHover : "transparent", borderColor: prefs.recupera === v ? C.accent : C.borderBright }}>{l}</button>
+                  ))}
+                </div>
+              </div>
+              <div style={{ marginTop: 22, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+                <button onClick={savePrefs} style={btnMain}>Guardar preferencias</button>
+                {prefMsg && <span style={{ fontSize: 12, color: C.green }}>{prefMsg}</span>}
+              </div>
+            </div>
+          )}
+
+          {tab === "datos" && (<>
+            <div style={panel}>
+              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>Exportar mis datos</div>
+              <div style={{ fontSize: 13, color: C.textDim, marginBottom: 16, lineHeight: 1.6 }}>Descarga un archivo con tu perfil, tus cálculos guardados y tu control financiero.</div>
+              <button onClick={exportData} disabled={busy === "export"} style={{ ...btnGhost, opacity: busy === "export" ? 0.6 : 1 }}><Ic n="download" /> {busy === "export" ? "Preparando..." : "Descargar mis datos"}</button>
+            </div>
+            <div style={{ ...panel, borderColor: `${C.red}40` }}>
+              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4, color: C.red }}>Eliminar mi cuenta</div>
+              <div style={{ fontSize: 13, color: C.textDim, marginBottom: 16, lineHeight: 1.6 }}>Se borran tu perfil, tus cálculos guardados y tu control financiero. Esta acción no se puede deshacer.</div>
+              {!canDelete ? (
+                <div style={{ fontSize: 13, color: C.amber, lineHeight: 1.6 }}>Tienes una suscripción PRO activa. Cancélala primero en la pestaña Suscripción y después podrás eliminar tu cuenta.</div>
+              ) : (<>
+                <label style={lbl} htmlFor="delc">Escribe ELIMINAR para confirmar</label>
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  <input id="delc" value={confirm} onChange={e => setConfirm(e.target.value)} style={{ ...inp, flex: "1 1 200px", width: "auto" }} />
+                  <button onClick={deleteAccount} disabled={confirm !== "ELIMINAR" || busy === "delete"} style={{ ...btnMain, background: C.red, color: "#fff", opacity: confirm === "ELIMINAR" && busy !== "delete" ? 1 : 0.4, cursor: confirm === "ELIMINAR" ? "pointer" : "not-allowed" }}>{busy === "delete" ? "Eliminando..." : "Eliminar cuenta"}</button>
+                </div>
+              </>)}
+              {err && <div style={{ fontSize: 12, color: C.red, marginTop: 12 }}>{err}</div>}
+            </div>
+          </>)}
+
+          {SUPPORT_URL && (
+            <div style={{ marginTop: 8, fontSize: 13, color: C.textDim }}>¿Necesitas ayuda? <a href={SUPPORT_URL} target="_blank" rel="noreferrer" style={{ color: C.text, fontWeight: 600 }}>Escríbenos</a></div>
+          )}
+        </>)}
+      </div>
+    </AppShell>
+  );
+}
+
 function Paywall({ onUpgrade, onStartTrial, onHome, trialAvailable, message, justPaid }) {
   const { user } = useAuth();
   return (
@@ -2615,6 +2872,7 @@ function AppInner() {
   const justPaid = justPaidUrl;
 
   const canPro = isPro || trialDaysLeft > 0;
+  useEffect(() => { const h = () => setView("account"); window.addEventListener(ACCOUNT_EVT, h); return () => window.removeEventListener(ACCOUNT_EVT, h); }, []);
 
   // Si el pago llega mientras se espera, entra a PRO solo
   useEffect(() => { if (isPro && view === "paywall") setView("pro"); }, [isPro, view]);
@@ -2640,6 +2898,7 @@ function AppInner() {
   };
   const openPro = () => { if (canPro) setView("pro"); else { setPayMsg(""); setView("paywall"); } };
   const openFree = () => setView("free");
+  const openFinance = () => { if (canPro) setView("finance"); else { setPayMsg(""); setView("paywall"); } };
   const goHome = () => { setView("landing"); window.scrollTo(0, 0); };
 
   // Ir a pagar: pide sesión (para saber a qué cuenta activar PRO) y abre el pago dentro de la página
@@ -2657,6 +2916,7 @@ function AppInner() {
   if ((view === "pro" || view === "finance") && !canPro) return <Paywall onUpgrade={upgrade} onStartTrial={startTrial} onHome={goHome} trialAvailable={!trialUsed()} message={payMsg} justPaid={false} />;
   if (view === "checkout") return <CheckoutView onBack={goHome} onDone={() => setView("pro")} />;
   if (view === "paywall") return <Paywall onUpgrade={upgrade} onStartTrial={startTrial} onHome={goHome} trialAvailable={!trialUsed()} message={payMsg} justPaid={justPaid && !isPro} />;
+  if (view === "account") return <AccountView trialDaysLeft={proTrial} onUpgrade={upgrade} onHome={goHome} onCalc={openPro} onFinance={openFinance} onBackToFree={openFree} />;
   if (view === "free") return <FreeCalculator onUpgrade={upgrade} onOpenPro={openPro} onStartTrial={startTrial} onHome={goHome} />;
   if (view === "pro") return <ProCalculator trialDaysLeft={proTrial} onUpgrade={upgrade} onBackToFree={openFree} onHome={goHome} onFinance={() => setView("finance")} />;
   if (view === "finance") return <FinanceCenter onBackToCalc={openPro} onHome={goHome} onBackToFree={openFree} />;
