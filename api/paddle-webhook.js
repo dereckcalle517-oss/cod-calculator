@@ -45,13 +45,35 @@ export default async function handler(req, res) {
   const active = ["active", "trialing", "past_due"].includes(d.status) ||
     (d.status === "canceled" && endsAt && new Date(endsAt) > new Date());
   const urls = d.management_urls || {};
-  await getDb().collection("users").doc(uid).set({
+  const db = getDb();
+  await db.collection("users").doc(uid).set({
     plan: active ? "pro" : "free",
     lsStatus: d.status || "",
     lsSubscriptionId: d.id || "",
-    customerPortalUrl: urls.cancel || urls.update_payment_method || "",
+    customerPortalUrl: urls.cancel || "",
+    updatePaymentUrl: urls.update_payment_method || "",
+    nextBillAt: d.next_billed_at || null,
+    cancelAt: (d.scheduled_change && d.scheduled_change.action === "cancel") ? d.scheduled_change.effective_at : null,
     proUntil: endsAt || null,
     updatedAt: new Date().toISOString(),
   }, { merge: true });
+  // Referidos: primer pago de un referido => premio pendiente (se acredita pasados 3 días)
+  try {
+    const WINDOW_MS = 3 * 24 * 3600 * 1000;
+    const fref = db.collection("referrals").doc(uid);
+    const fd = (await fref.get()).data() || {};
+    if (d.status === "active" && fd.referredBy && !fd.paidAt) {
+      const at = new Date().toISOString();
+      await fref.set({ paidAt: at }, { merge: true });
+      await db.collection("referrals").doc(fd.referredBy).set({
+        pending: admin.firestore.FieldValue.arrayUnion({ friendUid: uid, at }),
+        paidCount: admin.firestore.FieldValue.increment(1),
+      }, { merge: true });
+    }
+    // Cancelación inmediata dentro de la garantía (reembolso): el premio se anula
+    if (d.status === "canceled" && fd.paidAt && Date.now() - Date.parse(fd.paidAt) < WINDOW_MS) {
+      await fref.set({ voided: true }, { merge: true });
+    }
+  } catch (e) { console.error("referral", e); }
   return res.status(200).send("ok");
 }
