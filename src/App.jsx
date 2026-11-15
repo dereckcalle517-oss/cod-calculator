@@ -30,7 +30,8 @@ function prefInputs() {
   return o;
 }
 const ACCOUNT_EVT = "nx:account";
-const openAccount = () => window.dispatchEvent(new Event(ACCOUNT_EVT));
+const openAccount = (tab) => { window.__nxAcctTab = typeof tab === "string" ? tab : "perfil"; window.dispatchEvent(new Event(ACCOUNT_EVT)); };
+const navTo = (v) => window.dispatchEvent(new CustomEvent("nx:nav", { detail: v }));
 const SUPPORT_EMAIL = "soporte@nexuscod.com";
 const LEGAL_PATHS = { terms: "/terminos", privacy: "/privacidad", refund: "/reembolsos" };
 const legalFromPath = () => { try { const p = window.location.pathname.replace(/\/+$/, ""); return Object.keys(LEGAL_PATHS).find(k => LEGAL_PATHS[k] === p) || null; } catch { return null; } };
@@ -699,7 +700,7 @@ function CpaTab({ inputs, R, fmt }) {
 }
 
 // ─── FREE CALCULATOR ──────────────────────────────────────────────────────────
-function FreeCalculator({ onUpgrade, onStartTrial, onHome, onOpenPro }) {
+function FreeCalculator({ onUpgrade, onStartTrial, onHome, onOpenPro, embedded }) {
   const [currencyCode, setCurrencyCode] = useState(() => readPrefs().currency || "USD");
   const currency = CURRENCIES.find(c => c.code === currencyCode) || CURRENCIES[0];
   const fmt = makeFmt(currency.symbol);
@@ -718,6 +719,7 @@ function FreeCalculator({ onUpgrade, onStartTrial, onHome, onOpenPro }) {
   return (
     <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Plus Jakarta Sans','Inter',system-ui,sans-serif", color: C.text }}>
       {/* Header */}
+      {!embedded && (
       <div style={{ borderBottom: `1px solid ${C.border}`, background: `${C.surface}EE`, backdropFilter: "blur(20px)", position: "sticky", top: 0, zIndex: 100, padding: "0 16px" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 52 }}>
           <Brand onClick={onHome} size={28} sub="Gratis" />
@@ -727,6 +729,8 @@ function FreeCalculator({ onUpgrade, onStartTrial, onHome, onOpenPro }) {
           <UserMenu />
         </div>
       </div>
+
+      )}
 
       {/* Pro upsell banner */}
       <div style={{ background: C.card, borderBottom: `1px solid ${C.accent}20`, padding: "10px 20px", textAlign: "center" }}>
@@ -915,7 +919,7 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
   const invisible = calcInvisibleLosses(inputs, R);
   const breakPts = calcBreakPoints(inputs, R);
   const isProfit = R.gananciaNet >= 0;
-  const [tab, setTab] = useState("resultados");
+  const [tab, setTab] = useState(() => { const t = window.__nxCalcTab; window.__nxCalcTab = null; return t || "resultados"; });
   const [sims, setSims] = useState(() => { try { return JSON.parse(localStorage.getItem("cod_sims_pro") || "[]"); } catch { return []; } });
   const [simName, setSimName] = useState(""); const [showSave, setShowSave] = useState(false);
   const [scenarioMode, setScenarioMode] = useState("realista");
@@ -1754,6 +1758,7 @@ function HeroPreview() {
 }
 
 function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
+  const { user } = useAuth();
   const cpaEx = (() => { const inp = { costo: 8, precio: 35.99, envio: 5, cpa: 4, pedidos: 100, pctConfirmados: 75, pctEntregados: 65, recupera: true }; return { cpa: inp.cpa, r: useCalcPure(inp), f: makeFmt("$") }; })();
   return (
     <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Plus Jakarta Sans','Inter',system-ui,sans-serif", color: C.text }}>
@@ -1766,9 +1771,9 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
             <a href="#faq" style={{ fontSize: 13, color: C.textDim, textDecoration: "none" }}>FAQ</a>
           </div>
           <div style={{ display: "flex", gap: 8 }}>
-            <button className="hide-mobile" onClick={onOpenFree} style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 9, padding: "8px 16px", color: C.textDim, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Gratis</button>
-            <motion.button onClick={onOpenPro} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-              style={{ background: C.gold, border: "none", borderRadius: 9, padding: "8px 16px", color: C.bg, fontSize: 12, fontWeight: 800, cursor: "pointer", fontFamily: "inherit" }}><Ic n="⭐" /> Ver PRO</motion.button>
+            {!user && <button className="hide-mobile" onClick={onOpenPro} style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 9, padding: "8px 16px", color: C.textDim, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Ver PRO</button>}
+            <motion.button onClick={user ? () => navTo("panel") : onOpenFree} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+              style={{ background: C.text, border: "none", borderRadius: 9, padding: "8px 16px", color: C.bg, fontSize: 12, fontWeight: 800, cursor: "pointer", fontFamily: "inherit" }}>{user ? "Ir a mi panel" : "Abrir calculadora"}</motion.button>
             <UserMenu />
           </div>
         </div>
@@ -1785,12 +1790,16 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
               Calcula tu ganancia real con todo incluido: costo de envío, CPA de publicidad, devoluciones y comisión de Dropi. Recibe un puntaje de salud, benchmarks de LATAM y un simulador para escalar sin perder.
             </p>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              {user ? (
+                <button onClick={() => navTo("panel")} style={{ background: C.gold, border: "none", borderRadius: 10, padding: "13px 24px", color: C.bg, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Ir a mi panel</button>
+              ) : (<>
               <button onClick={onStartTrial} style={{ background: C.gold, border: "none", borderRadius: 10, padding: "13px 24px", color: C.bg, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
                 Probar PRO gratis 3 días
               </button>
               <button onClick={onOpenFree} style={{ background: "transparent", border: `1px solid ${C.borderBright}`, borderRadius: 10, padding: "13px 24px", color: C.text, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
                 Usar la versión gratis
               </button>
+              </>)}
             </div>
             <div style={{ marginTop: 18, display: "flex", gap: 18, flexWrap: "wrap", fontSize: 12, color: C.textMuted }}>
               <span><Ic n="✓" /> Sin tarjeta</span><span><Ic n="✓" /> Sin registro</span><span><Ic n="✓" /> 16 monedas de LATAM</span>
@@ -2235,6 +2244,10 @@ function UserMenu() {
               <div style={{ fontSize: 10, color: C.textMuted }}>{user.email}</div>
               <div style={{ marginTop: 4, fontSize: 10, color: isPro ? C.gold : C.textMuted, fontWeight: 600 }}>{isPro ? "Plan PRO" : "Plan Gratuito"}</div>
             </div>
+            <button onClick={() => { setOpen(false); navTo("panel"); }}
+              style={{ width: "100%", background: "transparent", border: "none", borderRadius: 8, padding: "8px 10px", color: C.text, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", textAlign: "left", display: "flex", alignItems: "center", gap: 8 }}>
+              <Ic n="home" /> Ir al panel
+            </button>
             <button onClick={() => { setOpen(false); openAccount(); }}
               style={{ width: "100%", background: "transparent", border: "none", borderRadius: 8, padding: "8px 10px", color: C.text, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>
               <Ic n="user" /> Mi cuenta
@@ -2331,38 +2344,93 @@ function SavedCalcs({ inputs, currency, R, limit, onLoad }) {
 }
 
 // ─── MARCO DE LA APP PRO (menú lateral + barra superior) ──────────────────────
-function AppShell({ active, onHome, onCalc, onFinance, onBackToFree, right, children }) {
+function AppShell({ active, onHome, right, children }) {
+  const { user, isPro } = useAuth();
   const items = [
-    { id: "calc", label: "Calculadora", icon: "calculator", fn: onCalc },
-    { id: "fin", label: "Control financiero", icon: "wallet", fn: onFinance },
+    ...(user ? [{ id: "panel", label: "Panel", icon: "home", fn: () => navTo("panel") }] : []),
+    { id: "calc", label: "Calculadora", icon: "calculator", fn: () => navTo("calc") },
+    { id: "fin", label: "Control financiero", icon: "wallet", fn: () => navTo("finance") },
+    { id: "ref", label: "Referidos", icon: "gift", fn: () => openAccount("referidos") },
+    { id: "acct", label: "Mi cuenta", icon: "user", fn: () => openAccount("perfil") },
   ];
+  const help = () => { window.location.href = `mailto:${SUPPORT_EMAIL}`; };
+  const titles = { panel: "Panel", calc: "Calculadora", fin: "Control financiero", ref: "Referidos", acct: "Mi cuenta" };
+  const brandGo = user ? () => navTo("panel") : onHome;
+  const legalLink = { background: "none", border: "none", padding: 0, color: C.textMuted, fontSize: 11, cursor: "pointer", fontFamily: "inherit" };
   return (
     <div className="shell" style={{ fontFamily: "'Plus Jakarta Sans','Inter',system-ui,sans-serif", color: C.text }}>
       <aside className="shell-side">
-        <Brand onClick={onHome} size={30} pro />
+        <Brand onClick={brandGo} size={30} pro={isPro} />
         <nav style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <div style={{ fontSize: 11, color: C.textMuted, fontWeight: 600, padding: "0 12px 6px" }}>Herramientas</div>
           {items.map(i => (
             <button key={i.id} className={"nav-item" + (active === i.id ? " on" : "")} onClick={i.fn}><Ic n={i.icon} size={17} /> {i.label}</button>
           ))}
-          <div className="nav-sep" />
-          <button className={"nav-item" + (active === "acct" ? " on" : "")} onClick={openAccount}><Ic n="user" size={17} /> Mi cuenta</button>
-          {onBackToFree && <button className="nav-item" onClick={onBackToFree}><Ic n="arrowLeft" size={17} /> Versión gratis</button>}
-          <button className="nav-item" onClick={onHome}><Ic n="home" size={17} /> Inicio</button>
+          <button className="nav-item" onClick={help}><Ic n="message" size={17} /> Ayuda</button>
+          {!isPro && <button className="nav-item" onClick={() => navTo("upgrade")} style={{ color: C.gold }}><Ic n="star" size={17} /> Activar PRO</button>}
         </nav>
+        <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: 10, padding: "0 12px" }}>
+          <button className="nav-item" onClick={onHome} style={{ margin: "0 -12px" }}><Ic n="globe" size={17} /> Ver sitio</button>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            <button style={legalLink} onClick={() => openLegal("terms")}>Términos</button>
+            <button style={legalLink} onClick={() => openLegal("privacy")}>Privacidad</button>
+            <button style={legalLink} onClick={() => openLegal("refund")}>Reembolsos</button>
+          </div>
+        </div>
       </aside>
       <div style={{ minWidth: 0 }}>
         <div className="shell-top">
-          <div className="shell-top-l"><Brand onClick={onHome} size={26} pro /></div>
-          <div className="hide-mobile" style={{ fontSize: 13, color: C.textDim, fontWeight: 600 }}>{active === "fin" ? "Control financiero" : active === "acct" ? "Mi cuenta" : "Calculadora"}</div>
+          <div className="shell-top-l"><Brand onClick={brandGo} size={26} pro={isPro} /></div>
+          <div className="hide-mobile" style={{ fontSize: 13, color: C.textDim, fontWeight: 600 }}>{titles[active] || "Calculadora"}</div>
           <div style={{ display: "flex", gap: 7, alignItems: "center" }}>{right}<UserMenu /></div>
         </div>
         <div className="shell-tabs-m">
-          {[...items, { id: "acct", label: "Mi cuenta", icon: "user", fn: openAccount }].map(i => (
-            <button key={i.id} onClick={i.fn} style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 14px", background: active === i.id ? C.cardHover : "transparent", border: `1px solid ${active === i.id ? C.borderBright : C.border}`, borderRadius: 9, color: active === i.id ? C.text : C.textDim, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}><Ic n={i.icon} size={15} /> {i.label}</button>
+          {[...items, { id: "help", label: "Ayuda", icon: "message", fn: help }].map(i => (
+            <button key={i.id} onClick={i.fn} style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 14px", background: active === i.id ? C.cardHover : "transparent", border: `1px solid ${active === i.id ? C.borderBright : C.border}`, borderRadius: 99, color: active === i.id ? C.text : C.textDim, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", flexShrink: 0 }}><Ic n={i.icon} size={14} /> {i.label}</button>
           ))}
         </div>
         {children}
+      </div>
+    </div>
+  );
+}
+
+// ─── PANEL DE INICIO ──────────────────────────────────────────────────────────
+function Dashboard({ trialDaysLeft, onUpgrade }) {
+  const { user, isPro, profile } = useAuth();
+  const canPro = isPro || trialDaysLeft > 0;
+  const name = ((user && user.displayName) || "").split(" ")[0];
+  const st = profile && profile.lsStatus;
+  const planNote = isPro ? (st === "bonus" ? "Tienes PRO por tus referidos." : "Tu plan PRO está activo.") : trialDaysLeft > 0 ? `Prueba gratis: te quedan ${trialDaysLeft} ${trialDaysLeft === 1 ? "día" : "días"}.` : "Estás en el plan gratis. PRO cuesta $5.99 al mes.";
+  const cards = [
+    { i: "calculator", t: "Calculadora", d: canPro ? "Calcula tu ganancia real con envío, CPA, devoluciones y Dropi incluidos." : "Calcula tu ganancia real con todos los costos. Incluye tu CPA real y tu CPA máximo.", b: "Abrir calculadora", fn: () => navTo("calc") },
+    { i: "target", t: "CPA real y desglose", d: canPro ? "Tu CPA real, los niveles de rentabilidad y qué pasa si cambia la entrega." : "Tu CPA real está en la calculadora. El desglose por niveles es PRO.", b: canPro ? "Ver desglose" : "Abrir calculadora", fn: () => { window.__nxCalcTab = "cpa"; navTo("calc"); } },
+    { i: "wallet", t: "Control financiero", d: "Registra gastos y fondos de ads y mira tu capital mes a mes.", b: canPro ? "Abrir" : "Solo PRO", fn: () => navTo("finance"), lock: !canPro },
+    { i: "gift", t: "Referidos", d: "Gana 15 días de PRO por cada amigo que se suscriba.", b: "Ver mi enlace", fn: () => openAccount("referidos") },
+    { i: "card", t: "Suscripción", d: planNote, b: "Administrar", fn: () => openAccount("suscripcion") },
+    { i: "message", t: "Ayuda", d: "¿Dudas o quieres pedir un reembolso? Escríbenos.", b: "Escribir", fn: () => { window.location.href = `mailto:${SUPPORT_EMAIL}`; } },
+  ];
+  return (
+    <div style={{ maxWidth: 1000, margin: "0 auto", padding: "28px 16px 60px" }}>
+      <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.03em", margin: "0 0 4px" }}>{name ? `Hola, ${name}` : "Hola"}</h1>
+      <div style={{ fontSize: 14, color: C.textDim, marginBottom: 24 }}>¿Qué quieres hacer hoy?</div>
+      {!isPro && (
+        <div style={{ background: `${C.gold}10`, border: `1px solid ${C.gold}30`, borderRadius: 14, padding: "16px 18px", marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, flexWrap: "wrap" }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: C.gold, marginBottom: 2 }}>Pasa a PRO</div>
+            <div style={{ fontSize: 13, color: C.textDim }}>Desglose de CPA, benchmarks, escenarios, asesor de IA y control financiero.</div>
+          </div>
+          <button onClick={onUpgrade} style={{ background: C.gold, border: "none", borderRadius: 10, padding: "10px 18px", color: C.bg, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Activar PRO por $5.99</button>
+        </div>
+      )}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 14 }}>
+        {cards.map(c => (
+          <div key={c.t} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 22, display: "flex", flexDirection: "column" }}>
+            <div style={{ width: 38, height: 38, borderRadius: 10, background: C.accentDim, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}><Ic n={c.i} size={19} /></div>
+            <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 6 }}>{c.t}</div>
+            <div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.6, marginBottom: 18, flex: 1 }}>{c.d}</div>
+            <button onClick={c.lock ? onUpgrade : c.fn} style={{ alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 7, background: C.cardHover, border: `1px solid ${C.border}`, borderRadius: 9, padding: "8px 16px", color: C.text, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{c.lock && <Ic n="lock" size={13} />}{c.b}</button>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -2874,7 +2942,8 @@ function LegalView({ kind, onHome }) {
 
 function AccountView({ trialDaysLeft, onUpgrade, onHome, onCalc, onFinance, onBackToFree }) {
   const { user, isPro, profile, portalUrl, loginWithGoogle, logout } = useAuth();
-  const [tab, setTab] = useState("perfil");
+  const [tab, setTab] = useState(() => window.__nxAcctTab || "perfil");
+  useEffect(() => { const h = () => { if (window.__nxAcctTab) setTab(window.__nxAcctTab); }; window.addEventListener(ACCOUNT_EVT, h); return () => window.removeEventListener(ACCOUNT_EVT, h); }, []);
   const [business, setBusiness] = useState("");
   const [bizMsg, setBizMsg] = useState("");
   const [prefs, setPrefs] = useState(() => ({ currency: "USD", envio: 5, pctConfirmados: 75, pctEntregados: 65, recupera: true, ...readPrefs() }));
@@ -2962,7 +3031,7 @@ function AccountView({ trialDaysLeft, onUpgrade, onHome, onCalc, onFinance, onBa
   const canDelete = !(isPro && !willCancel && st !== "bonus");
 
   return (
-    <AppShell active="acct" onHome={onHome} onCalc={onCalc} onFinance={onFinance} onBackToFree={onBackToFree}>
+    <AppShell active={tab === "referidos" ? "ref" : "acct"} onHome={onHome}>
       <GlobalStyles />
       <div style={{ maxWidth: 860, margin: "0 auto", padding: "28px 16px 60px" }}>
         <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.03em", margin: "0 0 18px" }}>Mi cuenta</h1>
@@ -3249,6 +3318,8 @@ function AppInner() {
   const { user, isPro, loadingAuth, loginWithGoogle } = useAuth();
   const [view, setView] = useState(() => (legalFromPath() ? "legal" : "landing"));
   const [legalKind, setLegalKind] = useState(legalFromPath);
+  const [routed, setRouted] = useState(false);
+  const actions = useRef({});
   const [trialDaysLeft, setTrialDaysLeft] = useState(trialLeft);
   const [payMsg, setPayMsg] = useState("");
   const justPaidUrl = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("pago") === "ok";
@@ -3263,12 +3334,28 @@ function AppInner() {
   }, []);
   useEffect(() => { const h = () => setView("account"); window.addEventListener(ACCOUNT_EVT, h); return () => window.removeEventListener(ACCOUNT_EVT, h); }, []);
 
+  // Quien ya inició sesión entra directo al panel
+  useEffect(() => {
+    if (loadingAuth || routed) return;
+    setRouted(true);
+    if (user && view === "landing" && window.location.pathname === "/" && !justPaidUrl) setView("panel");
+  }, [loadingAuth, user]);
+  useEffect(() => {
+    const h = (e) => {
+      const v = e.detail, a = actions.current;
+      if (v === "panel") setView(a.user ? "panel" : "landing");
+      else if (v === "calc") (a.canPro ? setView("pro") : setView("free"));
+      else if (v === "finance" && a.openFinance) a.openFinance();
+      else if (v === "upgrade" && a.upgrade) a.upgrade();
+    };
+    window.addEventListener("nx:nav", h); return () => window.removeEventListener("nx:nav", h);
+  }, []);
   // Si el pago llega mientras se espera, entra a PRO solo
   useEffect(() => { if (isPro && view === "paywall") setView("pro"); }, [isPro, view]);
   // Al volver del pago, mostrar la pantalla de espera
   useEffect(() => { if (justPaidUrl && !isPro) setView("paywall"); }, []);
 
-  if (loadingAuth) return (
+  if (loadingAuth || !routed) return (
     <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Plus Jakarta Sans',system-ui,sans-serif" }}>
       <div style={{ textAlign: "center" }}>
         <div style={{ width: 40, height: 40, border: `3px solid ${C.border}`, borderTopColor: C.accent, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} />
@@ -3301,13 +3388,19 @@ function AppInner() {
     setView("checkout");
   };
 
+  actions.current = { user, canPro, openFinance, upgrade };
   const proTrial = isPro ? 0 : trialDaysLeft;
   if ((view === "pro" || view === "finance") && !canPro) return <Paywall onUpgrade={upgrade} onStartTrial={startTrial} onHome={goHome} trialAvailable={!trialUsed()} message={payMsg} justPaid={false} />;
   if (view === "legal") return <LegalView kind={legalKind || "terms"} onHome={goHome} />;
   if (view === "checkout") return <CheckoutView onBack={goHome} onDone={() => setView("pro")} />;
   if (view === "paywall") return <Paywall onUpgrade={upgrade} onStartTrial={startTrial} onHome={goHome} trialAvailable={!trialUsed()} message={payMsg} justPaid={justPaid && !isPro} />;
   if (view === "account") return <AccountView trialDaysLeft={proTrial} onUpgrade={upgrade} onHome={goHome} onCalc={openPro} onFinance={openFinance} onBackToFree={openFree} />;
-  if (view === "free") return <FreeCalculator onUpgrade={upgrade} onOpenPro={openPro} onStartTrial={startTrial} onHome={goHome} />;
+  if (view === "panel") return user
+    ? <AppShell active="panel" onHome={goHome}><Dashboard trialDaysLeft={proTrial} onUpgrade={upgrade} /></AppShell>
+    : <Landing onOpenFree={openFree} onOpenPro={openPro} onStartTrial={startTrial} onUpgrade={upgrade} />;
+  if (view === "free") return user
+    ? <AppShell active="calc" onHome={goHome}><FreeCalculator embedded onUpgrade={upgrade} onOpenPro={openPro} onStartTrial={startTrial} onHome={goHome} /></AppShell>
+    : <FreeCalculator onUpgrade={upgrade} onOpenPro={openPro} onStartTrial={startTrial} onHome={goHome} />;
   if (view === "pro") return <ProCalculator trialDaysLeft={proTrial} onUpgrade={upgrade} onBackToFree={openFree} onHome={goHome} onFinance={() => setView("finance")} />;
   if (view === "finance") return <FinanceCenter onBackToCalc={openPro} onHome={goHome} onBackToFree={openFree} />;
   return <Landing onOpenFree={openFree} onOpenPro={openPro} onStartTrial={startTrial} onUpgrade={upgrade} />;
