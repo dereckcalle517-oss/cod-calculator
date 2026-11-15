@@ -2351,7 +2351,7 @@ function CheckoutView({ onBack, onDone }) {
       if (!P || !PADDLE_PRICE_ID) { setState("error"); return; }
       try {
         P.Checkout.open({
-          settings: { displayMode: "inline", frameTarget: "paddle-checkout", frameInitialHeight: 450, frameStyle: "width:100%; min-width:280px; background-color:transparent; border:none;", theme: "dark", locale: "es", variant: "one-page" },
+          settings: { displayMode: "inline", frameTarget: "paddle-checkout", frameInitialHeight: 450, frameStyle: "width:100%; min-width:280px; background-color:transparent; border:none;", theme: "dark", locale: "es", variant: "one-page", showAddDiscounts: false, showAddTaxId: false },
           items: [{ priceId: PADDLE_PRICE_ID, quantity: 1 }],
           customer: user && user.email ? { email: user.email } : undefined,
           customData: { user_id: user ? user.uid : "" },
