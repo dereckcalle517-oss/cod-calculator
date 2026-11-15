@@ -9,13 +9,13 @@ import { getFirestore, doc, getDoc, setDoc, collection, addDoc, getDocs, deleteD
 const C = {
   bg: "#0A0A0A", surface: "#0E0E0E", card: "#111111", cardHover: "#181818",
   border: "#222222", borderBright: "#303030",
-  accent: "#F2F2F2", accentGlow: "rgba(255,255,255,0.12)", accentDim: "rgba(255,255,255,0.06)",
+  accent: "#8AA6E6", accentGlow: "rgba(138,166,230,0.14)", accentDim: "rgba(138,166,230,0.07)",
   green: "#22C55E", greenGlow: "rgba(34,197,94,0.16)",
   red: "#EF4444", redGlow: "rgba(239,68,68,0.16)",
   amber: "#F59E0B", amberGlow: "rgba(245,158,11,0.16)",
   purple: "#A1A1AA", purpleGlow: "rgba(161,161,170,0.16)",
   cyan: "#38BDF8", cyanGlow: "rgba(56,189,248,0.16)",
-  gold: "#FACC15",
+  gold: "#E8B93C",
   text: "#FFFFFF", textMuted: "#737373", textDim: "#A3A3A3",
 };
 
@@ -33,14 +33,14 @@ function Rich({ children }) {
   return children.split(EMOJI_RE).map((p, i) => (i % 2 ? <Ic key={i} n={p} /> : p));
 }
 function Flag({ c }) {
-  return <span style={{ display: "inline-block", fontSize: 10, fontWeight: 700, letterSpacing: "0.04em", color: C.textDim, border: `1px solid ${C.borderBright}`, borderRadius: 4, padding: "1px 5px", lineHeight: 1.4 }}>{c}</span>;
+  return <span style={{ display: "inline-block", fontSize: 10, fontWeight: 700, color: C.textDim, border: `1px solid ${C.borderBright}`, borderRadius: 4, padding: "1px 5px", lineHeight: 1.4 }}>{c}</span>;
 }
 function Logo({ size = 28 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true" style={{ display: "block", flexShrink: 0 }}>
       <rect width="32" height="32" rx="8" fill="#FFFFFF" />
       <path d="M9 23V9l14 14V9" fill="none" stroke="#0A0A0A" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="23" cy="9" r="2.4" fill="#FACC15" />
+      <circle cx="23" cy="9" r="2.4" fill="#E8B93C" />
     </svg>
   );
 }
@@ -407,6 +407,7 @@ function GlobalStyles() {
       .shell-top-l { display: none; }
       .shell-tabs-m { display: none; }
       @media (max-width: 900px) {
+        .hero-grid { grid-template-columns: minmax(0,1fr) !important; gap: 36px !important; }
         .shell { grid-template-columns: minmax(0,1fr); }
         .shell-side { display: none; }
         .shell-top { padding: 0 12px; }
@@ -510,7 +511,7 @@ function FreeCalculator({ onUpgrade, onStartTrial, onHome, onOpenPro }) {
       </div>
 
       <MobileProfitBar R={R} fmt={fmt} isProfit={isProfit} />
-      <div className="main-layout" style={{ maxWidth: 1100, margin: "0 auto", padding: "20px 14px 40px", display: "grid", gridTemplateColumns: "320px minmax(0,1fr)", gap: 18, alignItems: "start" }}>
+      <div className="main-layout" style={{ maxWidth: 1100, margin: "0 auto", padding: "20px 14px 40px", display: "grid", gridTemplateColumns: "320px minmax(0,1fr)", gap: 24, alignItems: "start" }}>
 
         {/* LEFT */}
         <motion.div className="left-panel" initial={{ opacity: 0, x: -14 }} animate={{ opacity: 1, x: 0 }}
@@ -532,11 +533,11 @@ function FreeCalculator({ onUpgrade, onStartTrial, onHome, onOpenPro }) {
           {/* Fixed costs */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 12 }}>
             <div style={{ background: `${C.purple}0A`, border: `1px solid ${C.purple}25`, borderRadius: 9, padding: "9px 11px" }}>
-              <div style={{ fontSize: 9, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 2 }}>Comisión Dropi</div>
+              <div style={{ fontSize: 9, color: C.textMuted, marginBottom: 2 }}>Comisión Dropi</div>
               <div style={{ fontSize: 18, fontWeight: 800, color: C.purple }}>2.5%</div>
             </div>
             <div style={{ background: `${C.amber}0A`, border: `1px solid ${C.amber}25`, borderRadius: 9, padding: "9px 11px" }}>
-              <div style={{ fontSize: 9, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 2 }}>Flete devuelto</div>
+              <div style={{ fontSize: 9, color: C.textMuted, marginBottom: 2 }}>Flete devuelto</div>
               <div style={{ fontSize: 18, fontWeight: 800, color: C.amber }}>40%</div>
             </div>
           </div>
@@ -556,12 +557,12 @@ function FreeCalculator({ onUpgrade, onStartTrial, onHome, onOpenPro }) {
                   style={{ transition: "stroke-dashoffset 1s ease" }} />
               </svg>
               <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                <div style={{ fontSize: 17, fontWeight: 900, color: health.score >= 75 ? C.green : health.score >= 50 ? C.amber : C.red, lineHeight: 1 }}>{health.score}</div>
+                <div style={{ fontSize: 17, fontWeight: 700, color: health.score >= 75 ? C.green : health.score >= 50 ? C.amber : C.red, lineHeight: 1 }}>{health.score}</div>
                 <div style={{ fontSize: 8, color: C.textMuted }}>/ 100</div>
               </div>
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 10, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 3 }}>Salud de campaña</div>
+              <div style={{ fontSize: 10, color: C.textMuted, marginBottom: 3 }}>Salud de campaña</div>
               <div style={{ fontSize: 17, fontWeight: 800, color: health.score >= 75 ? C.green : health.score >= 50 ? C.amber : C.red, marginBottom: 5 }}>
                 {health.score >= 75 ? "Saludable" : health.score >= 50 ? "En riesgo" : "Crítico"}
               </div>
@@ -573,7 +574,7 @@ function FreeCalculator({ onUpgrade, onStartTrial, onHome, onOpenPro }) {
             </div>
             {/* PRO teaser */}
             <div style={{ background: `${C.gold}10`, border: `1px solid ${C.gold}25`, borderRadius: 10, padding: "10px 12px", textAlign: "center", flexShrink: 0, cursor: "pointer" }} onClick={onUpgrade}>
-              <div style={{ fontSize: 9, color: C.gold, fontWeight: 700, textTransform: "uppercase", marginBottom: 3 }}><Ic n="⭐" /> Solo en PRO</div>
+              <div style={{ fontSize: 9, color: C.gold, fontWeight: 700, marginBottom: 3 }}><Ic n="⭐" /> Solo en PRO</div>
               <div style={{ fontSize: 10, color: C.textMuted, lineHeight: 1.4 }}>Análisis detallado<br />+ IA + Benchmarks</div>
             </div>
           </motion.div>
@@ -582,8 +583,8 @@ function FreeCalculator({ onUpgrade, onStartTrial, onHome, onOpenPro }) {
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
             style={{ background: isProfit ? `${C.green}0A` : `${C.red}0A`, border: `1.5px solid ${isProfit ? C.green : C.red}40`, borderRadius: 16, padding: "18px 20px", marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14 }}>
             <div>
-              <div style={{ fontSize: 10, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}><Rich>{isProfit ? "✦ Ganancia neta total" : "⚠ Pérdida neta total"}</Rich></div>
-              <div style={{ fontSize: "clamp(26px,4vw,40px)", fontWeight: 900, letterSpacing: "-0.03em", color: isProfit ? C.green : C.red, lineHeight: 1 }}>{isProfit ? "" : "−"}{fmt(R.gananciaNet)}</div>
+              <div style={{ fontSize: 10, color: C.textMuted, marginBottom: 4 }}><Rich>{isProfit ? "✦ Ganancia neta total" : "⚠ Pérdida neta total"}</Rich></div>
+              <div style={{ fontSize: "clamp(26px,4vw,40px)", fontWeight: 700, letterSpacing: "-0.03em", color: isProfit ? C.green : C.red, lineHeight: 1 }}>{isProfit ? "" : "−"}{fmt(R.gananciaNet)}</div>
               <div style={{ fontSize: 11, color: C.textMuted, marginTop: 4 }}>Margen: <span style={{ fontWeight: 700, color: isProfit ? C.green : C.red }}>{fmtPct(R.margen)}</span> · <Flag c={currency.flag} /> {currency.code}</div>
             </div>
             <div style={{ width: 48, height: 48, borderRadius: "50%", background: isProfit ? `${C.green}15` : `${C.red}15`, border: `2px solid ${isProfit ? C.green : C.red}40`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}><Ic n={isProfit ? "🚀" : "⚠"} /></div>
@@ -599,7 +600,7 @@ function FreeCalculator({ onUpgrade, onStartTrial, onHome, onOpenPro }) {
             ].map((m, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 + i * 0.04 }}
                 style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 13, padding: "14px 15px" }}>
-                <div style={{ fontSize: 10, color: C.textMuted, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}><Ic n={m.icon} /> {m.label}</div>
+                <div style={{ fontSize: 10, color: C.textMuted, fontWeight: 600, marginBottom: 6 }}><Ic n={m.icon} /> {m.label}</div>
                 <div style={{ fontSize: 18, fontWeight: 800, color: m.color }}>{m.value}</div>
               </motion.div>
             ))}
@@ -860,7 +861,7 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
       {trialDaysLeft > 0 && <div style={{ padding: "12px 12px 0" }}><TrialBanner daysLeft={trialDaysLeft} onUpgrade={onUpgrade} /></div>}
 
       <MobileProfitBar R={R} fmt={fmt} isProfit={isProfit} />
-      <div className="main-layout" style={{ maxWidth: 1300, margin: "0 auto", padding: "16px 12px 40px", display: "grid", gridTemplateColumns: "320px minmax(0,1fr)", gap: 16, alignItems: "start" }}>
+      <div className="main-layout" style={{ maxWidth: 1300, margin: "0 auto", padding: "16px 12px 40px", display: "grid", gridTemplateColumns: "320px minmax(0,1fr)", gap: 24, alignItems: "start" }}>
 
         {/* LEFT */}
         <motion.div className="left-panel" initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }}
@@ -884,16 +885,16 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
           <Toggle value={inputs.recupera} onChange={set("recupera")} />
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7, marginTop: 10 }}>
             <div style={{ background: `${C.purple}0A`, border: `1px solid ${C.purple}25`, borderRadius: 8, padding: "8px 10px" }}>
-              <div style={{ fontSize: 9, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 2 }}>Dropi</div>
+              <div style={{ fontSize: 9, color: C.textMuted, marginBottom: 2 }}>Dropi</div>
               <div style={{ fontSize: 17, fontWeight: 800, color: C.purple }}>2.5%</div>
             </div>
             <div style={{ background: `${C.amber}0A`, border: `1px solid ${C.amber}25`, borderRadius: 8, padding: "8px 10px" }}>
-              <div style={{ fontSize: 9, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 2 }}>Flete</div>
+              <div style={{ fontSize: 9, color: C.textMuted, marginBottom: 2 }}>Flete</div>
               <div style={{ fontSize: 17, fontWeight: 800, color: C.amber }}>40%</div>
             </div>
           </div>
           <div style={{ marginTop: 10, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 12px" }}>
-            <div style={{ fontSize: 9, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 7 }}>Ganancia por pedido</div>
+            <div style={{ fontSize: 9, color: C.textMuted, marginBottom: 7 }}>Ganancia por pedido</div>
             {[
               { label: "+ Precio", val: inputs.precio, pos: true },
               { label: "− Producto", val: inputs.costo },
@@ -920,8 +921,8 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
             style={{ background: isProfit ? `${C.green}0A` : `${C.red}0A`, border: `1.5px solid ${isProfit ? C.green : C.red}40`, borderRadius: 16, padding: "16px 20px", marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14 }}>
             <div>
-              <div style={{ fontSize: 10, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}><Rich>{isProfit ? "✦ Ganancia neta total" : "⚠ Pérdida neta total"}</Rich></div>
-              <div style={{ fontSize: "clamp(24px,4vw,40px)", fontWeight: 900, letterSpacing: "-0.03em", color: isProfit ? C.green : C.red, lineHeight: 1 }}>{isProfit ? "" : "−"}{fmt(R.gananciaNet)}</div>
+              <div style={{ fontSize: 10, color: C.textMuted, marginBottom: 4 }}><Rich>{isProfit ? "✦ Ganancia neta total" : "⚠ Pérdida neta total"}</Rich></div>
+              <div style={{ fontSize: "clamp(24px,4vw,40px)", fontWeight: 700, letterSpacing: "-0.03em", color: isProfit ? C.green : C.red, lineHeight: 1 }}>{isProfit ? "" : "−"}{fmt(R.gananciaNet)}</div>
               <div style={{ fontSize: 11, color: C.textMuted, marginTop: 4 }}>Margen: <span style={{ fontWeight: 700, color: isProfit ? C.green : C.red }}>{fmtPct(R.margen)}</span> · <Flag c={currency.flag} /> {currency.code}</div>
             </div>
             <div style={{ textAlign: "right", flexShrink: 0 }}>
@@ -955,7 +956,7 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
                       { label: "Devoluciones", val: fmtNum(R.devoluciones), color: C.red, icon: "↩️" },
                     ].map((m, i) => (
                       <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "13px 12px" }}>
-                        <div style={{ fontSize: 9, color: C.textMuted, textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.07em", marginBottom: 6 }}><Ic n={m.icon} /> {m.label}</div>
+                        <div style={{ fontSize: 9, color: C.textMuted, fontWeight: 600, marginBottom: 6 }}><Ic n={m.icon} /> {m.label}</div>
                         <div style={{ fontSize: 20, fontWeight: 800, color: m.color }}>{m.val}</div>
                       </div>
                     ))}
@@ -973,7 +974,7 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
                       { label: "Perdido logística", val: fmt(R.perdidaFlete_dev), color: C.amber, icon: "🚚" },
                     ].map((m, i) => (
                       <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "13px 12px" }}>
-                        <div style={{ fontSize: 9, color: C.textMuted, textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.07em", marginBottom: 6 }}><Ic n={m.icon} /> {m.label}</div>
+                        <div style={{ fontSize: 9, color: C.textMuted, fontWeight: 600, marginBottom: 6 }}><Ic n={m.icon} /> {m.label}</div>
                         <div style={{ fontSize: 17, fontWeight: 800, color: m.color }}>{m.val}</div>
                       </div>
                     ))}
@@ -1022,13 +1023,13 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
                             style={{ transition: "stroke-dashoffset 1s ease", filter: `drop-shadow(0 0 6px ${health.score >= 75 ? C.green : health.score >= 50 ? C.amber : C.red})` }} />
                         </svg>
                         <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                          <div style={{ fontSize: 22, fontWeight: 900, color: health.score >= 75 ? C.green : health.score >= 50 ? C.amber : C.red, lineHeight: 1 }}>{health.score}</div>
+                          <div style={{ fontSize: 22, fontWeight: 700, color: health.score >= 75 ? C.green : health.score >= 50 ? C.amber : C.red, lineHeight: 1 }}>{health.score}</div>
                           <div style={{ fontSize: 9, color: C.textMuted }}>/ 100</div>
                         </div>
                       </div>
                       <div>
-                        <div style={{ fontSize: 10, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Puntuación de salud</div>
-                        <div style={{ fontSize: 22, fontWeight: 900, color: health.score >= 75 ? C.green : health.score >= 50 ? C.amber : C.red, marginBottom: 4 }}>
+                        <div style={{ fontSize: 10, color: C.textMuted, marginBottom: 4 }}>Puntuación de salud</div>
+                        <div style={{ fontSize: 22, fontWeight: 700, color: health.score >= 75 ? C.green : health.score >= 50 ? C.amber : C.red, marginBottom: 4 }}>
                           {health.score >= 75 ? "Saludable" : health.score >= 50 ? "En riesgo" : "Crítico"}
                         </div>
                         <div style={{ fontSize: 12, color: C.textMuted }}>{health.issues.length} problema(s) · {health.wins.length} punto(s) positivo(s)</div>
@@ -1039,7 +1040,7 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
                         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
                           <span style={{ fontSize: 12 }}><Ic n={issue.severity === "urgente" ? "🚨" : "⚠"} /></span>
                           <span style={{ fontSize: 12, fontWeight: 700, color: issue.severity === "urgente" ? C.red : C.amber }}>{issue.label}</span>
-                          <span style={{ background: `${issue.severity === "urgente" ? C.red : C.amber}20`, color: issue.severity === "urgente" ? C.red : C.amber, fontSize: 9, fontWeight: 700, borderRadius: 4, padding: "2px 6px", textTransform: "uppercase" }}>{issue.severity}</span>
+                          <span style={{ background: `${issue.severity === "urgente" ? C.red : C.amber}20`, color: issue.severity === "urgente" ? C.red : C.amber, fontSize: 9, fontWeight: 700, borderRadius: 4, padding: "2px 6px" }}>{issue.severity}</span>
                         </div>
                         <div style={{ fontSize: 11, color: C.textMuted }}>{issue.detail}</div>
                       </div>
@@ -1051,11 +1052,11 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
 
                   {/* Risk level */}
                   <div style={{ background: `${risk.color}08`, border: `1.5px solid ${risk.color}40`, borderRadius: 16, padding: "20px", marginBottom: 12 }}>
-                    <div style={{ fontSize: 11, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 8 }}><Ic n="⚡" /> Nivel de riesgo</div>
+                    <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 8 }}><Ic n="⚡" /> Nivel de riesgo</div>
                     <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 10 }}>
                       <div style={{ fontSize: 36, color: risk.color }}><Ic n={risk.emoji} /></div>
                       <div>
-                        <div style={{ fontSize: 24, fontWeight: 900, color: risk.color }}>{risk.level}</div>
+                        <div style={{ fontSize: 24, fontWeight: 700, color: risk.color }}>{risk.level}</div>
                         <div style={{ fontSize: 13, color: C.textDim }}>{risk.desc}</div>
                       </div>
                     </div>
@@ -1066,7 +1067,7 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
                         { label: "ROAS vs BE", val: `${R.roas.toFixed(1)}x vs ${R.roasBreakEven.toFixed(1)}x`, ok: R.roas >= R.roasBreakEven },
                       ].map((item, i) => (
                         <div key={i} style={{ background: item.ok ? `${C.green}08` : `${C.red}08`, border: `1px solid ${item.ok ? C.green : C.red}25`, borderRadius: 9, padding: "9px 10px" }}>
-                          <div style={{ fontSize: 9, color: C.textMuted, textTransform: "uppercase", marginBottom: 3 }}>{item.label}</div>
+                          <div style={{ fontSize: 9, color: C.textMuted, marginBottom: 3 }}>{item.label}</div>
                           <div style={{ fontSize: 13, fontWeight: 700, color: item.ok ? C.green : C.red }}>{item.val}</div>
                         </div>
                       ))}
@@ -1079,8 +1080,8 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
                     <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 14 }}>Los límites críticos de tu campaña. Si cruzas estas líneas, pierdes dinero.</div>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                       <div style={{ background: `${C.red}08`, border: `1px solid ${C.red}25`, borderRadius: 12, padding: "14px" }}>
-                        <div style={{ fontSize: 10, color: C.textMuted, textTransform: "uppercase", marginBottom: 6 }}><Ic n="🚨" /> Entrega mínima rentable</div>
-                        <div style={{ fontSize: 26, fontWeight: 900, color: C.red }}>{breakPts.minEntrega}%</div>
+                        <div style={{ fontSize: 10, color: C.textMuted, marginBottom: 6 }}><Ic n="🚨" /> Entrega mínima rentable</div>
+                        <div style={{ fontSize: 26, fontWeight: 700, color: C.red }}>{breakPts.minEntrega}%</div>
                         <div style={{ fontSize: 11, color: C.textMuted, marginTop: 4 }}>
                           {inputs.pctEntregados > breakPts.minEntrega
                             ? `Correcto: Estás ${inputs.pctEntregados - breakPts.minEntrega}pp por encima del límite`
@@ -1088,8 +1089,8 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
                         </div>
                       </div>
                       <div style={{ background: `${C.amber}08`, border: `1px solid ${C.amber}25`, borderRadius: 12, padding: "14px" }}>
-                        <div style={{ fontSize: 10, color: C.textMuted, textTransform: "uppercase", marginBottom: 6 }}><Ic n="⚠" /> CPA máximo seguro</div>
-                        <div style={{ fontSize: 26, fontWeight: 900, color: C.amber }}>{fmt(breakPts.maxCPA)}</div>
+                        <div style={{ fontSize: 10, color: C.textMuted, marginBottom: 6 }}><Ic n="⚠" /> CPA máximo seguro</div>
+                        <div style={{ fontSize: 26, fontWeight: 700, color: C.amber }}>{fmt(breakPts.maxCPA)}</div>
                         <div style={{ fontSize: 11, color: C.textMuted, marginTop: 4 }}>
                           {inputs.cpa <= breakPts.maxCPA
                             ? `Correcto: Tu CPA está ${fmt(breakPts.maxCPA - inputs.cpa)} por debajo del límite`
@@ -1136,9 +1137,9 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
               {tab === "invisible" && (
                 <div>
                   <div style={{ background: C.card, border: `1px solid ${C.red}25`, borderRadius: 16, padding: "20px", marginBottom: 14, textAlign: "center" }}>
-                    <div style={{ fontSize: 11, color: C.red, textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700, marginBottom: 8 }}><Ic n="🔍" /> Pérdida Invisible</div>
+                    <div style={{ fontSize: 11, color: C.red, fontWeight: 700, marginBottom: 8 }}><Ic n="🔍" /> Pérdida Invisible</div>
                     <div style={{ fontSize: 13, color: C.textDim, marginBottom: 16, lineHeight: 1.6 }}>Este es el dinero que <strong style={{ color: C.text }}>podrías estar ganando</strong> si optimizas los puntos clave de tu campaña. No es lo que pierdes — es lo que dejas de ganar.</div>
-                    <div style={{ fontSize: 38, fontWeight: 900, color: C.red, letterSpacing: "-0.02em", marginBottom: 6 }}>−{fmt(invisible.total)}</div>
+                    <div style={{ fontSize: 38, fontWeight: 700, color: C.red, letterSpacing: "-0.02em", marginBottom: 6 }}>−{fmt(invisible.total)}</div>
                     <div style={{ fontSize: 13, color: C.textMuted }}>dinero que estás dejando sobre la mesa</div>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -1153,7 +1154,7 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
                         <div style={{ flex: 1 }}>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 5, flexWrap: "wrap", gap: 8 }}>
                             <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{item.label}</div>
-                            <div style={{ fontSize: 16, fontWeight: 900, color: C.red }}>−{fmt(item.amount)}</div>
+                            <div style={{ fontSize: 16, fontWeight: 700, color: C.red }}>−{fmt(item.amount)}</div>
                           </div>
                           <div style={{ fontSize: 12, color: C.textDim, marginBottom: 8, lineHeight: 1.5 }}>{item.desc}</div>
                           <div style={{ background: `${C.green}08`, border: `1px solid ${C.green}20`, borderRadius: 8, padding: "7px 10px", fontSize: 11, color: C.green }}>
@@ -1178,7 +1179,7 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
                         style={{ background: scenarioMode === sc.key ? `${sc.color}12` : C.card, border: `1.5px solid ${scenarioMode === sc.key ? sc.color : C.border}`, borderRadius: 14, padding: "16px", cursor: "pointer", transition: "all 0.2s" }}>
                         <div style={{ fontSize: 12, fontWeight: 800, color: sc.color, marginBottom: 3 }}>{sc.label}</div>
                         <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 10 }}>{sc.desc}</div>
-                        <div style={{ fontSize: 22, fontWeight: 900, color: sc.ganancia >= 0 ? C.green : C.red }}>{sc.ganancia >= 0 ? "" : "−"}{fmt(sc.ganancia)}</div>
+                        <div style={{ fontSize: 22, fontWeight: 700, color: sc.ganancia >= 0 ? C.green : C.red }}>{sc.ganancia >= 0 ? "" : "−"}{fmt(sc.ganancia)}</div>
                         <div style={{ fontSize: 10, color: C.textMuted, marginTop: 3 }}>Margen: {fmtPct(sc.margen)} · {sc.entregados} entregados</div>
                         <div style={{ height: 1, background: C.border, margin: "10px 0" }} />
                         <div style={{ display: "flex", flexDirection: "column", gap: 3, fontSize: 10, color: C.textMuted }}>
@@ -1262,7 +1263,7 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
                           </div>
                         </div>
                         <div style={{ textAlign: "right", flexShrink: 0 }}>
-                          <div style={{ fontSize: 16, fontWeight: 900, color: op.gain >= 0 ? C.green : C.red }}>{op.gain >= 0 ? "+" : "−"}{fmt(op.gain)}</div>
+                          <div style={{ fontSize: 16, fontWeight: 700, color: op.gain >= 0 ? C.green : C.red }}>{op.gain >= 0 ? "+" : "−"}{fmt(op.gain)}</div>
                           <div style={{ fontSize: 9, color: C.textMuted }}>ganancia adicional</div>
                         </div>
                       </motion.div>
@@ -1458,6 +1459,46 @@ Sé brutal y honesto. Usa números. Máximo 400 palabras.`;
 }
 
 // ─── LANDING PAGE ─────────────────────────────────────────────────────────────
+function HeroPreview() {
+  const rows = [
+    { l: "Ingresos", v: "$1.754,51", w: 100, c: C.green },
+    { l: "Gastos", v: "$1.156,36", w: 66, c: C.red },
+    { l: "Ganancia", v: "$598,15", w: 34, c: C.accent },
+  ];
+  return (
+    <div aria-hidden="true" style={{ background: C.card, border: `1px solid ${C.borderBright}`, borderRadius: 16, padding: 22, boxShadow: "0 40px 90px rgba(0,0,0,0.55)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: C.textDim }}>Campaña de ejemplo</div>
+        <div style={{ fontSize: 11, fontWeight: 600, color: C.green, background: `${C.green}14`, border: `1px solid ${C.green}30`, borderRadius: 99, padding: "3px 10px" }}>Seguro · 92/100</div>
+      </div>
+      <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 4 }}>Ganancia neta</div>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 20 }}>
+        <div style={{ fontSize: 40, fontWeight: 700, letterSpacing: "-0.03em", color: C.green }}>$598,15</div>
+        <div style={{ fontSize: 13, color: C.textDim }}>margen 34,1%</div>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 10, marginBottom: 20 }}>
+        {[["Confirmados", "75"], ["Entregados", "49"], ["Devueltos", "26"]].map(([l, v]) => (
+          <div key={l} style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 12px" }}>
+            <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 2 }}>{l}</div>
+            <div style={{ fontSize: 20, fontWeight: 700 }}>{v}</div>
+          </div>
+        ))}
+      </div>
+      {rows.map(r => (
+        <div key={r.l} style={{ marginBottom: 12 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 5 }}>
+            <span style={{ color: C.textDim }}>{r.l}</span><span style={{ color: C.text, fontWeight: 600 }}>{r.v}</span>
+          </div>
+          <div style={{ height: 6, borderRadius: 99, background: C.border }}><div style={{ width: `${r.w}%`, height: "100%", borderRadius: 99, background: r.c }} /></div>
+        </div>
+      ))}
+      <div style={{ marginTop: 18, paddingTop: 16, borderTop: `1px solid ${C.border}`, display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+        <span style={{ color: C.textMuted }}>Pérdida invisible detectada</span><span style={{ color: C.amber, fontWeight: 600 }}>$212,40 al mes</span>
+      </div>
+    </div>
+  );
+}
+
 function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
   return (
     <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Plus Jakarta Sans','Inter',system-ui,sans-serif", color: C.text }}>
@@ -1479,36 +1520,33 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
       </nav>
 
       {/* Hero */}
-      <section style={{ padding: "80px 20px 60px", textAlign: "center", position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", top: -100, left: "50%", transform: "translateX(-50%)", width: 800, height: 500, background: `radial-gradient(ellipse,${C.accentGlow},transparent 65%)`, pointerEvents: "none" }} />
-        <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: `${C.green}12`, border: `1px solid ${C.green}30`, borderRadius: 99, padding: "6px 16px", fontSize: 12, color: C.green, fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 24 }}>
-            <Ic n="✦" /> La herramienta que los dropshippers de LATAM necesitaban
-          </div>
-          <h1 style={{ fontSize: "clamp(30px,5.5vw,60px)", fontWeight: 900, letterSpacing: "-0.03em", margin: "0 0 20px", lineHeight: 1.08, maxWidth: 820, marginLeft: "auto", marginRight: "auto" }}>
-            Deja de perder dinero en campañas que parecen rentables y no lo son
-          </h1>
-          <p style={{ fontSize: "clamp(14px,2vw,17px)", color: C.textDim, maxWidth: 560, margin: "0 auto 36px", lineHeight: 1.75 }}>
-            Calcula tu ganancia real incluyendo devoluciones, confirmaciones, comisión Dropi y publicidad. Con puntuación de salud, IA, benchmarks LATAM y simulador de escalado. <strong style={{ color: C.text }}>16 monedas de toda Latinoamérica.</strong>
-          </p>
-          <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-            <motion.button onClick={onOpenFree} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-              style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 13, padding: "14px 28px", color: C.textDim, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
-              Usar gratis →
-            </motion.button>
-            <motion.button onClick={onStartTrial} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-              style={{ background: C.gold, border: "none", borderRadius: 13, padding: "14px 28px", color: C.bg, fontSize: 14, fontWeight: 800, cursor: "pointer", fontFamily: "inherit", boxShadow: `0 8px 32px ${C.amberGlow}` }}>
-              <Ic n="⭐" /> Probar PRO gratis 3 días
-            </motion.button>
-          </div>
-          <div style={{ marginTop: 16, fontSize: 11, color: C.textMuted }}><Ic n="✓" /> Sin tarjeta de crédito &nbsp;·&nbsp; <Ic n="✓" /> Sin registro &nbsp;·&nbsp; <Ic n="✓" /> 16 monedas LATAM</div>
-        </motion.div>
-        <div style={{ marginTop: 40, display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 6, maxWidth: 560, marginLeft: "auto", marginRight: "auto" }}>
-          {CURRENCIES.map(c => (
-            <div key={c.code} title={c.name} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 7, padding: "4px 8px", fontSize: 11, color: C.textDim, display: "flex", alignItems: "center", gap: 4 }}>
-              <Flag c={c.flag} />{c.code}
+      <section style={{ padding: "76px 20px 56px" }}>
+        <div className="hero-grid" style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "minmax(0,1.02fr) minmax(0,1fr)", gap: 56, alignItems: "center" }}>
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <h1 style={{ fontSize: "clamp(34px,4.6vw,54px)", fontWeight: 700, letterSpacing: "-0.035em", margin: "0 0 20px", lineHeight: 1.06 }}>
+              Deja de perder dinero en campañas que parecen rentables y no lo son
+            </h1>
+            <p style={{ fontSize: 16, color: C.textDim, maxWidth: 500, margin: "0 0 32px", lineHeight: 1.7 }}>
+              Calcula tu ganancia real con devoluciones, confirmaciones, comisión de Dropi y publicidad. Recibe un puntaje de salud, benchmarks de LATAM y un simulador para escalar sin perder.
+            </p>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <button onClick={onStartTrial} style={{ background: C.gold, border: "none", borderRadius: 10, padding: "13px 24px", color: C.bg, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                Probar PRO gratis 3 días
+              </button>
+              <button onClick={onOpenFree} style={{ background: "transparent", border: `1px solid ${C.borderBright}`, borderRadius: 10, padding: "13px 24px", color: C.text, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                Usar la versión gratis
+              </button>
             </div>
-          ))}
+            <div style={{ marginTop: 18, display: "flex", gap: 18, flexWrap: "wrap", fontSize: 12, color: C.textMuted }}>
+              <span><Ic n="✓" /> Sin tarjeta</span><span><Ic n="✓" /> Sin registro</span><span><Ic n="✓" /> 16 monedas de LATAM</span>
+            </div>
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }}>
+            <HeroPreview />
+          </motion.div>
+        </div>
+        <div style={{ maxWidth: 1100, margin: "44px auto 0", fontSize: 12, color: C.textMuted, lineHeight: 1.9 }}>
+          Disponible en {CURRENCIES.map(c => c.code).join(", ")}.
         </div>
       </section>
 
@@ -1516,15 +1554,14 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
       <section id="precios" style={{ padding: "20px 20px 60px" }}>
         <div style={{ maxWidth: 900, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 40 }}>
-            <div style={{ fontSize: 12, color: C.accent, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>Planes</div>
-            <div style={{ fontSize: "clamp(22px,3vw,32px)", fontWeight: 900, color: C.text, letterSpacing: "-0.02em" }}>Elige tu nivel</div>
+                        <div style={{ fontSize: "clamp(22px,3vw,32px)", fontWeight: 700, color: C.text, letterSpacing: "-0.02em" }}>Elige tu nivel</div>
             <div style={{ fontSize: 14, color: C.textMuted, marginTop: 8 }}>Gratis para calcular. PRO para escalar y ganar más.</div>
           </div>
           <div className="pricing-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             {/* Free */}
-            <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, padding: "26px 22px" }}>
+            <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "26px 22px" }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: C.textDim, marginBottom: 6 }}>Gratis</div>
-              <div style={{ fontSize: 34, fontWeight: 900, color: C.text, letterSpacing: "-0.03em" }}>$0</div>
+              <div style={{ fontSize: 34, fontWeight: 700, color: C.text, letterSpacing: "-0.03em" }}>$0</div>
               <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 4 }}>Para siempre</div>
               <div style={{ fontSize: 12, color: C.textDim, marginBottom: 18, lineHeight: 1.5 }}>Calcula si tu campaña es rentable. Rápido y simple.</div>
               {["Calculadora completa", "16 monedas LATAM", "Score de salud básico", "1 gráfico de pedidos", "Resultados principales"].map((f, i) => (
@@ -1542,10 +1579,10 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
             </div>
 
             {/* Pro */}
-            <div style={{ background: C.card, border: `2px solid ${C.gold}40`, borderRadius: 20, padding: "26px 22px", position: "relative" }}>
-              <div style={{ position: "absolute", top: -11, left: "50%", transform: "translateX(-50%)", background: C.gold, borderRadius: 99, padding: "3px 14px", fontSize: 10, color: C.bg, fontWeight: 800, whiteSpace: "nowrap" }}><Ic n="⭐" /> SISTEMA PROFESIONAL</div>
+            <div style={{ background: C.card, border: `1px solid ${C.gold}60`, borderRadius: 14, padding: "26px 22px", position: "relative" }}>
+              <div style={{ position: "absolute", top: -11, left: "50%", transform: "translateX(-50%)", background: C.gold, borderRadius: 99, padding: "3px 14px", fontSize: 10, color: C.bg, fontWeight: 800, whiteSpace: "nowrap" }}>Recomendado</div>
               <div style={{ fontSize: 13, fontWeight: 700, color: C.gold, marginBottom: 6 }}>PRO</div>
-              <div style={{ fontSize: 34, fontWeight: 900, color: C.text, letterSpacing: "-0.03em" }}>$5.99</div>
+              <div style={{ fontSize: 34, fontWeight: 700, color: C.text, letterSpacing: "-0.03em" }}>$5.99</div>
               <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 4 }}>por mes · cancela cuando quieras</div>
               <div style={{ fontSize: 12, color: C.textDim, marginBottom: 18, lineHeight: 1.5 }}>Sistema operativo de dropshipping COD. Escala, optimiza y toma decisiones profesionales.</div>
               {[
@@ -1583,8 +1620,7 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
       <section id="nosotros" style={{ padding: "10px 20px 60px" }}>
         <div style={{ maxWidth: 1000, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 40 }}>
-            <div style={{ fontSize: 12, color: C.accent, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>Quiénes somos</div>
-            <div style={{ fontSize: "clamp(22px,3vw,34px)", fontWeight: 900, color: C.text, letterSpacing: "-0.02em", lineHeight: 1.2 }}>
+                        <div style={{ fontSize: "clamp(22px,3vw,34px)", fontWeight: 700, color: C.text, letterSpacing: "-0.02em", lineHeight: 1.2 }}>
               Nació de perder dinero real.<br />
               <span style={{ color: C.gold }}>Se construyó para que tú no lo pierdas.</span>
             </div>
@@ -1592,21 +1628,21 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
           <div className="stack-m" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, alignItems: "center", marginBottom: 44 }}>
             <div>
               <div style={{ background: `${C.red}08`, border: `1px solid ${C.red}20`, borderRadius: 14, padding: "20px", marginBottom: 16 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: C.red, marginBottom: 7, textTransform: "uppercase", letterSpacing: "0.06em" }}><Ic n="⚠" /> El momento que lo cambió todo</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: C.red, marginBottom: 7, letterSpacing: "0.06em" }}><Ic n="⚠" /> El momento que lo cambió todo</div>
                 <p style={{ fontSize: 14, color: C.textDim, lineHeight: 1.8, margin: 0 }}>Era un martes por la noche. Tenía los números en la cabeza: 200 pedidos, precio $35, CPA $4. La matemática parecía perfecta. <strong style={{ color: C.text }}>Pero cuando llegó el dinero real, había perdido más de $600.</strong></p>
               </div>
               <p style={{ fontSize: 14, color: C.textDim, lineHeight: 1.8, marginBottom: 12 }}>Lo que no había calculado: que solo el 72% iba a confirmar. Que el 63% iba a recibir el paquete. Que cada devolución costaba el CPA más el 60% del flete.</p>
               <p style={{ fontSize: 14, color: C.textDim, lineHeight: 1.8 }}>Esa noche construí la herramienta que ojalá hubiera tenido desde el primer día.</p>
             </div>
             <div style={{ background: `${C.accent}08`, border: `1px solid ${C.accent}20`, borderRadius: 18, padding: "24px" }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: C.accent, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 14 }}><Ic n="📊" /> Lo que aprendimos a las malas</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: C.accent, marginBottom: 14 }}><Ic n="📊" /> Lo que aprendimos a las malas</div>
               {[
                 { stat: "40%", desc: "de dropshippers en LATAM pierden dinero en su primera campaña sin saberlo" },
                 { stat: "2–3x", desc: "es la diferencia entre el margen estimado y el real al incluir devoluciones" },
                 { stat: "$800+", desc: "es el promedio que un dropshipper pierde antes de entender el COD real" },
               ].map((item, i) => (
                 <div key={i} style={{ display: "flex", gap: 14, alignItems: "flex-start", marginBottom: i < 2 ? 14 : 0, paddingBottom: i < 2 ? 14 : 0, borderBottom: i < 2 ? `1px solid ${C.border}` : "none" }}>
-                  <div style={{ fontSize: 22, fontWeight: 900, color: C.accent, flexShrink: 0, lineHeight: 1, minWidth: 56 }}>{item.stat}</div>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: C.accent, flexShrink: 0, lineHeight: 1, minWidth: 56 }}>{item.stat}</div>
                   <div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.6, minWidth: 0 }}>{item.desc}</div>
                 </div>
               ))}
@@ -1621,7 +1657,7 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
               <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "18px 16px", textAlign: "center" }}>
                 <div style={{ width: 46, height: 46, borderRadius: "50%", background: `${m.color}20`, border: `2px solid ${m.color}40`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 800, color: m.color, margin: "0 auto 10px" }}>{m.initials}</div>
                 <div style={{ fontSize: 13, fontWeight: 800, color: C.text, marginBottom: 3 }}>{m.name}</div>
-                <div style={{ fontSize: 10, color: m.color, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 7 }}>{m.role}</div>
+                <div style={{ fontSize: 10, color: m.color, fontWeight: 600, marginBottom: 7 }}>{m.role}</div>
                 <div style={{ fontSize: 11, color: C.textMuted, lineHeight: 1.6 }}>{m.desc}</div>
               </div>
             ))}
@@ -1633,7 +1669,7 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
       <section id="faq" style={{ padding: "10px 20px 60px" }}>
         <div style={{ maxWidth: 620, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 26 }}>
-            <div style={{ fontSize: "clamp(18px,3vw,24px)", fontWeight: 900, color: C.text }}>Preguntas frecuentes</div>
+            <div style={{ fontSize: "clamp(18px,3vw,24px)", fontWeight: 700, color: C.text }}>Preguntas frecuentes</div>
           </div>
           {[
             { q: "¿Qué diferencia hay entre Gratis y PRO?", a: "Gratis te ayuda a calcular si una campaña es rentable. PRO te ayuda a escalar, optimizar y tomar decisiones profesionales con benchmarks LATAM, IA, escenarios, pérdida invisible, comparador de productos y más." },
@@ -1648,7 +1684,7 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
       {/* CTA */}
       <section style={{ padding: "10px 20px 80px" }}>
         <div style={{ maxWidth: 560, margin: "0 auto", textAlign: "center", background: C.card, border: `1px solid ${C.gold}25`, borderRadius: 22, padding: "40px 24px" }}>
-          <div style={{ fontSize: "clamp(20px,3vw,28px)", fontWeight: 900, color: C.text, letterSpacing: "-0.02em", marginBottom: 10 }}>¿Tu campaña es rentable de verdad?</div>
+          <div style={{ fontSize: "clamp(20px,3vw,28px)", fontWeight: 700, color: C.text, letterSpacing: "-0.02em", marginBottom: 10 }}>¿Tu campaña es rentable de verdad?</div>
           <div style={{ fontSize: 13, color: C.textMuted, marginBottom: 22, lineHeight: 1.7 }}>Descúbrelo en 30 segundos. Sin registro. Sin tarjeta.</div>
           <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
             <button onClick={onOpenFree} style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 12, padding: "12px 22px", color: C.textDim, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Usar gratis</button>
@@ -2079,13 +2115,13 @@ function FinanceCenter({ onBackToCalc, onHome, onBackToFree }) {
   // styles
   const card = { background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 16 };
   const inp = { background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 10px", color: C.text, fontSize: 12, fontFamily: "inherit", outline: "none", minWidth: 0, colorScheme: "dark" };
-  const th = { textAlign: "left", fontSize: 10, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.06em", padding: "8px 8px", borderBottom: `2px solid ${C.accent}`, whiteSpace: "nowrap" };
+  const th = { textAlign: "left", fontSize: 10, color: C.textMuted, padding: "8px 8px", borderBottom: `2px solid ${C.accent}`, whiteSpace: "nowrap" };
   const td = { fontSize: 12, color: C.text, padding: "8px 8px", borderBottom: `1px solid ${C.border}` };
   const btn = (color) => ({ background: color, border: "none", borderRadius: 8, padding: "9px 14px", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" });
   const kpi = (label, value, color, sub) => (
     <div style={{ ...card, borderLeft: `3px solid ${color}` }}>
-      <div style={{ fontSize: 10, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>{label}</div>
-      <div style={{ fontSize: "clamp(20px,3vw,28px)", fontWeight: 900, color, letterSpacing: "-0.02em" }}>{value}</div>
+      <div style={{ fontSize: 10, color: C.textMuted, marginBottom: 6 }}>{label}</div>
+      <div style={{ fontSize: "clamp(20px,3vw,28px)", fontWeight: 700, color, letterSpacing: "-0.02em" }}>{value}</div>
       {sub && <div style={{ fontSize: 10, color: C.textMuted, marginTop: 4 }}>{sub}</div>}
     </div>
   );
@@ -2123,7 +2159,7 @@ function FinanceCenter({ onBackToCalc, onHome, onBackToFree }) {
       <GlobalStyles />
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "18px 14px 50px" }}>
         <div style={{ marginBottom: 14 }}>
-          <div style={{ fontSize: 20, fontWeight: 900, letterSpacing: "-0.02em" }}><Ic n="💼" /> Control financiero</div>
+          <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: "-0.02em" }}><Ic n="💼" /> Control financiero</div>
           <div style={{ fontSize: 12, color: C.textMuted, marginTop: 3 }}>Capital, gastos, fondos de Dropi y saldo de tu negocio, mes a mes.</div>
           {!user && <div style={{ fontSize: 11, color: C.amber, marginTop: 6 }}>Inicia sesión para guardar tus finanzas en tu cuenta. Ahora se guardan solo en este navegador.</div>}
           <div className="show-mobile-only" style={{ fontSize: 10, color: status === "error" ? C.red : C.textMuted, marginTop: 6 }}>{statusText}</div>
@@ -2132,7 +2168,7 @@ function FinanceCenter({ onBackToCalc, onHome, onBackToFree }) {
         {needsSetup && (
           <div style={{ ...card, maxWidth: 480, margin: "30px auto", textAlign: "center", border: `1px solid ${C.gold}40` }}>
             <div style={{ fontSize: 34, marginBottom: 8 }}><Ic n="💰" /></div>
-            <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 6 }}>Empecemos por tu capital</div>
+            <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>Empecemos por tu capital</div>
             <div style={{ fontSize: 12, color: C.textDim, lineHeight: 1.6, marginBottom: 16 }}>¿Con cuánto dinero cuenta tu negocio hoy? Es tu punto de partida: a partir de ahí se calculan tus gastos, fondos de Dropi y saldo.</div>
             <div style={{ textAlign: "left", fontSize: 11, color: C.textMuted, marginBottom: 4 }}>Capital actual ($)</div>
             <input type="number" min={0} step="0.01" placeholder="Ej: 1500" value={setupAmt} onChange={e => setSetupAmt(e.target.value)} onKeyDown={e => e.key === "Enter" && finishSetup()} style={{ ...inp, width: "100%", fontSize: 18, fontWeight: 700, marginBottom: 12 }} />
