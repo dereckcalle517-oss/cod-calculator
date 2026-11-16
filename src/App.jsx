@@ -1787,7 +1787,7 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
               Deja de perder dinero en campañas que parecen rentables y no lo son
             </h1>
             <p style={{ fontSize: 16, color: C.textDim, maxWidth: 500, margin: "0 0 32px", lineHeight: 1.7 }}>
-              Calcula tu ganancia real con todo incluido: costo de envío, CPA de publicidad, devoluciones y comisión de Dropi. Recibe un puntaje de salud, benchmarks de LATAM y un simulador para escalar sin perder.
+              Calcula tu ganancia real con envío, CPA, devoluciones y comisión de Dropi incluidos.
             </p>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
               {user ? (
@@ -1809,9 +1809,6 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
             <HeroPreview />
           </motion.div>
         </div>
-        <div style={{ maxWidth: 1100, margin: "44px auto 0", fontSize: 12, color: C.textMuted, lineHeight: 1.9 }}>
-          Disponible en {CURRENCIES.map(c => c.code).join(", ")}.
-        </div>
       </section>
 
       {/* CPA real */}
@@ -1819,8 +1816,7 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
         <div className="hero-grid" style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 56, alignItems: "center" }}>
           <div>
             <h2 style={{ fontSize: "clamp(26px,3.4vw,38px)", fontWeight: 700, letterSpacing: "-0.03em", margin: "0 0 14px", lineHeight: 1.12 }}>Tu Ads Manager dice $4. Tu CPA real es $8,21.</h2>
-            <p style={{ fontSize: 15, color: C.textDim, lineHeight: 1.75, margin: "0 0 14px", maxWidth: 480 }}>En contraentrega no cuenta cada pedido que genera tu anuncio, sino los que se entregan. Si de 100 pedidos solo llegan 49, lo que gastaste en los 100 lo pagan esos 49.</p>
-            <p style={{ fontSize: 15, color: C.textDim, lineHeight: 1.75, margin: "0 0 24px", maxWidth: 480 }}>Nexus COD te dice tu CPA real y el CPA máximo que puedes pagar sin perder dinero, para que sepas cuándo escalar y cuándo apagar.</p>
+            <p style={{ fontSize: 15, color: C.textDim, lineHeight: 1.75, margin: "0 0 24px", maxWidth: 480 }}>En contraentrega solo cuentan los pedidos que se entregan. Lo que gastas en los demás lo pagan los que sí llegan.</p>
             <button onClick={onOpenFree} style={{ background: C.text, border: "none", borderRadius: 10, padding: "12px 22px", color: C.bg, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Calcular mi CPA real</button>
           </div>
           <div style={{ background: C.card, border: `1px solid ${C.borderBright}`, borderRadius: 18, padding: 22 }}>
@@ -1850,71 +1846,23 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
         </div>
       </section>
 
-      {/* Testear productos */}
+      {/* Beneficios */}
       <section style={{ padding: "8px 20px 72px" }}>
-        <div className="hero-grid" style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 56, alignItems: "center" }}>
-          <div>
-            <h2 style={{ fontSize: "clamp(26px,3.4vw,38px)", fontWeight: 700, letterSpacing: "-0.03em", margin: "0 0 14px", lineHeight: 1.12 }}>¿Quieres testear un producto y saber si es rentable?</h2>
-            <p style={{ fontSize: 15, color: C.textDim, lineHeight: 1.7, margin: "0 0 26px", maxWidth: 480 }}>
-              Antes de gastar en publicidad, ponle números a tu idea. Ingresa lo que crees que va a costar y descubre si el producto deja ganancia o te va a dejar en pérdida.
-            </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 28 }}>
-              {[
-                ["Ingresa tus costos", "Costo del producto, precio de venta, costo de envío y el CPA que esperas pagar por pedido."],
-                ["Ajusta tu realidad", "Cambia el porcentaje de confirmados y entregados según lo que te pasa en tus pedidos."],
-                ["Mira tus números", "Ganancia por pedido, ROAS de equilibrio y cuánto pierdes en devoluciones, publicidad y envío."],
-              ].map(([t, d], i) => (
-                <div key={t} style={{ display: "flex", gap: 14 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: 8, background: C.accentDim, color: C.accent, fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{i + 1}</div>
-                  <div><div style={{ fontSize: 14, fontWeight: 700, marginBottom: 2 }}>{t}</div><div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.6 }}>{d}</div></div>
-                </div>
-              ))}
-            </div>
-            <button onClick={onOpenFree} style={{ background: C.text, border: "none", borderRadius: 10, padding: "13px 24px", color: C.bg, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Calcular mi producto</button>
-          </div>
-          <div aria-hidden="true" style={{ background: C.card, border: `1px solid ${C.borderBright}`, borderRadius: 16, padding: 22, boxShadow: "0 30px 70px rgba(0,0,0,0.45)" }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: C.textDim, marginBottom: 16 }}>Test de producto</div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: 10, marginBottom: 18 }}>
-              {[["Costo del producto", "$8,00"], ["Precio de venta", "$35,99"], ["Costo de envío", "$5,00"], ["CPA por pedido", "$4,00"]].map(([l, v]) => (
-                <div key={l} style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 12px" }}>
-                  <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 2 }}>{l}</div>
-                  <div style={{ fontSize: 17, fontWeight: 700 }}>{v}</div>
-                </div>
-              ))}
-            </div>
-            <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 16 }}>
-              {[["Ganancia por pedido", "$18,09", C.green], ["ROAS de equilibrio", "1,63x", C.amber], ["Pérdida por devoluciones", "−$183,75", C.red]].map(([l, v, c]) => (
-                <div key={l} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10, fontSize: 13 }}>
-                  <span style={{ color: C.textDim }}>{l}</span><span style={{ fontWeight: 700, fontSize: 16, color: c }}>{v}</span>
-                </div>
-              ))}
-              <div style={{ marginTop: 14, background: `${C.green}14`, border: `1px solid ${C.green}33`, borderRadius: 10, padding: "10px 14px", fontSize: 13, color: C.green, fontWeight: 600 }}>Producto rentable con estos números</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Costos incluidos */}
-      <section style={{ padding: "16px 20px 72px" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto 36px" }}>
-            <h2 style={{ fontSize: "clamp(24px,3.2vw,34px)", fontWeight: 700, letterSpacing: "-0.03em", margin: "0 0 10px", lineHeight: 1.15 }}>Cada costo que se come tu ganancia, ya incluido</h2>
-            <p style={{ fontSize: 15, color: C.textDim, lineHeight: 1.7, margin: 0 }}>Casi todos calculan solo precio menos costo del producto. Nexus COD descuenta todo lo que de verdad sale de tu bolsillo.</p>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(230px,1fr))", gap: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(250px,1fr))", gap: 14 }}>
             {[
-              { i: "truck", t: "Costo de envío", d: "El flete de cada pedido entregado y el que pierdes cada vez que hay una devolución." },
-              { i: "megaphone", t: "CPA de publicidad", d: "Lo que gastas por pedido generado, incluido lo invertido en pedidos que nunca se confirman o se devuelven." },
-              { i: "undo", t: "Confirmaciones y devoluciones", d: "Cuántos pedidos se confirman, cuántos llegan de verdad y cuánto te cuesta cada devolución." },
-              { i: "building", t: "Comisión de Dropi", d: "La comisión por cada pedido entregado, descontada de tu ganancia real." },
+              { i: "dollar", t: "Sabes si ganas o pierdes", d: "Tu ganancia real por pedido, con todos los costos incluidos." },
+              { i: "target", t: "Sabes cuánto puedes pagar por pedido", d: "Tu CPA máximo para no perder dinero." },
+              { i: "search", t: "Sabes si un producto vale la pena", d: "Pruébalo con números antes de invertir en publicidad." },
             ].map(x => (
               <div key={x.t} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 22 }}>
-                <div style={{ width: 38, height: 38, borderRadius: 10, background: C.accentDim, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16, fontSize: 18 }}><Ic n={x.i} size={19} /></div>
+                <div style={{ width: 38, height: 38, borderRadius: 10, background: C.accentDim, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}><Ic n={x.i} size={19} /></div>
                 <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 6 }}>{x.t}</div>
                 <div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.65 }}>{x.d}</div>
               </div>
             ))}
           </div>
+          <div style={{ textAlign: "center", marginTop: 18, fontSize: 13, color: C.textMuted }}>Incluye envío, devoluciones, CPA y comisión de Dropi.</div>
         </div>
       </section>
 
