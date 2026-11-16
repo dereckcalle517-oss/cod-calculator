@@ -2652,22 +2652,38 @@ function trkRecs(p, rows, fmt, today) {
   const recs = [];
   if (!rows.length) return recs;
   const a = trkSum(rows.slice(-3).map(r => r.c));
-  if (a.ent > 0 && a.cpaAvg > a.cpaMax) recs.push({ tone: "red", title: "Estás perdiendo dinero por pedido entregado", text: `Tu CPA de los últimos días es ${fmt(a.cpaAvg)} y tu máximo es ${fmt(a.cpaMax)}. Baja el presupuesto o pausa los anuncios que más gastan hasta que el CPA vuelva por debajo del máximo.` });
+  const perDay = a.pedidos / Math.max(1, rows.slice(-3).length);
+  const lowerSteps = [
+    "Pausa los anuncios que más gastan y menos pedidos traen; deja solo los mejores.",
+    "Sube 2 o 3 creativos nuevos con otro gancho (problema, resultado, testimonio) y compáralos con los actuales.",
+    "Haz la oferta más atractiva: combo 2x1, segundo con descuento, regalo o envío gratis. Más conversión baja el CPA.",
+    "Revisa la página: foto principal, precio y botón de comprar visibles sin bajar, y reseñas arriba.",
+  ];
+  if (a.ent > 0 && a.cpaAvg > a.cpaMax) {
+    const target = a.cpaMax * 0.9;
+    recs.push({ tone: "red", title: "Estás perdiendo dinero por pedido", text: `Tu CPA de los últimos días es ${fmt(a.cpaAvg)} y tu máximo es ${fmt(a.cpaMax)}. Si lo bajas a ${fmt(target)}, ganarías unos ${fmt((a.cpaMax - target) * perDay)} más al día con tu volumen actual. Cómo bajarlo:`, steps: lowerSteps });
+  } else if (a.ent > 0 && a.cpaAvg > a.cpaMax * 0.85) {
+    recs.push({ tone: "amber", title: "Estás cerca de tu límite", text: `Tu CPA (${fmt(a.cpaAvg)}) está a ${fmt(a.cpaMax - a.cpaAvg)} de tu máximo (${fmt(a.cpaMax)}). Un pequeño aumento y dejas de ganar. Prepara creativos nuevos antes de que suba.`, steps: lowerSteps.slice(1, 3) });
+  }
   const recent = rows.slice(-3), before = rows.slice(-10, -3);
   if (recent.length >= 2 && before.length >= 3) {
     const avg = (xs) => xs.reduce((s, r) => s + (r.d.cpa || 0), 0) / xs.length;
     const up = avg(before) > 0 ? (avg(recent) / avg(before) - 1) * 100 : 0;
-    if (up >= 20) recs.push({ tone: "amber", title: `Tu CPA subió ${Math.round(up)}% en los últimos días`, text: "Suele ser fatiga de creativos: tu audiencia ya vio mucho tus anuncios. Sube 2 o 3 creativos nuevos, con otro gancho u otro ángulo, y compáralos." });
+    if (up >= 20) recs.push({ tone: "amber", title: `Tu CPA subió ${Math.round(up)}% en los últimos días`, text: `Pasó de ${fmt(avg(before))} a ${fmt(avg(recent))}. Casi siempre es fatiga: tu audiencia ya vio mucho tus anuncios. Qué hacer:`, steps: ["Sube 2 o 3 creativos nuevos con un ángulo distinto al que ya cansó.", "Prueba una oferta nueva (combo, regalo, envío gratis) para renovar el interés.", "Si el anuncio lleva muchos días, duplícalo con otra audiencia en vez de subirle presupuesto."] });
   }
   const reals = rows.filter(r => r.c.real);
   if (reals.length >= 2) {
     const t = trkSum(reals.map(r => r.c));
     const rc = t.pedidos > 0 ? (t.conf / t.pedidos) * 100 : 0, re = t.conf > 0 ? (t.ent / t.conf) * 100 : 0;
-    if (re < p.pctEntregados - 8) recs.push({ tone: "amber", title: `Tu entrega real es ${re.toFixed(0)}%, no ${p.pctEntregados}%`, text: "Tus pedidos confirmados se entregan menos de lo que supones. Actualiza la tasa del producto y confirma por WhatsApp antes de despachar.", action: "edit" });
-    if (rc < p.pctConfirmados - 8) recs.push({ tone: "amber", title: `Tu confirmación real es ${rc.toFixed(0)}%, no ${p.pctConfirmados}%`, text: "Se te confirman menos pedidos de los que supones. Revisa qué tan rápido contactas al cliente y actualiza la tasa del producto.", action: "edit" });
+    if (re < p.pctEntregados - 8) recs.push({ tone: "amber", title: `Tu entrega real es ${re.toFixed(0)}%, no ${p.pctEntregados}%`, text: "Tus pedidos confirmados se entregan menos de lo que supones. Actualiza la tasa del producto y mejora la entrega:", steps: ["Confirma por WhatsApp o llamada antes de despachar.", "Avisa al cliente el día de entrega y el valor a pagar.", "Evita ciudades o zonas donde más te devuelven."], action: "edit" });
+    if (rc < p.pctConfirmados - 8) recs.push({ tone: "amber", title: `Tu confirmación real es ${rc.toFixed(0)}%, no ${p.pctConfirmados}%`, text: "Se te confirman menos pedidos de los que supones. Actualiza la tasa del producto y mejora la confirmación:", steps: ["Escríbele al cliente en los primeros minutos tras el pedido.", "Usa un mensaje corto con el producto, el precio y la fecha de entrega.", "Haz una llamada a quien no responde el mensaje."], action: "edit" });
   }
   const w = trkSum(rows.slice(-7).map(r => r.c));
-  if (w.ent > 0 && w.cpaAvg <= w.cpaMax && w.margen < 15) recs.push({ tone: "info", title: "Tu CPA está bien, pero el margen es justo", text: `Tu margen de la semana es ${w.margen.toFixed(1)}%. Prueba subir el precio, ofrecer un combo o un upsell para dejar más por pedido.` });
+  if (w.ent > 0 && w.cpaAvg <= w.cpaMax && w.margen < 15) {
+    const delta = Math.max(1, Math.round(p.precio * 0.05));
+    const extra = delta * (w.ent / Math.max(1, w.pedidos)) * (1 - (p.comision ?? 2.5) / 100);
+    recs.push({ tone: "info", title: "Tu CPA está bien, pero el margen es justo", text: `Tu margen de la semana es ${w.margen.toFixed(1)}%. Si subes el precio ${fmt(delta)}, tu CPA máximo sube a ${fmt(w.cpaMax + extra)} y tienes más espacio para escalar. Otras formas de dejar más por pedido:`, steps: ["Ofrece un combo (2 unidades con descuento) para subir el ticket promedio.", "Añade un upsell en la confirmación: un producto complementario.", "Negocia el costo del producto o el envío si ya tienes volumen."] });
+  }
   const pend = rows.filter(r => !r.c.real && trkDayDiff(today, r.date) >= TRK_CONFIRM_AFTER);
   if (pend.length) recs.push({ tone: "info", title: `${pend.length} ${pend.length === 1 ? "día espera" : "días esperan"} tu resultado real`, text: "Ya pasó el tiempo de entrega. Confirma cuántos pedidos se entregaron para que tus números sean reales.", action: "confirm" });
   if (!recs.length) recs.push({ tone: "green", title: "Vas bien", text: `Tu CPA (${fmt(w.cpaAvg)}) está por debajo de tu máximo (${fmt(w.cpaMax)}). Sigue registrando cada día.` });
@@ -2815,34 +2831,56 @@ function ProductForm({ initial, onSave, onCancel, onDelete }) {
   );
 }
 
-function DayForm({ p, date, compact, onSaved }) {
+function trkLast(p, date) {
+  const ds = Object.keys(p.days || {}).filter(k => k < date).sort();
+  return ds.length ? p.days[ds[ds.length - 1]] : null;
+}
+function TrkStep({ onMinus, onPlus, label }) {
+  const b = { width: 34, height: 34, borderRadius: 9, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 18, cursor: "pointer", fontFamily: "inherit", flexShrink: 0 };
+  return (<><button type="button" aria-label={`Menos ${label}`} onClick={onMinus} style={b}>−</button><button type="button" aria-label={`Más ${label}`} onClick={onPlus} style={b}>+</button></>);
+}
+
+function DayForm({ p, date, onSaved }) {
   const t = useTracking();
   const existing = (p.days || {})[date];
-  const [cpa, setCpa] = useState(existing ? String(existing.cpa) : "");
-  const [ped, setPed] = useState(existing ? String(existing.pedidos) : "");
+  const last = existing ? null : trkLast(p, date);
+  const [cpa, setCpa] = useState("");
+  const [ped, setPed] = useState("");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
-  const [ok, setOk] = useState(false);
-  useEffect(() => { setCpa(existing ? String(existing.cpa) : ""); setPed(existing ? String(existing.pedidos) : ""); setOk(false); setErr(""); }, [p.id, date]);
+  const [saved, setSaved] = useState(null);
+  useEffect(() => {
+    const e = (p.days || {})[date], l = e ? null : trkLast(p, date);
+    setCpa(e ? String(e.cpa) : l ? String(l.cpa) : ""); setPed(e ? String(e.pedidos) : l ? String(l.pedidos) : "");
+    setSaved(null); setErr("");
+  }, [p.id, date]);
   const fmt = trkFmt(p);
   const nC = trkNum(cpa), nP = trkNum(ped);
-  const preview = nC >= 0 && nP >= 0 && cpa !== "" && ped !== "" ? calcDay(p, { ...(existing || { snap: trkSnap(p) }), cpa: nC, pedidos: nP }) : null;
+  const valid = cpa !== "" && ped !== "" && nC >= 0 && nP >= 0;
+  const preview = valid ? calcDay(p, { ...(existing || { snap: trkSnap(p) }), cpa: nC, pedidos: nP }) : null;
+  const bump = (set, cur, d, dec) => () => { const n = trkNum(cur); const v = Math.max(0, (Number.isFinite(n) ? n : 0) + d); set(dec ? String(+v.toFixed(2)) : String(Math.round(v))); setSaved(null); };
   const submit = async (e) => {
     e.preventDefault();
-    if (!(nC >= 0) || !(nP >= 0) || cpa === "" || ped === "") return setErr("Escribe el CPA y los pedidos del día (puede ser 0).");
+    if (!valid) return setErr("Escribe el CPA y los pedidos del día (puede ser 0).");
     setErr(""); setBusy(true);
     const day = { ...(existing || { snap: trkSnap(p) }), cpa: nC, pedidos: nP, updatedMs: Date.now() };
     const done = await t.saveDay(p.id, date, day);
     setBusy(false);
-    if (done) { setOk(true); onSaved && onSaved(); }
+    if (done) { setSaved(calcDay(p, day)); onSaved && onSaved(); }
   };
+  const mk = (() => { if (!saved) return null; const q = { ...p, days: { ...(p.days || {}) } }; const rs = trkRows(q); const ms = trkMonthStats(rs, todayISO()); return { ms, light: trkLight(rs) }; })();
   return (
     <form onSubmit={submit} style={{ display: "grid", gap: 12 }}>
+      {last && <div style={{ fontSize: 12, color: C.textMuted }}>Te dejé los valores del último día registrado. Ajústalos si cambiaron.</div>}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: 12 }}>
-        <TrkField label="CPA del día"><input style={trkInp} inputMode="decimal" value={cpa} onChange={(e) => { setCpa(e.target.value); setOk(false); }} placeholder="4.50" /></TrkField>
-        <TrkField label="Pedidos del día"><input style={trkInp} inputMode="numeric" value={ped} onChange={(e) => { setPed(e.target.value); setOk(false); }} placeholder="12" /></TrkField>
+        <TrkField label="CPA del día">
+          <div style={{ display: "flex", gap: 6 }}><input style={trkInp} inputMode="decimal" value={cpa} onChange={(e) => { setCpa(e.target.value); setSaved(null); }} placeholder="4.50" /><TrkStep label="CPA" onMinus={bump(setCpa, cpa, -0.1, true)} onPlus={bump(setCpa, cpa, 0.1, true)} /></div>
+        </TrkField>
+        <TrkField label="Pedidos del día">
+          <div style={{ display: "flex", gap: 6 }}><input style={trkInp} inputMode="numeric" value={ped} onChange={(e) => { setPed(e.target.value); setSaved(null); }} placeholder="12" /><TrkStep label="pedidos" onMinus={bump(setPed, ped, -1)} onPlus={bump(setPed, ped, 1)} /></div>
+        </TrkField>
       </div>
-      {preview && (
+      {preview && !saved && (
         <div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.5 }}>
           Gastaste <b style={{ color: C.text }}>{fmt(preview.ads)}</b> en ads. Con tus tasas, la ganancia estimada es{" "}
           <b style={{ color: preview.ganancia >= 0 ? C.green : C.red }}>{trkSigned(fmt, preview.ganancia)}</b>.
@@ -2850,11 +2888,64 @@ function DayForm({ p, date, compact, onSaved }) {
       )}
       {err && <div role="alert" style={{ fontSize: 13, color: C.red }}>{err}</div>}
       {t.error && <div role="alert" style={{ fontSize: 13, color: C.red }}>{t.error}</div>}
-      <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-        <button type="submit" disabled={busy} style={{ ...trkBtn, opacity: busy ? 0.7 : 1 }}>{busy ? "Guardando..." : existing ? "Actualizar día" : "Guardar día"}</button>
-        {ok && <span style={{ fontSize: 13, color: C.green }}><Ic n="check" size={14} /> Guardado</span>}
-      </div>
+      <button type="submit" disabled={busy} style={{ ...trkBtn, justifySelf: "start", opacity: busy ? 0.7 : 1 }}>{busy ? "Guardando..." : existing || saved ? "Actualizar día" : "Guardar día"}</button>
+      {saved && mk && (
+        <div role="status" style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 12, padding: 14, display: "grid", gap: 4 }}>
+          <div style={{ fontSize: 13, color: C.green }}><Ic n="check" size={14} /> Guardado</div>
+          <div style={{ fontSize: 15, fontWeight: 700 }}>{trkLabel(date)}: <span style={{ color: saved.ganancia >= 0 ? C.green : C.red }}>{saved.ganancia >= 0 ? "ganaste" : "perdiste"} {fmt(saved.ganancia)}</span> (estimado)</div>
+          <div style={{ fontSize: 13, color: C.textDim }}>Vas {trkSigned(fmt, mk.ms.m.ganancia)} este mes{mk.light ? <> · <b style={{ color: mk.light.color }}>{mk.light.label}</b></> : null}</div>
+        </div>
+      )}
     </form>
+  );
+}
+
+function MissingDays({ p, today }) {
+  const t = useTracking();
+  const days = p.days || {};
+  const keys = Object.keys(days).sort();
+  const [open, setOpen] = useState(false);
+  const [vals, setVals] = useState({});
+  const [busy, setBusy] = useState(false);
+  if (!keys.length) return null;
+  const miss = [];
+  for (let i = TRK_FREE_DAYS - 1; i >= 1; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    if (iso > keys[0] && !days[iso]) miss.push(iso);
+  }
+  if (!miss.length) return null;
+  const base = days[keys[keys.length - 1]];
+  const get = (k) => vals[k] || { cpa: String(base.cpa), pedidos: String(base.pedidos) };
+  const setV = (k, f, v) => setVals({ ...vals, [k]: { ...get(k), [f]: v } });
+  const saveAll = async () => {
+    setBusy(true);
+    for (const k of miss) {
+      const v = get(k), c = trkNum(v.cpa), n = trkNum(v.pedidos);
+      if (c >= 0 && n >= 0) await t.saveDay(p.id, k, { snap: trkSnap(p), cpa: c, pedidos: n, updatedMs: Date.now() });
+    }
+    setBusy(false); setOpen(false);
+  };
+  return (
+    <div style={{ ...trkCard, marginBottom: 14, borderColor: `${C.amber}44` }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+        <div style={{ fontSize: 14, fontWeight: 700 }}>Te {miss.length === 1 ? "falta 1 día" : `faltan ${miss.length} días`} de la última semana</div>
+        <button onClick={() => setOpen(!open)} style={{ ...trkBtn2, padding: "7px 13px", fontSize: 12 }}>{open ? "Cerrar" : "Rellenar días que faltan"}</button>
+      </div>
+      {open && (
+        <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
+          <div style={{ fontSize: 12, color: C.textMuted }}>Los puse con los valores del último día registrado. Cámbialos si no fueron iguales.</div>
+          {miss.map(k => (
+            <div key={k} style={{ display: "grid", gridTemplateColumns: "64px 1fr 1fr", gap: 8, alignItems: "center" }}>
+              <b style={{ fontSize: 13 }}>{trkLabel(k)}</b>
+              <input aria-label={`CPA ${k}`} style={trkInp} inputMode="decimal" value={get(k).cpa} onChange={(e) => setV(k, "cpa", e.target.value)} />
+              <input aria-label={`Pedidos ${k}`} style={trkInp} inputMode="numeric" value={get(k).pedidos} onChange={(e) => setV(k, "pedidos", e.target.value)} />
+            </div>
+          ))}
+          <button onClick={saveAll} disabled={busy} style={{ ...trkBtn, justifySelf: "start", opacity: busy ? 0.7 : 1 }}>{busy ? "Guardando..." : `Guardar ${miss.length} ${miss.length === 1 ? "día" : "días"}`}</button>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -2993,6 +3084,7 @@ function SeguimientoView() {
           ) : <div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.55 }}>Registra tu primer día y aquí verás si vas en verde, en amarillo o en rojo.</div>}
         </div>
       </div>
+      <MissingDays p={p} today={today} />
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 12, marginBottom: 14 }}>
         <TrkStat label="Hoy" value={tod ? trkSigned(fmt, tod.c.ganancia) : "—"} color={tod ? (tod.c.ganancia >= 0 ? C.green : C.red) : C.textMuted} sub={tod ? (tod.c.real ? "confirmado" : "estimado") : "Aún sin registrar"} />
         <TrkStat label="Últimos 7 días" value={trkSigned(fmt, wk.ganancia)} color={wk.ganancia >= 0 ? C.green : C.red} sub={`${fmtNum(wk.pedidos)} pedidos`} />
@@ -3008,6 +3100,7 @@ function SeguimientoView() {
           <div key={i} style={{ borderLeft: `3px solid ${TRK_TONE[r.tone]}`, paddingLeft: 12 }}>
             <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 3 }}>{r.title}</div>
             <div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.55 }}>{r.text}</div>
+            {r.steps && <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 13, color: C.textDim, lineHeight: 1.6 }}>{r.steps.map((x, k) => <li key={k}>{x}</li>)}</ul>}
             {r.action === "edit" && <button onClick={() => setMode("edit")} style={{ ...trkBtn2, padding: "6px 12px", fontSize: 12, marginTop: 8 }}>Actualizar tasas del producto</button>}
           </div>
         ))}
@@ -3109,7 +3202,7 @@ function TodayCard() {
             <div><div style={{ fontSize: 12, color: C.textDim }}>Acumulado del mes</div><div style={{ fontSize: 20, fontWeight: 700, color: ms.m.ganancia >= 0 ? C.green : C.red }}>{trkSigned(fmt, ms.m.ganancia)}</div></div>
           </div>
           {light && <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}><span style={{ width: 10, height: 10, borderRadius: 5, background: light.color }} /><b style={{ color: light.color }}>{light.label}</b><span style={{ color: C.textDim }}>· {light.text}</span></div>}
-          {top && <div style={{ borderLeft: `3px solid ${TRK_TONE[top.tone]}`, paddingLeft: 10, fontSize: 13, color: C.textDim, lineHeight: 1.5 }}><b style={{ color: C.text }}>{top.title}.</b> {top.text}</div>}
+          {top && <div style={{ borderLeft: `3px solid ${TRK_TONE[top.tone]}`, paddingLeft: 10, fontSize: 13, color: C.textDim, lineHeight: 1.5 }}><b style={{ color: C.text }}>{top.title}.</b> {top.steps ? "Mira qué hacer en Seguimiento." : top.text}</div>}
           <button onClick={() => navTo("track")} style={{ ...trkBtn2, justifySelf: "start", padding: "7px 12px", fontSize: 12 }}>Ver seguimiento completo</button>
         </div>
       </div>
