@@ -1864,7 +1864,30 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
               </div>
             ))}
           </div>
-          <div style={{ textAlign: "center", marginTop: 18, fontSize: 13, color: C.textMuted }}>Incluye envío, devoluciones, CPA y comisión de Dropi.</div>
+        </div>
+      </section>
+
+      {/* Costos incluidos */}
+      <section style={{ padding: "16px 20px 72px" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto 36px" }}>
+            <h2 style={{ fontSize: "clamp(24px,3.2vw,34px)", fontWeight: 700, letterSpacing: "-0.03em", margin: "0 0 10px", lineHeight: 1.15 }}>Cada costo que se come tu ganancia, ya incluido</h2>
+            <p style={{ fontSize: 15, color: C.textDim, lineHeight: 1.7, margin: 0 }}>Casi todos calculan solo precio menos costo del producto. Nexus COD descuenta todo lo que de verdad sale de tu bolsillo.</p>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(230px,1fr))", gap: 14 }}>
+            {[
+              { i: "truck", t: "Costo de envío", d: "El flete de cada pedido entregado y el que pierdes cada vez que hay una devolución." },
+              { i: "megaphone", t: "CPA de publicidad", d: "Lo que gastas por pedido generado, incluido lo invertido en pedidos que nunca se confirman o se devuelven." },
+              { i: "undo", t: "Confirmaciones y devoluciones", d: "Cuántos pedidos se confirman, cuántos llegan de verdad y cuánto te cuesta cada devolución." },
+              { i: "building", t: "Comisión de Dropi", d: "La comisión por cada pedido entregado, descontada de tu ganancia real." },
+            ].map(x => (
+              <div key={x.t} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 22 }}>
+                <div style={{ width: 38, height: 38, borderRadius: 10, background: C.accentDim, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16, fontSize: 18 }}><Ic n={x.i} size={19} /></div>
+                <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 6 }}>{x.t}</div>
+                <div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.65 }}>{x.d}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
