@@ -1945,22 +1945,22 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
       <section id="nosotros" style={{ padding: "10px 20px 60px" }}>
         <div style={{ maxWidth: 1000, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 40 }}>
-                        <div style={{ fontSize: "clamp(22px,3vw,34px)", fontWeight: 700, color: C.text, letterSpacing: "-0.02em", lineHeight: 1.2 }}>
+            <div style={{ fontSize: "clamp(24px,3.4vw,38px)", fontWeight: 700, color: C.text, letterSpacing: "-0.03em", lineHeight: 1.15 }}>
               Nació de perder dinero real.<br />
               <span style={{ color: C.gold }}>Se construyó para que tú no lo pierdas.</span>
             </div>
           </div>
-          <div style={{ maxWidth: 560, margin: "0 auto 44px" }}>
-            <div style={{ background: `${C.accent}08`, border: `1px solid ${C.accent}20`, borderRadius: 18, padding: "24px" }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: C.accent, marginBottom: 14 }}><Ic n="📊" /> Lo que aprendimos a las malas</div>
+          <div style={{ margin: "0 auto 44px" }}>
+            <div style={{ textAlign: "center", fontSize: 13, fontWeight: 600, color: C.textDim, marginBottom: 16 }}>Lo que aprendimos a las malas</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 12 }}>
               {[
                 { stat: "40%", desc: "de dropshippers en LATAM pierden dinero en su primera campaña sin saberlo" },
                 { stat: "2–3x", desc: "es la diferencia entre el margen estimado y el real al incluir devoluciones" },
                 { stat: "$800+", desc: "es el promedio que un dropshipper pierde antes de entender el COD real" },
               ].map((item, i) => (
-                <div key={i} style={{ display: "flex", gap: 14, alignItems: "flex-start", marginBottom: i < 2 ? 14 : 0, paddingBottom: i < 2 ? 14 : 0, borderBottom: i < 2 ? `1px solid ${C.border}` : "none" }}>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: C.accent, flexShrink: 0, lineHeight: 1, minWidth: 56 }}>{item.stat}</div>
-                  <div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.6, minWidth: 0 }}>{item.desc}</div>
+                <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: "22px 22px 20px", textAlign: "left" }}>
+                  <div style={{ fontSize: 38, fontWeight: 700, color: C.text, letterSpacing: "-0.035em", lineHeight: 1, marginBottom: 12 }}>{item.stat}</div>
+                  <div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.6 }}>{item.desc}</div>
                 </div>
               ))}
             </div>
