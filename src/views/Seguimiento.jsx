@@ -6,7 +6,7 @@ import { fmtNum } from "../lib/calc";
 import { MONTHS_ES, todayISO } from "../lib/dates";
 import { useAuth } from "../lib/firebase";
 import { openPlans } from "../lib/nav";
-import { DayForm, MissingDays, ProductForm, RealForm, TRK_CONFIRM_AFTER, TRK_FREE_DAYS, TRK_FREE_PRODUCTS, TRK_TONE, TrkField, TrkLock, TrkStat, trkDayDiff, trkFmt, trkInp, trkLabel, trkLight, trkMonthStats, trkRecs, trkRows, trkSigned, trkSum, trkVisible, useTracking } from "../lib/tracking";
+import { DayForm, MissingDays, ProductForm, RealForm, TRK_CONFIRM_AFTER, TRK_FREE_DAYS, TRK_FREE_PRODUCTS, TRK_TONE, TrkField, TrkLock, TrkStat, trkBtn2, trkCard, trkDayDiff, trkFmt, trkInp, trkLabel, trkLight, trkMonthStats, trkRecs, trkRows, trkSigned, trkSum, trkVisible, useTracking } from "../lib/tracking";
 
 
 export function SeguimientoView() {
