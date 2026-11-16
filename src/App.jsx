@@ -32,6 +32,8 @@ function AppInner() {
   const [view, setView] = useState(() => (legalFromPath() ? "legal" : "landing"));
   const [legalKind, setLegalKind] = useState(legalFromPath);
   const [routed, setRouted] = useState(false);
+  // Al cambiar de pantalla, siempre empezar arriba (sin animación)
+  useEffect(() => { window.scrollTo({ top: 0, left: 0, behavior: "instant" }); }, [view, legalKind]);
   const actions = useRef({});
   const [trialDaysLeft, setTrialDaysLeft] = useState(trialLeft);
   const [payMsg, setPayMsg] = useState("");
