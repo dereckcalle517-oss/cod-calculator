@@ -1860,7 +1860,7 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
               { i: "truck", t: "Costo de envío", d: "El flete de cada pedido entregado y lo que pierdes en cada devolución, ya descontados de tu ganancia." },
               { i: "megaphone", t: "CPA de publicidad", d: "Tu CPA real y el máximo que puedes pagar sin perder, contando lo que gastas en pedidos que no se entregan." },
               { i: "undo", t: "Confirmaciones y devoluciones", d: "Cuántos pedidos se confirman, cuántos llegan de verdad y cuánto te cuesta cada devolución." },
-              { i: "search", t: "Test de producto", d: "Prueba un producto con tus números antes de invertir en publicidad." },
+              { i: "building", t: "Comisiones de plataforma", d: "Lo que cobra la plataforma, como Dropi, por cada pedido entregado, descontado de tu ganancia real." },
             ].map(x => (
               <div key={x.t} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 22 }}>
                 <div style={{ width: 38, height: 38, borderRadius: 10, background: C.accentDim, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16, fontSize: 18 }}><Ic n={x.i} size={19} /></div>
