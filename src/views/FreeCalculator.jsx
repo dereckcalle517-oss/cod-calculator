@@ -8,7 +8,7 @@ import { UserMenu } from "../components/Shell";
 import { CurrencySelector, MobileProfitBar, NumInput, Slider, Toggle } from "../components/shared";
 import { Brand, Flag, Ic, Rich } from "../components/ui";
 import { CURRENCIES, calcHealth, fmtNum, fmtPct, makeFmt, useCalc } from "../lib/calc";
-import { readPrefs } from "../lib/nav";
+import { prefInputs, readPrefs } from "../lib/nav";
 import { CpaCard } from "./Cpa";
 
 

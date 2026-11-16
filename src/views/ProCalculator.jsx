@@ -8,7 +8,7 @@ import { AppShell } from "../components/Shell";
 import { BenchmarkBar, CurrencySelector, MobileProfitBar, NumInput, Slider, Toggle, TrialBanner } from "../components/shared";
 import { Flag, Ic, Rich } from "../components/ui";
 import { BENCH, CURRENCIES, calcBreakPoints, calcHealth, calcInvisibleLosses, calcRisk, fmtNum, fmtPct, makeFmt, useCalc } from "../lib/calc";
-import { readPrefs } from "../lib/nav";
+import { prefInputs, readPrefs } from "../lib/nav";
 import { AITab } from "./AITab";
 import { CpaTab } from "./Cpa";
 
