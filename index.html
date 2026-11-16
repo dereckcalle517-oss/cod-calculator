@@ -9,9 +9,16 @@
     <meta name="theme-color" content="#0B0B0C" />
     <link rel="preconnect" href="https://rsms.me/" />
     <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+    <style>
+      html, body { margin: 0; background: #0B0B0C; }
+      #splash { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #0B0B0C; }
+      #splash svg { width: 44px; height: 44px; animation: cq-pulse 1.6s ease-in-out infinite; }
+      @keyframes cq-pulse { 0%, 100% { opacity: .35; transform: scale(.96); } 50% { opacity: 1; transform: scale(1); } }
+      @media (prefers-reduced-motion: reduce) { #splash svg { animation: none; opacity: .8; } }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><div id="splash"><svg viewBox="0 0 100 100" aria-label="Cargando"><path d="M0 0H83L65 18H18V64H33L0 97Z M100 100H17L35 82H82V36H67L100 3Z" fill="#FFFFFF"/></svg></div></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

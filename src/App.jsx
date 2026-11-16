@@ -3,6 +3,7 @@ import { C } from "./theme";
 import { GlobalStyles } from "./components/GlobalStyles";
 import { AppShell } from "./components/Shell";
 import { Ic } from "./components/ui";
+import { Splash } from "./components/Splash";
 import { AuthProvider, useAuth } from "./lib/firebase";
 import { ACCOUNT_EVT, legalFromPath, openPlans, trialLeft, trialUsed } from "./lib/nav";
 import { TrackingProvider } from "./lib/tracking";
@@ -19,13 +20,6 @@ const LegalView = lazy(() => import("./views/Legal").then(m => ({ default: m.Leg
 const ProCalculator = lazy(() => import("./views/ProCalculator").then(m => ({ default: m.ProCalculator })));
 const SeguimientoView = lazy(() => import("./views/Seguimiento").then(m => ({ default: m.SeguimientoView })));
 
-function Loading() {
-  return (
-    <div style={{ minHeight: "60vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ width: 32, height: 32, border: `3px solid ${C.border}`, borderTopColor: C.accent, borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-    </div>
-  );
-}
 
 function AppInner() {
   const { user, isPro, loadingAuth, loginWithGoogle } = useAuth();
@@ -71,15 +65,7 @@ function AppInner() {
   // Al volver del pago, mostrar la pantalla de espera
   useEffect(() => { if (justPaidUrl && !isPro) { try { sessionStorage.setItem("nx_pay_pending", "1"); } catch {} setView("paywall"); } }, []);
 
-  if (loadingAuth || !routed) return (
-    <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'InterVariable','Inter',system-ui,sans-serif" }}>
-      <div style={{ textAlign: "center" }}>
-        <div style={{ width: 40, height: 40, border: `3px solid ${C.border}`, borderTopColor: C.accent, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} />
-        <div style={{ fontSize: 13, color: C.textMuted }}>Cargando...</div>
-      </div>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </div>
-  );
+  if (loadingAuth || !routed) return <Splash />;
 
   const startTrial = () => upgrade();
   const openPro = () => { if (canPro) setView("pro"); else { setPayMsg(""); setView("paywall"); } };
@@ -166,7 +152,7 @@ export default function App() {
     <AuthProvider>
       <TrackingProvider>
         <GlobalStyles />
-        <Suspense fallback={<Loading />}><AppInner /></Suspense>
+        <Suspense fallback={<Splash />}><AppInner /></Suspense>
         <WelcomePro />
       </TrackingProvider>
     </AuthProvider>
