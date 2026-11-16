@@ -472,6 +472,7 @@ function GlobalStyles() {
   return (
     <style>{`
       * { box-sizing: border-box; }
+      @media (min-width: 901px) { .cpa-grid > :first-child { order: 2; } }
       html, body, button, input, select, textarea { font-feature-settings: 'cv02','cv03','cv04','cv11'; }
       body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
       h1, h2, h3 { letter-spacing: -0.025em; }
@@ -1814,15 +1815,15 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
       </section>
 
       {/* CPA real */}
-      <section style={{ padding: "8px 20px 72px" }}>
-        <div className="hero-grid" style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 56, alignItems: "center" }}>
+      <section style={{ padding: "48px 20px 104px" }}>
+        <div className="hero-grid cpa-grid" style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 72, alignItems: "center" }}>
           <div>
             <h2 style={{ fontSize: "clamp(26px,3.4vw,38px)", fontWeight: 700, letterSpacing: "-0.03em", margin: "0 0 14px", lineHeight: 1.12 }}>Tu Ads Manager dice $4. Tu CPA real es $8,21.</h2>
             <p style={{ fontSize: 15, color: C.textDim, lineHeight: 1.75, margin: "0 0 24px", maxWidth: 480 }}>En contraentrega solo cuentan los pedidos que se entregan. Lo que gastas en los demás lo pagan los que sí llegan.</p>
             <button onClick={onOpenFree} style={{ background: C.text, border: "none", borderRadius: 10, padding: "12px 22px", color: C.bg, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Calcular mi CPA real</button>
           </div>
           <div style={{ background: C.card, border: `1px solid ${C.borderBright}`, borderRadius: 18, padding: 22 }}>
-            <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 12, marginBottom: 14 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 12, marginBottom: 18 }}>
               <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: "14px 16px" }}>
                 <div style={{ fontSize: 12, color: C.textMuted, fontWeight: 600, marginBottom: 6 }}>Lo que ves en Ads Manager</div>
                 <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: "-0.03em" }}>{cpaEx.f(cpaEx.cpa)}</div>
@@ -1832,15 +1833,6 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
                 <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: "-0.03em", color: C.red }}>{cpaEx.f(cpaEx.r.cpaReal)}</div>
               </div>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4,minmax(0,1fr))", gap: 8, marginBottom: 14, textAlign: "center" }}>
-              {[[100, "Pedidos", C.accent], [75, "Confirmados", C.accent], [Math.round(cpaEx.r.ent), "Entregados", C.green], [Math.round(100 - cpaEx.r.ent), "Sin entregar", C.red]].map(([v, l, col]) => (
-                <div key={l} style={{ background: C.surface, borderRadius: 10, padding: "10px 4px" }}>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: col }}>{v}</div>
-                  <div style={{ fontSize: 10, color: C.textMuted, marginTop: 2 }}>{l}</div>
-                </div>
-              ))}
-            </div>
-            <div style={{ fontSize: 12, color: C.textMuted, lineHeight: 1.6, marginBottom: 12 }}>{cpaEx.f(400)} de publicidad entre {String(cpaEx.r.ent.toFixed(2)).replace(".", ",")} pedidos entregados.</div>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", borderTop: `1px solid ${C.border}`, paddingTop: 12, fontSize: 13 }}>
               <span style={{ color: C.textDim }}>CPA máximo para no perder</span><b>{cpaEx.f(cpaEx.r.cpaMax)}</b>
             </div>
@@ -1849,7 +1841,7 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
       </section>
 
       {/* Costos incluidos */}
-      <section style={{ padding: "16px 20px 72px" }}>
+      <section style={{ padding: "16px 20px 104px" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
           <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto 36px" }}>
             <h2 style={{ fontSize: "clamp(24px,3.2vw,34px)", fontWeight: 700, letterSpacing: "-0.03em", margin: "0 0 10px", lineHeight: 1.15 }}>Cada costo que se come tu ganancia, ya incluido</h2>
