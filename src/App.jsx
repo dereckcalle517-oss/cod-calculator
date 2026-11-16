@@ -3268,7 +3268,7 @@ function CheckoutView({ onBack, onDone }) {
   const [paid, setPaid] = useState(false);
   useEffect(() => {
     let alive = true;
-    loadPaddle((e) => { if (e && e.name === "checkout.completed" && alive) setPaid(true); }).then((P) => {
+    loadPaddle((e) => { if (e && e.name === "checkout.completed" && alive) { try { sessionStorage.setItem("nx_pay_pending", "1"); } catch {} setPaid(true); } }).then((P) => {
       if (!alive) return;
       if (!P || !PADDLE_PRICE_ID) { setState("error"); return; }
       try {
@@ -3404,7 +3404,7 @@ function AppInner() {
   // Si el pago llega mientras se espera, entra a PRO solo
   useEffect(() => { if (isPro && view === "paywall") setView("pro"); }, [isPro, view]);
   // Al volver del pago, mostrar la pantalla de espera
-  useEffect(() => { if (justPaidUrl && !isPro) setView("paywall"); }, []);
+  useEffect(() => { if (justPaidUrl && !isPro) { try { sessionStorage.setItem("nx_pay_pending", "1"); } catch {} setView("paywall"); } }, []);
 
   if (loadingAuth || !routed) return (
     <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'InterVariable','Inter',system-ui,sans-serif" }}>
@@ -3451,11 +3451,52 @@ function AppInner() {
   return <Landing onOpenFree={openFree} onOpenPro={openPro} onStartTrial={startTrial} onUpgrade={upgrade} />;
 }
 
+function WelcomePro() {
+  const { user, isPro, profile } = useAuth();
+  const [show, setShow] = useState(false);
+  const DURATION = 8000;
+  useEffect(() => {
+    if (!isPro) return;
+    let pending = false;
+    try { pending = sessionStorage.getItem("nx_pay_pending") === "1"; if (pending) sessionStorage.removeItem("nx_pay_pending"); } catch {}
+    if (pending) setShow(true);
+  }, [isPro]);
+  useEffect(() => {
+    if (!show) return;
+    const t = setTimeout(() => setShow(false), DURATION);
+    const k = (e) => { if (e.key === "Escape") setShow(false); };
+    window.addEventListener("keydown", k);
+    return () => { clearTimeout(t); window.removeEventListener("keydown", k); };
+  }, [show]);
+  if (!show) return null;
+  const name = ((user && user.displayName) || "").split(" ")[0];
+  const trial = profile && profile.lsStatus === "trialing";
+  const perks = ["Desglose de CPA y sensibilidad a la entrega", "Salud de campaña, riesgo y benchmarks LATAM", "Escenarios, comparador A/B y asesor de IA", "Control financiero y reportes en PDF"];
+  return (
+    <div onClick={() => setShow(false)} style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,0.62)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, animation: "nxFade .2s ease" }}>
+      <style>{`@keyframes nxFade{from{opacity:0}to{opacity:1}} @keyframes nxPop{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}} @keyframes nxBar{from{transform:scaleX(1)}to{transform:scaleX(0)}}`}</style>
+      <div role="dialog" aria-live="polite" onClick={(e) => e.stopPropagation()} style={{ position: "relative", overflow: "hidden", width: "100%", maxWidth: 400, background: C.card, border: `1px solid ${C.gold}40`, borderRadius: 18, padding: "26px 24px 22px", textAlign: "center", fontFamily: "'InterVariable','Inter',system-ui,sans-serif", color: C.text, animation: "nxPop .25s ease", boxShadow: "0 24px 60px rgba(0,0,0,0.55)" }}>
+        <div style={{ width: 46, height: 46, borderRadius: 14, background: `${C.gold}18`, color: C.gold, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}><Ic n="star" size={22} /></div>
+        <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 6 }}>{name ? `¡Gracias, ${name}!` : "¡Gracias por suscribirte!"}</div>
+        <div style={{ fontSize: 14, color: C.textDim, lineHeight: 1.55, marginBottom: 16 }}>Bienvenido a PRO.{trial ? " Tu prueba gratis de 3 días ya empezó." : ""} Esto ya está desbloqueado:</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, textAlign: "left", marginBottom: 18 }}>
+          {perks.map(t => (
+            <div key={t} style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 13, color: C.text, lineHeight: 1.45 }}><span style={{ color: C.green, marginTop: 1, flexShrink: 0 }}><Ic n="✓" size={15} /></span>{t}</div>
+          ))}
+        </div>
+        <button onClick={() => setShow(false)} style={{ width: "100%", background: C.gold, border: "none", borderRadius: 10, padding: "12px", color: C.bg, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Empezar</button>
+        <div aria-hidden="true" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 3, background: `${C.gold}25` }}><div style={{ height: "100%", background: C.gold, transformOrigin: "left", animation: `nxBar ${DURATION}ms linear forwards` }} /></div>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <AuthProvider>
       <GlobalStyles />
       <AppInner />
+      <WelcomePro />
     </AuthProvider>
   );
 }
