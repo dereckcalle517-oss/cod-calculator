@@ -500,13 +500,20 @@ function GlobalStyles() {
       .shell-top { position: sticky; top: 0; z-index: 100; height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 18px; background: rgba(11,11,12,0.92); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid #2A2A2E; }
       .shell-top-l { display: none; }
       .shell-tabs-m { display: none; }
+      .shell-burger, .shell-drawer, .shell-scrim { display: none; }
       @media (max-width: 900px) {
         .hero-grid { grid-template-columns: minmax(0,1fr) !important; gap: 36px !important; }
         .shell { grid-template-columns: minmax(0,1fr); }
         .shell-side { display: none; }
         .shell-top { padding: 0 12px; }
         .shell-top-l { display: block; }
-        .shell-tabs-m { display: flex; gap: 6px; padding: 8px 12px; border-bottom: 1px solid #2A2A2E; overflow-x: auto; overflow-y: hidden; touch-action: pan-x; background: #121214; }
+        .shell-top-l { display: flex; align-items: center; gap: 10px; }
+        .shell-burger { display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; margin-left: -6px; background: transparent; border: none; border-radius: 10px; color: #fff; cursor: pointer; }
+        .shell-burger:active { background: #222226; }
+        .shell-scrim { display: block; position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.6); opacity: 0; pointer-events: none; transition: opacity .2s; }
+        .shell-scrim.open { opacity: 1; pointer-events: auto; }
+        .shell-drawer { display: flex; flex-direction: column; gap: 22px; position: fixed; top: 0; left: 0; bottom: 0; width: min(300px, 84vw); z-index: 310; background: #121214; border-right: 1px solid #2A2A2E; padding: 18px 14px; transform: translateX(-100%); transition: transform .22s ease; overflow-y: auto; }
+        .shell-drawer.open { transform: translateX(0); }
       }
       @keyframes spin { to { transform: rotate(360deg); } }
       @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
@@ -2286,6 +2293,14 @@ function SavedCalcs({ inputs, currency, R, limit, onLoad }) {
 function AppShell({ active, onHome, right, children }) {
   const { user, isPro } = useAuth();
   const canPro = isPro || trialLeft() > 0;
+  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const k = (e) => { if (e.key === "Escape") setMenuOpen(false); };
+    window.addEventListener("keydown", k);
+    return () => window.removeEventListener("keydown", k);
+  }, [menuOpen]);
+  const go = (fn) => () => { setMenuOpen(false); fn(); };
   const items = [
     ...(user ? [{ id: "panel", label: "Panel", icon: "home", fn: () => navTo("panel") }] : []),
     { id: "calc", label: "Calculadora", icon: "calculator", fn: () => navTo("calc") },
@@ -2297,6 +2312,29 @@ function AppShell({ active, onHome, right, children }) {
   const legalLink = { background: "none", border: "none", padding: 0, color: C.textMuted, fontSize: 11, cursor: "pointer", fontFamily: "inherit" };
   return (
     <div className="shell" style={{ fontFamily: "'InterVariable','Inter',system-ui,-apple-system,sans-serif", color: C.text }}>
+      <div className={"shell-scrim" + (menuOpen ? " open" : "")} onClick={() => setMenuOpen(false)} />
+      <aside className={"shell-drawer" + (menuOpen ? " open" : "")} aria-hidden={!menuOpen}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Brand onClick={go(brandGo)} size={30} pro={isPro} />
+          <button aria-label="Cerrar menú" onClick={() => setMenuOpen(false)} style={{ background: "transparent", border: "none", color: C.textDim, width: 36, height: 36, borderRadius: 10, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+          </button>
+        </div>
+        <nav style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          {items.map(i => (
+            <button key={i.id} className={"nav-item" + (active === i.id ? " on" : "")} onClick={go(i.fn)}><Ic n={i.icon} size={17} /> {i.label}{i.lock && <span style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 700, color: C.gold }}><Ic n="lock" size={12} /> PRO</span>}</button>
+          ))}
+          {!isPro && <button className="nav-item" onClick={go(openPlans)} style={{ color: C.gold }}><Ic n="star" size={17} /> Ver planes</button>}
+        </nav>
+        <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: 10, padding: "0 12px" }}>
+          <button className="nav-item" onClick={go(onHome)} style={{ margin: "0 -12px" }}><Ic n="globe" size={17} /> Ver sitio</button>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            <button style={legalLink} onClick={go(() => openLegal("terms"))}>Términos</button>
+            <button style={legalLink} onClick={go(() => openLegal("privacy"))}>Privacidad</button>
+            <button style={legalLink} onClick={go(() => openLegal("refund"))}>Reembolsos</button>
+          </div>
+        </div>
+      </aside>
       <aside className="shell-side">
         <Brand onClick={brandGo} size={30} pro={isPro} />
         <nav style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -2316,14 +2354,14 @@ function AppShell({ active, onHome, right, children }) {
       </aside>
       <div style={{ minWidth: 0 }}>
         <div className="shell-top">
-          <div className="shell-top-l"><Brand onClick={brandGo} size={26} pro={isPro} /></div>
+          <div className="shell-top-l">
+            <button className="shell-burger" aria-label="Abrir menú" onClick={() => setMenuOpen(true)}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+            </button>
+            <Brand onClick={brandGo} size={26} pro={isPro} />
+          </div>
           <div className="hide-mobile" style={{ fontSize: 13, color: C.textDim, fontWeight: 600 }}>{titles[active] || "Calculadora"}</div>
           <div style={{ display: "flex", gap: 7, alignItems: "center" }}>{right}<UserMenu /></div>
-        </div>
-        <div className="shell-tabs-m">
-          {items.map(i => (
-            <button key={i.id} onClick={i.fn} style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 14px", background: active === i.id ? C.cardHover : "transparent", border: `1px solid ${active === i.id ? C.borderBright : C.border}`, borderRadius: 99, color: active === i.id ? C.text : C.textDim, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", flexShrink: 0 }}><Ic n={i.icon} size={14} /> {i.label}{i.lock && <span style={{ color: C.gold, display: "flex" }}><Ic n="lock" size={12} /></span>}</button>
-          ))}
         </div>
         {children}
       </div>
