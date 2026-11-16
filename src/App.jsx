@@ -33,7 +33,7 @@ const ACCOUNT_EVT = "nx:account";
 const openAccount = (tab) => { window.__nxAcctTab = typeof tab === "string" ? tab : "perfil"; window.dispatchEvent(new Event(ACCOUNT_EVT)); };
 const openPlans = () => { window.__nxAcctTab = "suscripcion"; window.__nxShowPlans = true; window.dispatchEvent(new Event(ACCOUNT_EVT)); };
 const navTo = (v) => window.dispatchEvent(new CustomEvent("nx:nav", { detail: v }));
-const SUPPORT_EMAIL = "soporte@nexuscod.com";
+const SUPPORT_EMAIL = "soporte@cuadre.app";
 const LEGAL_PATHS = { terms: "/terminos", privacy: "/privacidad", refund: "/reembolsos" };
 const legalFromPath = () => { try { const p = window.location.pathname.replace(/\/+$/, ""); return Object.keys(LEGAL_PATHS).find(k => LEGAL_PATHS[k] === p) || null; } catch { return null; } };
 const openLegal = (k) => { try { window.history.pushState({}, "", LEGAL_PATHS[k]); } catch {} window.dispatchEvent(new CustomEvent("nx:legal", { detail: k })); window.scrollTo(0, 0); };
@@ -64,8 +64,8 @@ async function buildShareImage({ R, inputs, fmt, url }) {
   const t = (txt, X, Y, size, color, weight = 700, align = "left") => { x.font = `${weight} ${size}px ${F}`; x.fillStyle = color; x.textAlign = align; x.fillText(txt, X, Y); };
   x.fillStyle = "#0B0B0C"; x.fillRect(0, 0, W, H);
   rr(60, 60, 960, 960, 36, "#121214", "#2A2A2E");
-  rr(110, 108, 52, 52, 14, "#F5F5F5"); t("N", 136, 148, 34, "#0B0B0C", 800, "center");
-  t("Nexus COD", 180, 148, 34, "#F5F5F5", 800);
+  x.save(); x.translate(110, 106); x.scale(0.56, 0.56); x.fillStyle = "#F5F5F5"; x.fill(new Path2D(LOGO_D)); x.restore();
+  t("Cuadre", 184, 148, 34, "#F5F5F5", 800);
   t("Resultado de mi campaña", 970, 146, 26, "#7A7A83", 600, "right");
   const profit = R.gananciaNet >= 0, pc = profit ? "#22C55E" : "#EF4444";
   rr(110, 200, 860, 230, 28, profit ? "#22C55E14" : "#EF444414", profit ? "#22C55E55" : "#EF444455");
@@ -124,12 +124,11 @@ function Rich({ children }) {
 function Flag({ c }) {
   return <span style={{ display: "inline-block", fontSize: 10, fontWeight: 700, color: C.textDim, border: `1px solid ${C.borderBright}`, borderRadius: 4, padding: "1px 5px", lineHeight: 1.4 }}>{c}</span>;
 }
-function Logo({ size = 28 }) {
+const LOGO_D = "M0 0H83L65 18H18V64H33L0 97Z M100 100H17L35 82H82V36H67L100 3Z";
+function Logo({ size = 28, color = "#FFFFFF" }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true" style={{ display: "block", flexShrink: 0 }}>
-      <rect width="32" height="32" rx="8" fill="#FFFFFF" />
-      <path d="M9 23V9l14 14V9" fill="none" stroke="#0B0B0C" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="23" cy="9" r="2.4" fill="#E8B93C" />
+    <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden="true" style={{ display: "block", flexShrink: 0 }}>
+      <path d={LOGO_D} fill={color} />
     </svg>
   );
 }
@@ -137,7 +136,7 @@ function Brand({ onClick, size = 26, pro, sub }) {
   return (
     <button onClick={onClick} title="Ir al inicio" style={{ display: "flex", alignItems: "center", gap: 9, background: "transparent", border: "none", cursor: "pointer", fontFamily: "inherit", color: C.text, padding: 0, textAlign: "left" }}>
       <Logo size={size} />
-      <span style={{ fontSize: 15, fontWeight: 800, letterSpacing: "-0.02em" }}>Nexus COD</span>
+      <span style={{ fontSize: 15, fontWeight: 800, letterSpacing: "-0.02em" }}>Cuadre</span>
       {pro && <span style={{ fontSize: 9, fontWeight: 800, background: C.gold, color: C.bg, borderRadius: 5, padding: "2px 6px", letterSpacing: "0.04em" }}>PRO</span>}
       {sub && <span className="hide-mobile" style={{ color: C.textMuted, fontSize: 12, fontWeight: 500 }}>{sub}</span>}
     </button>
@@ -1044,7 +1043,7 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
 .row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #e2e8f0;font-size:12px}
 .footer{margin-top:30px;text-align:center;font-size:10px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:12px}
 </style></head><body>
-<div class="header"><div class="badge">Nexus COD PRO · LATAM · ${currency.name}</div><h1>Reporte Profesional de Rentabilidad</h1><p style="font-size:11px;opacity:.7">${date} · Salud: ${h.score}/100 · Riesgo: ${r.level}</p></div>
+<div class="header"><div class="badge">Cuadre PRO · LATAM · ${currency.name}</div><h1>Reporte Profesional de Rentabilidad</h1><p style="font-size:11px;opacity:.7">${date} · Salud: ${h.score}/100 · Riesgo: ${r.level}</p></div>
 <div class="section-title">Parámetros</div>
 <div class="grid3">
 <div class="card"><div class="card-label">Costo producto</div><div class="card-value blue">${fmt(inputs.costo)}</div></div>
@@ -1077,7 +1076,7 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
 <div class="row"><span>− Dropi 2.5%</span><span class="red">−${fmt(inputs.precio * 0.025)}</span></div>
 <div class="row"><span>= Ganancia neta</span><span class="${R.gananciaXPedido >= 0 ? "green" : "red"}">${fmt(R.gananciaXPedido)}</span></div>
 </div>
-<div class="footer">Nexus COD PRO · Simulación Financiera Real · Dropshipping Contraentrega LATAM</div>
+<div class="footer">Cuadre PRO · Simulación Financiera Real · Dropshipping Contraentrega LATAM</div>
 </body></html>`;
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
@@ -1607,7 +1606,7 @@ function ProCalculator({ trialDaysLeft, onUpgrade, onBackToFree, onHome, onFinan
         </div>
       </div>
       <div style={{ borderTop: `1px solid ${C.border}`, padding: "10px", textAlign: "center" }}>
-        <div style={{ fontSize: 10, color: C.textMuted }}>Nexus COD PRO · Sistema operativo de dropshipping COD LATAM</div>
+        <div style={{ fontSize: 10, color: C.textMuted }}>Cuadre PRO · Sistema operativo de dropshipping COD LATAM</div>
       </div>
       <GlobalStyles />
     </AppShell>
@@ -1856,7 +1855,7 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
           <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto 36px" }}>
             <h2 style={{ fontSize: "clamp(24px,3.2vw,34px)", fontWeight: 700, letterSpacing: "-0.03em", margin: "0 0 10px", lineHeight: 1.15 }}>Cada costo que se come tu ganancia, ya incluido</h2>
-            <p style={{ fontSize: 15, color: C.textDim, lineHeight: 1.7, margin: 0 }}>Casi todos calculan solo precio menos costo del producto. Nexus COD descuenta todo lo que de verdad sale de tu bolsillo y te dice si ganas o pierdes.</p>
+            <p style={{ fontSize: 15, color: C.textDim, lineHeight: 1.7, margin: 0 }}>Casi todos calculan solo precio menos costo del producto. Cuadre descuenta todo lo que de verdad sale de tu bolsillo y te dice si ganas o pierdes.</p>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(230px,1fr))", gap: 14 }}>
             {[
@@ -2019,7 +2018,7 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
             <div style={{ gridColumn: "span 2", minWidth: 220 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 12 }}>
                 <Logo size={26} />
-                <div style={{ fontSize: 15, fontWeight: 700, color: C.text, letterSpacing: "-0.02em" }}>Nexus COD</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: C.text, letterSpacing: "-0.02em" }}>Cuadre</div>
               </div>
               <div style={{ fontSize: 13, color: C.textMuted, lineHeight: 1.65, maxWidth: 320 }}>Calcula tu ganancia real en contraentrega: CPA real, devoluciones y costos que Ads Manager no te muestra.</div>
             </div>
@@ -2050,7 +2049,7 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
             ))}
           </div>
           <div style={{ marginTop: 36, paddingTop: 18, borderTop: `1px solid ${C.border}`, display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: 8, fontSize: 12, color: C.textMuted }}>
-            <span>© 2026 Nexus COD · Hecho en Ecuador para LATAM</span>
+            <span>© 2026 Cuadre · Hecho en Ecuador para LATAM</span>
             <span>Pagos seguros con Paddle</span>
           </div>
         </div>
@@ -2955,7 +2954,7 @@ function ReferralPanel({ panel, btnMain, btnGhost, inp }) {
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
           <input id="reflink" readOnly value={link} onFocus={e => e.target.select()} style={{ ...inp, flex: "1 1 240px", width: "auto" }} />
           <button onClick={copy} style={btnMain}>{copied ? "Copiado" : "Copiar enlace"}</button>
-          <a href={`https://wa.me/?text=${encodeURIComponent(`Calcula tu CPA real en contraentrega con Nexus COD: ${link}`)}`} target="_blank" rel="noreferrer" style={{ ...btnGhost, textDecoration: "none", display: "inline-flex", alignItems: "center" }}>Compartir por WhatsApp</a>
+          <a href={`https://wa.me/?text=${encodeURIComponent(`Calcula tu CPA real en contraentrega con Cuadre: ${link}`)}`} target="_blank" rel="noreferrer" style={{ ...btnGhost, textDecoration: "none", display: "inline-flex", alignItems: "center" }}>Compartir por WhatsApp</a>
         </div>
       </>)}
     </div>
@@ -2979,15 +2978,15 @@ function ReferralPanel({ panel, btnMain, btnGhost, inp }) {
 const LEGAL_UPDATED = "15 de noviembre de 2026";
 const LEGAL = {
   terms: { title: "Términos y condiciones", sections: [
-    ["1. Quiénes somos", ["Nexus COD es una herramienta en línea para calcular la rentabilidad de negocios de contraentrega (COD). Es operada desde Ecuador. Puedes escribirnos a " + SUPPORT_EMAIL + "."]],
-    ["2. Aceptación", ["Al usar Nexus COD o crear una cuenta aceptas estos términos. Si no estás de acuerdo, no uses el servicio. Debes ser mayor de 18 años."]],
-    ["3. El servicio", ["Nexus COD ofrece una calculadora gratuita y un plan de pago llamado PRO con funciones adicionales (análisis, benchmarks, escenarios, asesor de IA, control financiero y otras).", "Los resultados son estimaciones basadas en los datos que tú ingresas y en supuestos generales, como la comisión de Dropi y el costo de envío de devoluciones. No son asesoría financiera, contable ni legal. Las decisiones que tomes con ellos son tu responsabilidad."]],
+    ["1. Quiénes somos", ["Cuadre es una herramienta en línea para calcular la rentabilidad de negocios de contraentrega (COD). Es operada desde Ecuador. Puedes escribirnos a " + SUPPORT_EMAIL + "."]],
+    ["2. Aceptación", ["Al usar Cuadre o crear una cuenta aceptas estos términos. Si no estás de acuerdo, no uses el servicio. Debes ser mayor de 18 años."]],
+    ["3. El servicio", ["Cuadre ofrece una calculadora gratuita y un plan de pago llamado PRO con funciones adicionales (análisis, benchmarks, escenarios, asesor de IA, control financiero y otras).", "Los resultados son estimaciones basadas en los datos que tú ingresas y en supuestos generales, como la comisión de Dropi y el costo de envío de devoluciones. No son asesoría financiera, contable ni legal. Las decisiones que tomes con ellos son tu responsabilidad."]],
     ["4. Tu cuenta", ["Para guardar cálculos y activar PRO inicias sesión con Google. Eres responsable de la actividad de tu cuenta. Puedes eliminarla cuando quieras desde Ajustes."]],
     ["5. Suscripción PRO y pagos", ["PRO cuesta $5.99 USD al mes y se renueva automáticamente hasta que lo canceles. Incluye una prueba gratis de 3 días.", "Los pagos los procesa Paddle, que actúa como vendedor autorizado (merchant of record) y se encarga del cobro, los impuestos aplicables y las facturas. En tu estado de cuenta verás el cargo a nombre de Paddle.", "Puedes cancelar en cualquier momento desde Ajustes. Conservas PRO hasta el final del periodo ya pagado y no se te cobra de nuevo.", "Podemos cambiar el precio con aviso previo. El cambio aplica a partir de tu siguiente renovación."]],
     ["6. Reembolsos", ["Ofrecemos garantía de reembolso de 3 días en tu primer pago. Los detalles están en la política de reembolsos."]],
     ["7. Programa de referidos", ["Si invitas a alguien con tu enlace y se suscribe, recibes 15 días de PRO una vez pasados los 3 días de garantía de su primer pago. Puedes guardar hasta 30 días y activarlos cuando no tengas una suscripción activa. Los días no tienen valor en dinero, no se transfieren y se anulan si el pago del referido se reembolsa. Podemos cancelar premios por abuso, como referirte a ti mismo o crear cuentas falsas."]],
     ["8. Uso aceptable", ["No puedes usar el servicio para fines ilegales, intentar acceder a cuentas ajenas, extraer datos de forma masiva, vulnerar la seguridad ni revender el servicio sin autorización."]],
-    ["9. Propiedad intelectual", ["Nexus COD, su diseño y su código son nuestros. Tus datos siguen siendo tuyos: nos das permiso solo para almacenarlos y mostrarlos dentro del servicio."]],
+    ["9. Propiedad intelectual", ["Cuadre, su diseño y su código son nuestros. Tus datos siguen siendo tuyos: nos das permiso solo para almacenarlos y mostrarlos dentro del servicio."]],
     ["10. Disponibilidad y límite de responsabilidad", ["Nos esforzamos por mantener el servicio disponible, pero no garantizamos que funcione sin interrupciones ni errores. En la medida permitida por la ley, no somos responsables por pérdidas indirectas ni por decisiones de negocio tomadas con base en los resultados, y nuestra responsabilidad total se limita a lo que hayas pagado en los últimos 3 meses."]],
     ["11. Cambios", ["Podemos actualizar estos términos. Si el cambio es importante te avisaremos en la aplicación. Seguir usando el servicio significa que aceptas la versión nueva."]],
     ["12. Ley aplicable", ["Estos términos se rigen por las leyes de Ecuador. Para cualquier reclamo, escríbenos primero a " + SUPPORT_EMAIL + " y buscaremos resolverlo."]],
@@ -3037,7 +3036,7 @@ function LegalView({ kind, onHome }) {
             {ps.map((t, i) => <p key={i} style={{ fontSize: 14, color: C.textDim, lineHeight: 1.75, margin: "0 0 10px" }}>{t}</p>)}
           </div>
         ))}
-        <div style={{ marginTop: 36, paddingTop: 18, borderTop: `1px solid ${C.border}`, fontSize: 12, color: C.textMuted }}>Nexus COD · Ecuador · <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: C.textDim }}>{SUPPORT_EMAIL}</a></div>
+        <div style={{ marginTop: 36, paddingTop: 18, borderTop: `1px solid ${C.border}`, fontSize: 12, color: C.textMuted }}>Cuadre · Ecuador · <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: C.textDim }}>{SUPPORT_EMAIL}</a></div>
       </div>
     </div>
   );
@@ -3110,7 +3109,7 @@ function AccountView({ trialDaysLeft, onUpgrade, onHome, onCalc, onFinance, onBa
   const cancelAt = toDate(profile && profile.cancelAt);
   const willCancel = isPro && (st === "canceled" || !!cancelAt);
   const endDate = cancelAt || until;
-  let plan = { name: "Plan gratuito", chip: "Gratis", tone: C.textDim, note: "Estás usando la versión gratis de Nexus COD." };
+  let plan = { name: "Plan gratuito", chip: "Gratis", tone: C.textDim, note: "Estás usando la versión gratis de Cuadre." };
   if (isPro) {
     plan = st === "bonus" ? { name: "Plan PRO", chip: "Bonus de referidos", tone: C.gold, note: until ? `Tienes PRO gratis hasta el ${fmtLongDate(until)}.` : "Tienes PRO gratis por tus referidos." }
       : willCancel ? { name: "Plan PRO", chip: "Cancelada", tone: C.amber, note: endDate ? `Conservas PRO hasta el ${fmtLongDate(endDate)}. Después no se te cobrará más.` : "Tu suscripción está cancelada." }
@@ -3140,7 +3139,7 @@ function AccountView({ trialDaysLeft, onUpgrade, onHome, onCalc, onFinance, onBa
       const clean = (o) => JSON.parse(JSON.stringify(o || {}, (k, v) => (v && typeof v === "object" && typeof v.toDate === "function" ? v.toDate().toISOString() : v)));
       const out = { exportado: new Date().toISOString(), cuenta: { correo: user.email, nombre: user.displayName, negocio: profile && profile.businessName || "", preferencias: readPrefs() }, calculos_guardados: clean(sims), control_financiero: clean(fin) };
       const url = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type: "application/json" }));
-      const a = document.createElement("a"); a.href = url; a.download = "nexus-cod-mis-datos.json"; a.click(); URL.revokeObjectURL(url);
+      const a = document.createElement("a"); a.href = url; a.download = "cuadre-mis-datos.json"; a.click(); URL.revokeObjectURL(url);
     } catch (e) { console.error(e); setErr("No se pudieron exportar tus datos. Intenta de nuevo."); }
     setBusy("");
   };
@@ -3266,7 +3265,7 @@ function AccountView({ trialDaysLeft, onUpgrade, onHome, onCalc, onFinance, onBa
                   {willCancel && <button onClick={onUpgrade} style={{ ...btnMain, background: C.gold }}>Reactivar PRO</button>}
                 </div>
                 <div style={{ fontSize: 12, color: C.textMuted, marginTop: 18, lineHeight: 1.6 }}>Los pagos los procesa Paddle, nuestro vendedor oficial. En tu estado de cuenta verás el cobro a nombre de Paddle.</div>
-                <div style={{ fontSize: 12, color: C.textMuted, marginTop: 10, lineHeight: 1.6 }}>Tienes 3 días de garantía desde tu primer pago. <a href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Solicitud de reembolso - Nexus COD")}&body=${encodeURIComponent(`Hola, quiero solicitar el reembolso de mi primer pago.\n\nCorreo de mi cuenta: ${user.email}`)}`} style={{ color: C.text, fontWeight: 600 }}>Solicitar reembolso</a> · <a href="/reembolsos" onClick={e => { e.preventDefault(); openLegal("refund"); }} style={{ color: C.textDim }}>Ver política</a></div>
+                <div style={{ fontSize: 12, color: C.textMuted, marginTop: 10, lineHeight: 1.6 }}>Tienes 3 días de garantía desde tu primer pago. <a href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Solicitud de reembolso - Cuadre")}&body=${encodeURIComponent(`Hola, quiero solicitar el reembolso de mi primer pago.\n\nCorreo de mi cuenta: ${user.email}`)}`} style={{ color: C.text, fontWeight: 600 }}>Solicitar reembolso</a> · <a href="/reembolsos" onClick={e => { e.preventDefault(); openLegal("refund"); }} style={{ color: C.textDim }}>Ver política</a></div>
               </>) : (<>
                 <button onClick={() => setShowPlans(true)} style={btnMain}>Ver planes</button>
               </>)}
@@ -3417,7 +3416,7 @@ function CheckoutView({ onBack, onDone }) {
               <div style={{ display: "flex", flexDirection: "column", gap: 16, minWidth: 0 }}>
                 <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 22 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700 }}>Nexus COD PRO</div>
+                    <div style={{ fontSize: 15, fontWeight: 700 }}>Cuadre PRO</div>
                     <div style={{ fontSize: 22, fontWeight: 800 }}>$5.99<span style={{ fontSize: 12, color: C.textMuted, fontWeight: 500 }}>/mes</span></div>
                   </div>
                   {user && user.email && <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 16, overflowWrap: "anywhere" }}>{user.email}</div>}
