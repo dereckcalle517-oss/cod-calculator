@@ -500,6 +500,7 @@ function GlobalStyles() {
       .shell-top { position: sticky; top: 0; z-index: 100; height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 18px; background: rgba(11,11,12,0.92); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid #2A2A2E; }
       .shell-top-l { display: none; }
       .shell-tabs-m { display: none; }
+      .acct-select { display: none; }
       .shell-burger, .shell-drawer, .shell-scrim { display: none; }
       @media (max-width: 900px) {
         .hero-grid { grid-template-columns: minmax(0,1fr) !important; gap: 36px !important; }
@@ -508,6 +509,8 @@ function GlobalStyles() {
         .shell-top { padding: 0 12px; }
         .shell-top-l { display: block; }
         .shell-top-l { display: flex; align-items: center; gap: 10px; }
+        .acct-tabs { display: none !important; }
+        .acct-select { display: block; }
         .shell-burger { display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; margin-left: -6px; background: transparent; border: none; border-radius: 10px; color: #fff; cursor: pointer; }
         .shell-burger:active { background: #222226; }
         .shell-scrim { display: block; position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.6); opacity: 0; pointer-events: none; transition: opacity .2s; }
@@ -2953,6 +2956,7 @@ function PlansView({ paid, onBack, onUpgrade, panel }) {
 function AccountView({ trialDaysLeft, onUpgrade, onHome, onCalc, onFinance, onBackToFree }) {
   const { user, isPro, profile, portalUrl, loginWithGoogle, logout } = useAuth();
   const [tab, setTab] = useState(() => window.__nxAcctTab || "perfil");
+  const [selOpen, setSelOpen] = useState(false);
   const [showPlans, setShowPlans] = useState(() => { const v = !!window.__nxShowPlans; window.__nxShowPlans = false; return v; });
   useEffect(() => { const h = () => { if (window.__nxAcctTab) { setTab(window.__nxAcctTab); setShowPlans(!!window.__nxShowPlans); window.__nxShowPlans = false; } }; window.addEventListener(ACCOUNT_EVT, h); return () => window.removeEventListener(ACCOUNT_EVT, h); }, []);
   const [business, setBusiness] = useState("");
@@ -3051,7 +3055,21 @@ function AccountView({ trialDaysLeft, onUpgrade, onHome, onCalc, onFinance, onBa
             <button onClick={() => loginWithGoogle().catch(() => {})} style={btnMain}>Iniciar sesión con Google</button>
           </div>
         ) : (<>
-          <div style={{ display: "flex", gap: 4, borderBottom: `1px solid ${C.border}`, marginBottom: 22, overflowX: "auto", overflowY: "hidden", overscrollBehaviorY: "none", touchAction: "pan-x" }}>
+          <div className="acct-select" style={{ position: "relative", marginBottom: 22 }}>
+            <button onClick={() => setSelOpen(o => !o)} aria-haspopup="listbox" aria-expanded={selOpen} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, background: C.card, border: `1px solid ${C.borderBright}`, borderRadius: 12, padding: "13px 14px", color: C.text, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>
+              <Ic n={(tabs.find(t => t.id === tab) || tabs[0]).i} size={16} /> <span style={{ flex: 1 }}>{(tabs.find(t => t.id === tab) || tabs[0]).l}</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ color: C.textMuted, transform: selOpen ? "rotate(180deg)" : "none", transition: "transform .15s" }}><path d="M6 9l6 6 6-6" /></svg>
+            </button>
+            {selOpen && (<>
+              <div onClick={() => setSelOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 40 }} />
+              <div role="listbox" style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, zIndex: 41, background: C.card, border: `1px solid ${C.borderBright}`, borderRadius: 12, padding: 6, boxShadow: "0 12px 32px rgba(0,0,0,0.5)" }}>
+                {tabs.map(t => (
+                  <button key={t.id} role="option" aria-selected={tab === t.id} onClick={() => { setTab(t.id); setShowPlans(false); setSelOpen(false); }} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, background: tab === t.id ? C.cardHover : "transparent", border: "none", borderRadius: 8, padding: "11px 10px", color: tab === t.id ? C.text : C.textDim, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}><Ic n={t.i} size={16} /> {t.l}</button>
+                ))}
+              </div>
+            </>)}
+          </div>
+          <div className="acct-tabs" style={{ display: "flex", gap: 4, borderBottom: `1px solid ${C.border}`, marginBottom: 22, overflowX: "auto", overflowY: "hidden", overscrollBehaviorY: "none", touchAction: "pan-x" }}>
             {tabs.map(t => (
               <button key={t.id} onClick={() => { setTab(t.id); setShowPlans(false); }} style={{ display: "flex", alignItems: "center", gap: 8, background: "transparent", border: "none", borderBottom: `2px solid ${tab === t.id ? C.text : "transparent"}`, padding: "10px 14px", color: tab === t.id ? C.text : C.textMuted, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", marginBottom: -1 }}><Ic n={t.i} size={15} /> {t.l}</button>
             ))}
