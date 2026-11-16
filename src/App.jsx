@@ -2190,7 +2190,7 @@ function UserMenu() {
             </button>
             <button onClick={() => { setOpen(false); openAccount(); }}
               style={{ width: "100%", background: "transparent", border: "none", borderRadius: 8, padding: "8px 10px", color: C.text, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>
-              <Ic n="user" /> Mi cuenta
+              <Ic n="user" /> Ajustes
             </button>
             <button onClick={() => { logout(); setOpen(false); }}
               style={{ width: "100%", background: "transparent", border: "none", borderRadius: 8, padding: "8px 10px", color: C.red, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>
@@ -2290,9 +2290,9 @@ function AppShell({ active, onHome, right, children }) {
     ...(user ? [{ id: "panel", label: "Panel", icon: "home", fn: () => navTo("panel") }] : []),
     { id: "calc", label: "Calculadora", icon: "calculator", fn: () => navTo("calc") },
     { id: "fin", label: "Control financiero", icon: "wallet", fn: () => navTo("finance") },
-    { id: "acct", label: "Mi cuenta", icon: "user", fn: () => openAccount("perfil") },
+    { id: "acct", label: "Ajustes", icon: "user", fn: () => openAccount("perfil") },
   ];
-  const titles = { panel: "Panel", calc: "Calculadora", fin: "Control financiero", ref: "Referidos", acct: "Mi cuenta" };
+  const titles = { panel: "Panel", calc: "Calculadora", fin: "Control financiero", ref: "Referidos", acct: "Ajustes" };
   const brandGo = user ? () => navTo("panel") : onHome;
   const legalLink = { background: "none", border: "none", padding: 0, color: C.textMuted, fontSize: 11, cursor: "pointer", fontFamily: "inherit" };
   return (
@@ -2344,7 +2344,6 @@ function Dashboard({ trialDaysLeft, onUpgrade }) {
     { i: "wallet", t: "Control financiero", d: "Registra gastos y fondos de ads y mira tu capital mes a mes.", b: canPro ? "Abrir" : "Solo PRO", fn: () => navTo("finance"), lock: !canPro },
     { i: "gift", t: "Referidos", d: "Gana 15 días de PRO por cada amigo que se suscriba.", b: "Ver mi enlace", fn: () => openAccount("referidos") },
     { i: "card", t: "Suscripción", d: planNote, b: "Administrar", fn: () => openAccount("suscripcion") },
-    { i: "message", t: "Ayuda", d: "¿Dudas o quieres pedir un reembolso? Escríbenos.", b: "Escribir", fn: () => { window.location.href = `mailto:${SUPPORT_EMAIL}`; } },
   ];
   return (
     <div style={{ maxWidth: 1000, margin: "0 auto", padding: "28px 16px 60px" }}>
@@ -2816,8 +2815,8 @@ const LEGAL = {
     ["1. Quiénes somos", ["Nexus COD es una herramienta en línea para calcular la rentabilidad de negocios de contraentrega (COD). Es operada desde Ecuador. Puedes escribirnos a " + SUPPORT_EMAIL + "."]],
     ["2. Aceptación", ["Al usar Nexus COD o crear una cuenta aceptas estos términos. Si no estás de acuerdo, no uses el servicio. Debes ser mayor de 18 años."]],
     ["3. El servicio", ["Nexus COD ofrece una calculadora gratuita y un plan de pago llamado PRO con funciones adicionales (análisis, benchmarks, escenarios, asesor de IA, control financiero y otras).", "Los resultados son estimaciones basadas en los datos que tú ingresas y en supuestos generales, como la comisión de Dropi y el costo de envío de devoluciones. No son asesoría financiera, contable ni legal. Las decisiones que tomes con ellos son tu responsabilidad."]],
-    ["4. Tu cuenta", ["Para guardar cálculos y activar PRO inicias sesión con Google. Eres responsable de la actividad de tu cuenta. Puedes eliminarla cuando quieras desde Mi cuenta."]],
-    ["5. Suscripción PRO y pagos", ["PRO cuesta $5.99 USD al mes y se renueva automáticamente hasta que lo canceles. Incluye una prueba gratis de 3 días.", "Los pagos los procesa Paddle, que actúa como vendedor autorizado (merchant of record) y se encarga del cobro, los impuestos aplicables y las facturas. En tu estado de cuenta verás el cargo a nombre de Paddle.", "Puedes cancelar en cualquier momento desde Mi cuenta. Conservas PRO hasta el final del periodo ya pagado y no se te cobra de nuevo.", "Podemos cambiar el precio con aviso previo. El cambio aplica a partir de tu siguiente renovación."]],
+    ["4. Tu cuenta", ["Para guardar cálculos y activar PRO inicias sesión con Google. Eres responsable de la actividad de tu cuenta. Puedes eliminarla cuando quieras desde Ajustes."]],
+    ["5. Suscripción PRO y pagos", ["PRO cuesta $5.99 USD al mes y se renueva automáticamente hasta que lo canceles. Incluye una prueba gratis de 3 días.", "Los pagos los procesa Paddle, que actúa como vendedor autorizado (merchant of record) y se encarga del cobro, los impuestos aplicables y las facturas. En tu estado de cuenta verás el cargo a nombre de Paddle.", "Puedes cancelar en cualquier momento desde Ajustes. Conservas PRO hasta el final del periodo ya pagado y no se te cobra de nuevo.", "Podemos cambiar el precio con aviso previo. El cambio aplica a partir de tu siguiente renovación."]],
     ["6. Reembolsos", ["Ofrecemos garantía de reembolso de 3 días en tu primer pago. Los detalles están en la política de reembolsos."]],
     ["7. Programa de referidos", ["Si invitas a alguien con tu enlace y se suscribe, recibes 15 días de PRO una vez pasados los 3 días de garantía de su primer pago. Puedes guardar hasta 30 días y activarlos cuando no tengas una suscripción activa. Los días no tienen valor en dinero, no se transfieren y se anulan si el pago del referido se reembolsa. Podemos cancelar premios por abuso, como referirte a ti mismo o crear cuentas falsas."]],
     ["8. Uso aceptable", ["No puedes usar el servicio para fines ilegales, intentar acceder a cuentas ajenas, extraer datos de forma masiva, vulnerar la seguridad ni revender el servicio sin autorización."]],
@@ -2831,7 +2830,7 @@ const LEGAL = {
     ["2. Para qué los usamos", ["Para darte el servicio, guardar tu trabajo, activar tu plan PRO, gestionar referidos y atenderte cuando nos escribes. No vendemos tus datos ni los usamos para publicidad de terceros."]],
     ["3. Con quién los compartimos", ["Google (Firebase) para inicio de sesión y almacenamiento. Paddle para pagos y facturación. Vercel para alojar la aplicación. Google Fonts para cargar la tipografía. Cada uno trata los datos según su propia política. Los datos de pago se rigen por la política de privacidad de Paddle (paddle.com)."]],
     ["4. Cuánto tiempo los guardamos", ["Mientras tengas la cuenta. Si la eliminas, borramos tu perfil, tus cálculos y tu control financiero. Paddle puede conservar registros de facturación el tiempo que la ley le exija."]],
-    ["5. Tus derechos", ["Puedes acceder a tus datos, corregirlos, descargarlos y eliminarlos. Todo esto lo haces tú mismo en Mi cuenta (pestañas Perfil y Datos y privacidad). Si necesitas algo más, escríbenos a " + SUPPORT_EMAIL + ". Respetamos los derechos que reconoce la Ley Orgánica de Protección de Datos Personales de Ecuador."]],
+    ["5. Tus derechos", ["Puedes acceder a tus datos, corregirlos, descargarlos y eliminarlos. Todo esto lo haces tú mismo en Ajustes (pestañas Perfil y Datos y privacidad). Si necesitas algo más, escríbenos a " + SUPPORT_EMAIL + ". Respetamos los derechos que reconoce la Ley Orgánica de Protección de Datos Personales de Ecuador."]],
     ["6. Seguridad", ["Usamos conexiones cifradas y reglas de acceso para que cada persona solo vea sus propios datos. Ningún sistema es 100% seguro, pero trabajamos para proteger tu información."]],
     ["7. Menores", ["El servicio es para mayores de 18 años. No recogemos datos de menores a sabiendas."]],
     ["8. Cambios y contacto", ["Si cambiamos esta política, actualizaremos la fecha de esta página. Dudas: " + SUPPORT_EMAIL + "."]],
@@ -2839,7 +2838,7 @@ const LEGAL = {
   refund: { title: "Política de reembolsos", sections: [
     ["1. Garantía de 3 días", ["Si PRO no es para ti, puedes pedir el reembolso completo de tu primer pago dentro de los 3 días siguientes al cobro."]],
     ["2. Qué cubre", ["Solo el primer pago de la suscripción. Las renovaciones mensuales no se reembolsan, pero puedes cancelar cuando quieras para que no se cobren más. Si usas la prueba gratis de 3 días y cancelas antes de que termine, no se te cobra nada."]],
-    ["3. Cómo pedirlo", ["Escribe a " + SUPPORT_EMAIL + " desde el correo de tu cuenta, o usa el enlace Solicitar reembolso en Mi cuenta > Suscripción. Revisamos la solicitud en un máximo de 2 días hábiles."]],
+    ["3. Cómo pedirlo", ["Escribe a " + SUPPORT_EMAIL + " desde el correo de tu cuenta, o usa el enlace Solicitar reembolso en Ajustes > Suscripción. Revisamos la solicitud en un máximo de 2 días hábiles."]],
     ["4. Cómo se paga", ["El reembolso lo procesa Paddle al mismo método de pago que usaste. Según tu banco, puede tardar entre 5 y 10 días hábiles en verse reflejado."]],
     ["5. Qué pasa con tu cuenta", ["Al reembolsarse, tu suscripción se cancela y tu cuenta vuelve al plan gratuito. Conservas tus cálculos guardados, hasta el límite del plan gratis."]],
     ["6. Referidos", ["Si el pago de un referido se reembolsa dentro de los 3 días, los días de PRO que habrían correspondido al referente no se acreditan."]],
@@ -2877,10 +2876,44 @@ function LegalView({ kind, onHome }) {
   );
 }
 
+// ─── PLANES ────────────────────────────────────────────────────────────────────
+function PlansView({ paid, onBack, onUpgrade, panel }) {
+  const plans = [
+    { name: "Gratis", price: "$0", per: "para siempre", current: !paid && false, features: ["Calculadora de rentabilidad completa", "CPA real y CPA máximo", "16 monedas de LATAM", "Hasta 5 cálculos guardados", "Compartir tu resultado"] },
+    { name: "PRO", price: "$5.99", per: "al mes", pro: true, features: ["Todo lo del plan Gratis", "Desglose de CPA y sensibilidad a la entrega", "Salud de campaña y riesgo", "Benchmarks de LATAM y pérdida invisible", "Escenarios, escalado y comparador A/B", "Asesor de IA", "Control financiero", "Hasta 50 cálculos guardados", "3 días de prueba gratis"] },
+  ];
+  return (
+    <div>
+      <div style={{ fontSize: 13, color: C.textMuted, marginBottom: 6 }}>
+        <button onClick={onBack} style={{ background: "none", border: "none", padding: 0, color: C.textMuted, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Suscripción</button>
+        <span style={{ margin: "0 8px" }}>›</span><span style={{ color: C.text }}>Planes</span>
+      </div>
+      <h2 style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.03em", margin: "0 0 18px" }}>Planes</h2>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 14 }}>
+        {plans.map(p => (
+          <div key={p.name} style={{ ...panel, marginBottom: 0, padding: 24, borderColor: p.pro ? `${C.gold}55` : C.border, display: "flex", flexDirection: "column" }}>
+            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 14, color: p.pro ? C.gold : C.text }}>{p.name}</div>
+            <div style={{ marginBottom: 18 }}><span style={{ fontSize: 34, fontWeight: 800, letterSpacing: "-0.03em" }}>{p.price}</span> <span style={{ fontSize: 13, color: C.textMuted }}>{p.per}</span></div>
+            {p.pro ? (
+              <button onClick={onUpgrade} disabled={paid} style={{ background: paid ? C.cardHover : C.gold, color: paid ? C.textDim : C.bg, border: "none", borderRadius: 10, padding: "11px", fontSize: 13, fontWeight: 700, cursor: paid ? "default" : "pointer", fontFamily: "inherit", marginBottom: 20 }}>{paid ? "Tu plan actual" : "Elegir plan"}</button>
+            ) : (
+              <button disabled style={{ background: C.cardHover, color: C.textDim, border: "none", borderRadius: 10, padding: "11px", fontSize: 13, fontWeight: 700, fontFamily: "inherit", marginBottom: 20 }}>{paid ? "Plan gratuito" : "Tu plan actual"}</button>
+            )}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, borderTop: `1px solid ${C.border}`, paddingTop: 18 }}>
+              {p.features.map(f => <div key={f} style={{ display: "flex", gap: 10, fontSize: 13, color: C.textDim, lineHeight: 1.5 }}><span style={{ color: C.green, flexShrink: 0 }}><Ic n="check" size={15} /></span>{f}</div>)}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function AccountView({ trialDaysLeft, onUpgrade, onHome, onCalc, onFinance, onBackToFree }) {
   const { user, isPro, profile, portalUrl, loginWithGoogle, logout } = useAuth();
   const [tab, setTab] = useState(() => window.__nxAcctTab || "perfil");
-  useEffect(() => { const h = () => { if (window.__nxAcctTab) setTab(window.__nxAcctTab); }; window.addEventListener(ACCOUNT_EVT, h); return () => window.removeEventListener(ACCOUNT_EVT, h); }, []);
+  const [showPlans, setShowPlans] = useState(false);
+  useEffect(() => { const h = () => { if (window.__nxAcctTab) { setTab(window.__nxAcctTab); setShowPlans(false); } }; window.addEventListener(ACCOUNT_EVT, h); return () => window.removeEventListener(ACCOUNT_EVT, h); }, []);
   const [business, setBusiness] = useState("");
   const [bizMsg, setBizMsg] = useState("");
   const [prefs, setPrefs] = useState(() => ({ currency: "USD", envio: 5, pctConfirmados: 75, pctEntregados: 65, recupera: true, ...readPrefs() }));
@@ -2971,7 +3004,7 @@ function AccountView({ trialDaysLeft, onUpgrade, onHome, onCalc, onFinance, onBa
     <AppShell active="acct" onHome={onHome}>
       <GlobalStyles />
       <div style={{ maxWidth: 860, margin: "0 auto", padding: "28px 16px 60px" }}>
-        <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.03em", margin: "0 0 18px" }}>Mi cuenta</h1>
+        <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.03em", margin: "0 0 18px" }}>Ajustes</h1>
         {!user ? (
           <div style={{ ...panel, textAlign: "center", padding: 36 }}>
             <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>Inicia sesión para ver tu cuenta</div>
@@ -2981,7 +3014,7 @@ function AccountView({ trialDaysLeft, onUpgrade, onHome, onCalc, onFinance, onBa
         ) : (<>
           <div style={{ display: "flex", gap: 4, borderBottom: `1px solid ${C.border}`, marginBottom: 22, overflowX: "auto" }}>
             {tabs.map(t => (
-              <button key={t.id} onClick={() => setTab(t.id)} style={{ display: "flex", alignItems: "center", gap: 8, background: "transparent", border: "none", borderBottom: `2px solid ${tab === t.id ? C.text : "transparent"}`, padding: "10px 14px", color: tab === t.id ? C.text : C.textMuted, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", marginBottom: -1 }}><Ic n={t.i} size={15} /> {t.l}</button>
+              <button key={t.id} onClick={() => { setTab(t.id); setShowPlans(false); }} style={{ display: "flex", alignItems: "center", gap: 8, background: "transparent", border: "none", borderBottom: `2px solid ${tab === t.id ? C.text : "transparent"}`, padding: "10px 14px", color: tab === t.id ? C.text : C.textMuted, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", marginBottom: -1 }}><Ic n={t.i} size={15} /> {t.l}</button>
             ))}
           </div>
 
@@ -3024,7 +3057,18 @@ function AccountView({ trialDaysLeft, onUpgrade, onHome, onCalc, onFinance, onBa
             <button onClick={() => logout().then(onHome)} style={{ ...btnGhost, color: C.red }}><Ic n="logout" /> Cerrar sesión</button>
           </>)}
 
-          {tab === "suscripcion" && (<>
+          {tab === "suscripcion" && showPlans && <PlansView paid={isPro && st !== "bonus"} onBack={() => setShowPlans(false)} onUpgrade={onUpgrade} panel={panel} />}
+
+          {tab === "suscripcion" && !showPlans && !isPro && (
+            <div style={{ ...panel, textAlign: "center", padding: "44px 24px" }}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: C.cardHover, color: C.textDim, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}><Ic n="calendar" size={20} /></div>
+              <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 6 }}>Aún no tienes una suscripción activa</div>
+              <div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.6, maxWidth: 420, margin: "0 auto 22px" }}>{trialDaysLeft > 0 ? `Estás en tu prueba gratis de PRO: te quedan ${trialDaysLeft} ${trialDaysLeft === 1 ? "día" : "días"}. ` : ""}Activa PRO para desbloquear el desglose de CPA, benchmarks, escenarios y control financiero.</div>
+              <button onClick={() => setShowPlans(true)} style={btnMain}>Ver planes</button>
+            </div>
+          )}
+
+          {tab === "suscripcion" && !showPlans && isPro && (<>
             <div style={panel}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 10 }}>
                 <div style={{ fontSize: 20, fontWeight: 700 }}>{plan.name}</div>
@@ -3044,12 +3088,7 @@ function AccountView({ trialDaysLeft, onUpgrade, onHome, onCalc, onFinance, onBa
                 <div style={{ fontSize: 12, color: C.textMuted, marginTop: 18, lineHeight: 1.6 }}>Los pagos los procesa Paddle, nuestro vendedor oficial. En tu estado de cuenta verás el cobro a nombre de Paddle.</div>
                 <div style={{ fontSize: 12, color: C.textMuted, marginTop: 10, lineHeight: 1.6 }}>Tienes 3 días de garantía desde tu primer pago. <a href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Solicitud de reembolso - Nexus COD")}&body=${encodeURIComponent(`Hola, quiero solicitar el reembolso de mi primer pago.\n\nCorreo de mi cuenta: ${user.email}`)}`} style={{ color: C.text, fontWeight: 600 }}>Solicitar reembolso</a> · <a href="/reembolsos" onClick={e => { e.preventDefault(); openLegal("refund"); }} style={{ color: C.textDim }}>Ver política</a></div>
               </>) : (<>
-                <div style={{ display: "flex", flexDirection: "column", gap: 9, marginBottom: 22 }}>
-                  {["Salud de campaña y riesgo", "Benchmarks de LATAM y pérdida invisible", "Escenarios y comparador A/B", "Asesor IA y reporte en PDF", "Control financiero completo"].map(f => (
-                    <div key={f} style={{ display: "flex", gap: 10, fontSize: 13, color: C.textDim }}><span style={{ color: C.green }}><Ic n="✓" /></span>{f}</div>
-                  ))}
-                </div>
-                <button onClick={onUpgrade} style={{ ...btnMain, background: C.gold }}>Activar PRO por $5.99 al mes</button>
+                <button onClick={() => setShowPlans(true)} style={btnMain}>Ver planes</button>
               </>)}
             </div>
           </>)}
