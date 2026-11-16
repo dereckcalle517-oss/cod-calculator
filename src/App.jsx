@@ -58,7 +58,7 @@ function useMyRefCode() {
 async function buildShareImage({ R, inputs, fmt, url }) {
   try { await document.fonts.ready; } catch {}
   const W = 1080, H = 1080, c = document.createElement("canvas"); c.width = W; c.height = H;
-  const x = c.getContext("2d"), F = "'Satoshi', 'Figtree', 'Inter', system-ui, sans-serif";
+  const x = c.getContext("2d"), F = "'InterVariable', 'Inter', system-ui, sans-serif";
   const rr = (X, Y, w, h, r, fill, stroke) => { x.beginPath(); x.roundRect(X, Y, w, h, r); if (fill) { x.fillStyle = fill; x.fill(); } if (stroke) { x.strokeStyle = stroke; x.lineWidth = 2; x.stroke(); } };
   const t = (txt, X, Y, size, color, weight = 700, align = "left") => { x.font = `${weight} ${size}px ${F}`; x.fillStyle = color; x.textAlign = align; x.fillText(txt, X, Y); };
   x.fillStyle = "#0B0B0C"; x.fillRect(0, 0, W, H);
@@ -472,10 +472,11 @@ function GlobalStyles() {
   return (
     <style>{`
       * { box-sizing: border-box; }
+      html, body, button, input, select, textarea { font-feature-settings: 'cv02','cv03','cv04','cv11'; }
       body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
-      h1, h2, h3 { letter-spacing: -0.035em; }
+      h1, h2, h3 { letter-spacing: -0.025em; }
       html, body { width: 100%; overflow-x: clip; background: #0B0B0C; color-scheme: dark; }
-      body { margin: 0 !important; display: block !important; place-items: initial !important; min-width: 0 !important; background: #0B0B0C; font-family: 'Satoshi','Figtree','Inter',system-ui,sans-serif; -webkit-font-smoothing: antialiased; letter-spacing: -0.005em; }
+      body { margin: 0 !important; display: block !important; place-items: initial !important; min-width: 0 !important; background: #0B0B0C; font-family: 'InterVariable','Inter',system-ui,-apple-system,sans-serif; -webkit-font-smoothing: antialiased; letter-spacing: -0.005em; }
       button, input, select, textarea { font-family: inherit; }
       #root { max-width: none !important; width: 100% !important; margin: 0 !important; padding: 0 !important; text-align: left !important; border: 0 !important; border-inline: 0 !important; display: block !important; min-height: 0 !important; place-content: initial !important; box-shadow: none !important; }
       html { scroll-behavior: smooth; }
@@ -718,7 +719,7 @@ function FreeCalculator({ onUpgrade, onStartTrial, onHome, onOpenPro, embedded }
   ];
 
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Satoshi','Figtree','Inter',system-ui,sans-serif", color: C.text }}>
+    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'InterVariable','Inter',system-ui,-apple-system,sans-serif", color: C.text }}>
       {/* Header */}
       {!embedded && (
       <div style={{ borderBottom: `1px solid ${C.border}`, background: `${C.surface}EE`, backdropFilter: "blur(20px)", position: "sticky", top: 0, zIndex: 100, padding: "0 16px" }}>
@@ -1762,7 +1763,7 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
   const { user } = useAuth();
   const cpaEx = (() => { const inp = { costo: 8, precio: 35.99, envio: 5, cpa: 4, pedidos: 100, pctConfirmados: 75, pctEntregados: 65, recupera: true }; return { cpa: inp.cpa, r: useCalcPure(inp), f: makeFmt("$") }; })();
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Satoshi','Figtree','Inter',system-ui,sans-serif", color: C.text }}>
+    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'InterVariable','Inter',system-ui,-apple-system,sans-serif", color: C.text }}>
       <nav style={{ borderBottom: `1px solid ${C.border}`, background: `${C.surface}EE`, backdropFilter: "blur(20px)", position: "sticky", top: 0, zIndex: 100, padding: "0 20px" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 56 }}>
           <Brand onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} size={30} />
@@ -2297,7 +2298,7 @@ function AppShell({ active, onHome, right, children }) {
   const brandGo = user ? () => navTo("panel") : onHome;
   const legalLink = { background: "none", border: "none", padding: 0, color: C.textMuted, fontSize: 11, cursor: "pointer", fontFamily: "inherit" };
   return (
-    <div className="shell" style={{ fontFamily: "'Satoshi','Figtree','Inter',system-ui,sans-serif", color: C.text }}>
+    <div className="shell" style={{ fontFamily: "'InterVariable','Inter',system-ui,-apple-system,sans-serif", color: C.text }}>
       <aside className="shell-side">
         <Brand onClick={brandGo} size={30} pro={isPro} />
         <nav style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -2849,7 +2850,7 @@ function LegalView({ kind, onHome }) {
   const doc = LEGAL[kind] || LEGAL.terms;
   const tabs = [["terms", "Términos"], ["privacy", "Privacidad"], ["refund", "Reembolsos"]];
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, color: C.text, fontFamily: "'Satoshi','Figtree','Inter',system-ui,sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: C.bg, color: C.text, fontFamily: "'InterVariable','Inter',system-ui,-apple-system,sans-serif" }}>
       <GlobalStyles />
       <div style={{ borderBottom: `1px solid ${C.border}`, background: C.surface }}>
         <div style={{ maxWidth: 820, margin: "0 auto", padding: "0 20px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -3159,7 +3160,7 @@ function AccountView({ trialDaysLeft, onUpgrade, onHome, onCalc, onFinance, onBa
 function Paywall({ onUpgrade, onStartTrial, onHome, trialAvailable, message, justPaid }) {
   const { user } = useAuth();
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Satoshi','Figtree','Inter',system-ui,sans-serif", color: C.text, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'InterVariable','Inter',system-ui,-apple-system,sans-serif", color: C.text, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
       <GlobalStyles />
       <div style={{ maxWidth: 440, width: "100%", background: C.card, border: `1px solid ${C.gold}40`, borderRadius: 16, padding: 28, textAlign: "center" }}>
         <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 6 }}>{justPaid ? "Activando tu plan PRO" : "PRO es para suscriptores"}</div>
@@ -3212,7 +3213,7 @@ function CheckoutView({ onBack, onDone }) {
     { t: "Día 4", d: "Se cobra $5.99 al mes.", c: C.gold },
     { t: "Siempre", d: "Cancelas cuando quieras, en un clic.", c: C.accent },
   ];
-  const wrap = { minHeight: "100vh", background: C.bg, fontFamily: "'Satoshi','Figtree','Inter',system-ui,sans-serif", color: C.text };
+  const wrap = { minHeight: "100vh", background: C.bg, fontFamily: "'InterVariable','Inter',system-ui,-apple-system,sans-serif", color: C.text };
   return (
     <div style={wrap}>
       <GlobalStyles />
@@ -3333,7 +3334,7 @@ function AppInner() {
   useEffect(() => { if (justPaidUrl && !isPro) setView("paywall"); }, []);
 
   if (loadingAuth || !routed) return (
-    <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Satoshi','Figtree',system-ui,sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'InterVariable','Inter',system-ui,sans-serif" }}>
       <div style={{ textAlign: "center" }}>
         <div style={{ width: 40, height: 40, border: `3px solid ${C.border}`, borderTopColor: C.accent, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} />
         <div style={{ fontSize: 13, color: C.textMuted }}>Cargando...</div>
