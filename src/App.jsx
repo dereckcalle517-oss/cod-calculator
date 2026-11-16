@@ -2157,7 +2157,7 @@ function useAuth() {
 }
 
 // ─── USER MENU ────────────────────────────────────────────────────────────────
-function UserMenu() {
+function UserMenu({ side, onNavigate }) {
   const { user, isPro, portalUrl, loginWithGoogle, logout } = useAuth();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -2175,8 +2175,28 @@ function UserMenu() {
     </button>
   );
 
+  const nav = (fn) => () => { setOpen(false); if (onNavigate) onNavigate(); fn(); };
+  const initial = ((user.displayName || user.email || "?").trim()[0] || "?").toUpperCase();
+  const avatar = (sz) => user.photoURL
+    ? <img src={user.photoURL} alt="" width={sz} height={sz} referrerPolicy="no-referrer" style={{ borderRadius: sz > 30 ? 8 : "50%", display: "block", flexShrink: 0 }} />
+    : <span style={{ width: sz, height: sz, borderRadius: sz > 30 ? 8 : "50%", background: "#4C31A0", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: sz * 0.45, flexShrink: 0 }}>{initial}</span>;
+
   return (
-    <div style={{ position: "relative" }}>
+    <div style={{ position: "relative", width: side ? "100%" : undefined }}>
+      {side ? (
+        <button onClick={() => setOpen(!open)} aria-haspopup="menu" aria-expanded={open}
+          style={{ width: "100%", background: open ? C.cardHover : "transparent", border: "none", borderRadius: 10, padding: "8px 8px", cursor: "pointer", display: "flex", alignItems: "center", gap: 10, fontFamily: "inherit", textAlign: "left" }}>
+          {avatar(34)}
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 700, color: C.text }}>
+              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.displayName || "Mi cuenta"}</span>
+              {isPro && <span style={{ background: `${C.gold}20`, color: C.gold, fontSize: 9, fontWeight: 700, borderRadius: 5, padding: "1px 6px", flexShrink: 0 }}>PRO</span>}
+            </span>
+            <span style={{ display: "block", fontSize: 11, color: C.textMuted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.email}</span>
+          </span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ color: C.textMuted, flexShrink: 0 }}><path d="M8 9l4-4 4 4M8 15l4 4 4-4" /></svg>
+        </button>
+      ) : (
       <button onClick={() => setOpen(!open)}
         style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 99, padding: "4px 12px 4px 4px", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, fontFamily: "inherit" }}>
         <img src={user.photoURL} alt="" width={26} height={26} style={{ borderRadius: "50%", display: "block" }} />
@@ -2184,20 +2204,21 @@ function UserMenu() {
         {isPro && <span style={{ background: `${C.gold}20`, color: C.gold, fontSize: 9, fontWeight: 700, borderRadius: 5, padding: "1px 6px" }}>PRO</span>}
         <span style={{ color: C.textMuted, fontSize: 10 }}>▼</span>
       </button>
+      )}
       <AnimatePresence>
         {open && (
           <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.15 }}
-            style={{ position: "absolute", right: 0, top: "calc(100% + 6px)", background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "6px", minWidth: 180, zIndex: 200, boxShadow: "0 16px 40px rgba(0,0,0,0.5)" }}>
+            style={{ position: "absolute", ...(side ? { left: 0, right: 0, bottom: "calc(100% + 6px)" } : { right: 0, top: "calc(100% + 6px)" }), background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "6px", minWidth: 180, zIndex: 400, boxShadow: "0 16px 40px rgba(0,0,0,0.5)" }}>
             <div style={{ padding: "8px 10px 10px", borderBottom: `1px solid ${C.border}`, marginBottom: 4 }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: C.text }}>{user.displayName}</div>
               <div style={{ fontSize: 10, color: C.textMuted }}>{user.email}</div>
               <div style={{ marginTop: 4, fontSize: 10, color: isPro ? C.gold : C.textMuted, fontWeight: 600 }}>{isPro ? "Plan PRO" : "Plan Gratuito"}</div>
             </div>
-            <button onClick={() => { setOpen(false); navTo("panel"); }}
+            <button onClick={nav(() => navTo("panel"))}
               style={{ width: "100%", background: "transparent", border: "none", borderRadius: 8, padding: "8px 10px", color: C.text, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", textAlign: "left", display: "flex", alignItems: "center", gap: 8 }}>
               <Ic n="home" /> Ir al panel
             </button>
-            <button onClick={() => { setOpen(false); openAccount(); }}
+            <button onClick={nav(() => openAccount())}
               style={{ width: "100%", background: "transparent", border: "none", borderRadius: 8, padding: "8px 10px", color: C.text, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>
               <Ic n="settings" /> Ajustes
             </button>
@@ -2337,6 +2358,7 @@ function AppShell({ active, onHome, right, children }) {
             <button style={legalLink} onClick={go(() => openLegal("refund"))}>Reembolsos</button>
           </div>
         </div>
+        {user && <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 10 }}><UserMenu side onNavigate={() => setMenuOpen(false)} /></div>}
       </aside>
       <aside className="shell-side">
         <Brand onClick={brandGo} size={30} pro={isPro} />
@@ -2354,6 +2376,7 @@ function AppShell({ active, onHome, right, children }) {
             <button style={legalLink} onClick={() => openLegal("refund")}>Reembolsos</button>
           </div>
         </div>
+        {user && <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 10 }}><UserMenu side /></div>}
       </aside>
       <div style={{ minWidth: 0 }}>
         <div className="shell-top">
@@ -2364,7 +2387,7 @@ function AppShell({ active, onHome, right, children }) {
             <Brand onClick={brandGo} size={26} pro={isPro} />
           </div>
           <div className="hide-mobile" style={{ fontSize: 13, color: C.textDim, fontWeight: 600 }}>{titles[active] || "Calculadora"}</div>
-          <div style={{ display: "flex", gap: 7, alignItems: "center" }}>{right}<UserMenu /></div>
+          <div style={{ display: "flex", gap: 7, alignItems: "center" }}>{right}{!user && <UserMenu />}</div>
         </div>
         {children}
       </div>
