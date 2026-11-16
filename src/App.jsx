@@ -1993,15 +1993,7 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
               <span style={{ color: C.gold }}>Se construyó para que tú no lo pierdas.</span>
             </div>
           </div>
-          <div className="stack-m" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, alignItems: "center", marginBottom: 44 }}>
-            <div>
-              <div style={{ background: `${C.red}08`, border: `1px solid ${C.red}20`, borderRadius: 14, padding: "20px", marginBottom: 16 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: C.red, marginBottom: 7, letterSpacing: "0.06em" }}><Ic n="⚠" /> El momento que lo cambió todo</div>
-                <p style={{ fontSize: 14, color: C.textDim, lineHeight: 1.8, margin: 0 }}>Era un martes por la noche. Tenía los números en la cabeza: 200 pedidos, precio $35, CPA $4. La matemática parecía perfecta. <strong style={{ color: C.text }}>Pero cuando llegó el dinero real, había perdido más de $600.</strong></p>
-              </div>
-              <p style={{ fontSize: 14, color: C.textDim, lineHeight: 1.8, marginBottom: 12 }}>Lo que no había calculado: que solo el 72% iba a confirmar. Que el 63% iba a recibir el paquete. Que cada devolución costaba el CPA más el 60% del flete.</p>
-              <p style={{ fontSize: 14, color: C.textDim, lineHeight: 1.8 }}>Esa noche construí la herramienta que ojalá hubiera tenido desde el primer día.</p>
-            </div>
+          <div style={{ maxWidth: 560, margin: "0 auto 44px" }}>
             <div style={{ background: `${C.accent}08`, border: `1px solid ${C.accent}20`, borderRadius: 18, padding: "24px" }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: C.accent, marginBottom: 14 }}><Ic n="📊" /> Lo que aprendimos a las malas</div>
               {[
@@ -2350,10 +2342,8 @@ function AppShell({ active, onHome, right, children }) {
     ...(user ? [{ id: "panel", label: "Panel", icon: "home", fn: () => navTo("panel") }] : []),
     { id: "calc", label: "Calculadora", icon: "calculator", fn: () => navTo("calc") },
     { id: "fin", label: "Control financiero", icon: "wallet", fn: () => navTo("finance") },
-    { id: "ref", label: "Referidos", icon: "gift", fn: () => openAccount("referidos") },
     { id: "acct", label: "Mi cuenta", icon: "user", fn: () => openAccount("perfil") },
   ];
-  const help = () => { window.location.href = `mailto:${SUPPORT_EMAIL}`; };
   const titles = { panel: "Panel", calc: "Calculadora", fin: "Control financiero", ref: "Referidos", acct: "Mi cuenta" };
   const brandGo = user ? () => navTo("panel") : onHome;
   const legalLink = { background: "none", border: "none", padding: 0, color: C.textMuted, fontSize: 11, cursor: "pointer", fontFamily: "inherit" };
@@ -2365,7 +2355,6 @@ function AppShell({ active, onHome, right, children }) {
           {items.map(i => (
             <button key={i.id} className={"nav-item" + (active === i.id ? " on" : "")} onClick={i.fn}><Ic n={i.icon} size={17} /> {i.label}</button>
           ))}
-          <button className="nav-item" onClick={help}><Ic n="message" size={17} /> Ayuda</button>
           {!isPro && <button className="nav-item" onClick={() => navTo("upgrade")} style={{ color: C.gold }}><Ic n="star" size={17} /> Activar PRO</button>}
         </nav>
         <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: 10, padding: "0 12px" }}>
@@ -2384,7 +2373,7 @@ function AppShell({ active, onHome, right, children }) {
           <div style={{ display: "flex", gap: 7, alignItems: "center" }}>{right}<UserMenu /></div>
         </div>
         <div className="shell-tabs-m">
-          {[...items, { id: "help", label: "Ayuda", icon: "message", fn: help }].map(i => (
+          {items.map(i => (
             <button key={i.id} onClick={i.fn} style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 14px", background: active === i.id ? C.cardHover : "transparent", border: `1px solid ${active === i.id ? C.borderBright : C.border}`, borderRadius: 99, color: active === i.id ? C.text : C.textDim, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", flexShrink: 0 }}><Ic n={i.icon} size={14} /> {i.label}</button>
           ))}
         </div>
@@ -3031,7 +3020,7 @@ function AccountView({ trialDaysLeft, onUpgrade, onHome, onCalc, onFinance, onBa
   const canDelete = !(isPro && !willCancel && st !== "bonus");
 
   return (
-    <AppShell active={tab === "referidos" ? "ref" : "acct"} onHome={onHome}>
+    <AppShell active="acct" onHome={onHome}>
       <GlobalStyles />
       <div style={{ maxWidth: 860, margin: "0 auto", padding: "28px 16px 60px" }}>
         <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.03em", margin: "0 0 18px" }}>Mi cuenta</h1>
