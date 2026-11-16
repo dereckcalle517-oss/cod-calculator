@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, AreaChart, Area } from "recharts";
 import { initializeApp, getApps } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
-import { getFirestore, doc, getDoc, setDoc, collection, addDoc, getDocs, deleteDoc, query, orderBy, serverTimestamp, onSnapshot } from "firebase/firestore";
+import { getFirestore, doc, getDoc, setDoc, collection, addDoc, getDocs, deleteDoc, updateDoc, deleteField, FieldPath, query, orderBy, serverTimestamp, onSnapshot } from "firebase/firestore";
 
 // ─── THEME ────────────────────────────────────────────────────────────────────
 const C = {
@@ -2426,10 +2426,11 @@ function AppShell({ active, onHome, right, children }) {
   const items = [
     ...(user ? [{ id: "panel", label: "Panel", icon: "home", fn: () => navTo("panel") }] : []),
     { id: "calc", label: "Calculadora", icon: "calculator", fn: () => navTo("calc") },
+    ...(user ? [{ id: "track", label: "Seguimiento", icon: "trendUp", fn: () => navTo("track") }] : []),
     { id: "fin", label: "Control financiero", icon: "wallet", fn: () => navTo("finance"), lock: !canPro },
     { id: "acct", label: "Ajustes", icon: "settings", fn: () => openAccount("perfil") },
   ];
-  const titles = { panel: "Panel", calc: "Calculadora", fin: "Control financiero", ref: "Referidos", acct: "Ajustes" };
+  const titles = { track: "Seguimiento", panel: "Panel", calc: "Calculadora", fin: "Control financiero", ref: "Referidos", acct: "Ajustes" };
   const brandGo = user ? () => navTo("panel") : onHome;
   const legalLink = { background: "none", border: "none", padding: 0, color: C.textMuted, fontSize: 11, cursor: "pointer", fontFamily: "inherit" };
   return (
@@ -2521,6 +2522,7 @@ function Dashboard({ trialDaysLeft, onUpgrade }) {
           <button onClick={openPlans} style={{ background: C.gold, border: "none", borderRadius: 10, padding: "10px 18px", color: C.bg, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Ver planes</button>
         </div>
       )}
+      <TodayCard />
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 14 }}>
         {cards.map(c => (
           <div key={c.t} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 22, display: "flex", flexDirection: "column" }}>
@@ -2590,6 +2592,529 @@ function useFinance() {
 
   const update = (fn) => { dirty.current = true; setData(fn); };
   return { data, update, status, user };
+}
+
+// ─── SEGUIMIENTO (productos y registro diario) ─────────────────────────────
+const TRK_FREE_PRODUCTS = 1;
+const TRK_FREE_DAYS = 7;
+const TRK_CONFIRM_AFTER = 7;
+const TrkCtx = createContext(null);
+const TRK_EMPTY = { products: [], loaded: true, error: "", saveProduct: async () => {}, saveDay: async () => {}, deleteDay: async () => {}, deleteProduct: async () => {} };
+const useTracking = () => useContext(TrkCtx) || TRK_EMPTY;
+
+const trkNum = (v) => { const n = parseFloat(String(v).replace(",", ".")); return Number.isFinite(n) ? n : NaN; };
+const trkDayDiff = (a, b) => Math.round((new Date(a + "T00:00:00") - new Date(b + "T00:00:00")) / 86400000);
+const trkLabel = (iso) => { const p = iso.split("-"); return `${+p[2]} ${MONTHS_ES[+p[1] - 1].slice(0, 3).toLowerCase()}`; };
+const trkFmt = (p) => makeFmt(((CURRENCIES.find(c => c.code === p.cur) || CURRENCIES[0]).symbol));
+const trkSigned = (fmt, v) => (v <= -0.005 ? "−" : "") + fmt(v);
+const trkSnap = (p) => ({ costo: p.costo, precio: p.precio, envio: p.envio, c: p.pctConfirmados, e: p.pctEntregados, comision: p.comision ?? 2.5, recupera: p.recupera !== false });
+
+function calcDay(p, d) {
+  const s = d.snap || {};
+  const costo = s.costo ?? p.costo, precio = s.precio ?? p.precio, envio = s.envio ?? p.envio;
+  const pc = s.c ?? p.pctConfirmados, pe = s.e ?? p.pctEntregados;
+  const comision = s.comision ?? p.comision ?? 2.5, recupera = s.recupera ?? p.recupera ?? true;
+  const pedidos = Number(d.pedidos) || 0, cpa = Number(d.cpa) || 0;
+  const real = d.real && Number.isFinite(d.real.ent) && Number.isFinite(d.real.conf) ? d.real : null;
+  const conf = real ? real.conf : pedidos * pc / 100;
+  const ent = real ? real.ent : conf * pe / 100;
+  const dev = Math.max(0, conf - ent);
+  const ing = ent * precio, dropi = ent * precio * comision / 100;
+  const flete = ent * envio + dev * envio * 0.6;
+  const prod = recupera ? ent * costo : (ent + dev) * costo;
+  const ads = pedidos * cpa;
+  const ganancia = ing - ads - flete - prod - dropi;
+  return { pedidos, cpa, conf, ent, dev, ing, dropi, flete, prod, ads, ganancia, real: !!real,
+    cpaReal: ent > 0 ? ads / ent : 0,
+    cpaMax: pedidos > 0 ? Math.max(0, (ing - flete - prod - dropi) / pedidos) : 0,
+    margen: ing > 0 ? (ganancia / ing) * 100 : 0 };
+}
+function trkSum(list) {
+  const t = { pedidos: 0, conf: 0, ent: 0, dev: 0, ing: 0, dropi: 0, flete: 0, prod: 0, ads: 0, ganancia: 0 };
+  list.forEach(x => Object.keys(t).forEach(k => { t[k] += x[k]; }));
+  t.cpaReal = t.ent > 0 ? t.ads / t.ent : 0;
+  t.cpaAvg = t.pedidos > 0 ? t.ads / t.pedidos : 0;
+  t.cpaMax = t.pedidos > 0 ? Math.max(0, (t.ing - t.flete - t.prod - t.dropi) / t.pedidos) : 0;
+  t.margen = t.ing > 0 ? (t.ganancia / t.ing) * 100 : 0;
+  return t;
+}
+const trkRows = (p) => Object.entries(p.days || {}).map(([date, d]) => ({ date, d, c: calcDay(p, d) })).sort((a, b) => (a.date < b.date ? -1 : 1));
+const trkVisible = (rows, isPro, today) => (isPro ? rows : rows.filter(r => trkDayDiff(today, r.date) < TRK_FREE_DAYS));
+function trkLight(rows) {
+  if (!rows.length) return null;
+  const a = trkSum(rows.slice(-3).map(r => r.c));
+  if (!(a.ent > 0)) return { id: "red", color: C.red, label: "Sin entregas", text: "Con tus tasas, estos días no dejan pedidos entregados." };
+  if (a.cpaAvg > a.cpaMax) return { id: "red", color: C.red, label: "En rojo", text: "Tu CPA supera tu máximo: pierdes dinero por pedido." };
+  if (a.cpaAvg > a.cpaMax * 0.85) return { id: "amber", color: C.amber, label: "Cuidado", text: "Estás cerca del límite. Un pequeño aumento del CPA te deja sin ganancia." };
+  return { id: "green", color: C.green, label: "En verde", text: "Tu CPA está por debajo de tu máximo." };
+}
+function trkRecs(p, rows, fmt, today) {
+  const recs = [];
+  if (!rows.length) return recs;
+  const a = trkSum(rows.slice(-3).map(r => r.c));
+  if (a.ent > 0 && a.cpaAvg > a.cpaMax) recs.push({ tone: "red", title: "Estás perdiendo dinero por pedido entregado", text: `Tu CPA de los últimos días es ${fmt(a.cpaAvg)} y tu máximo es ${fmt(a.cpaMax)}. Baja el presupuesto o pausa los anuncios que más gastan hasta que el CPA vuelva por debajo del máximo.` });
+  const recent = rows.slice(-3), before = rows.slice(-10, -3);
+  if (recent.length >= 2 && before.length >= 3) {
+    const avg = (xs) => xs.reduce((s, r) => s + (r.d.cpa || 0), 0) / xs.length;
+    const up = avg(before) > 0 ? (avg(recent) / avg(before) - 1) * 100 : 0;
+    if (up >= 20) recs.push({ tone: "amber", title: `Tu CPA subió ${Math.round(up)}% en los últimos días`, text: "Suele ser fatiga de creativos: tu audiencia ya vio mucho tus anuncios. Sube 2 o 3 creativos nuevos, con otro gancho u otro ángulo, y compáralos." });
+  }
+  const reals = rows.filter(r => r.c.real);
+  if (reals.length >= 2) {
+    const t = trkSum(reals.map(r => r.c));
+    const rc = t.pedidos > 0 ? (t.conf / t.pedidos) * 100 : 0, re = t.conf > 0 ? (t.ent / t.conf) * 100 : 0;
+    if (re < p.pctEntregados - 8) recs.push({ tone: "amber", title: `Tu entrega real es ${re.toFixed(0)}%, no ${p.pctEntregados}%`, text: "Tus pedidos confirmados se entregan menos de lo que supones. Actualiza la tasa del producto y confirma por WhatsApp antes de despachar.", action: "edit" });
+    if (rc < p.pctConfirmados - 8) recs.push({ tone: "amber", title: `Tu confirmación real es ${rc.toFixed(0)}%, no ${p.pctConfirmados}%`, text: "Se te confirman menos pedidos de los que supones. Revisa qué tan rápido contactas al cliente y actualiza la tasa del producto.", action: "edit" });
+  }
+  const w = trkSum(rows.slice(-7).map(r => r.c));
+  if (w.ent > 0 && w.cpaAvg <= w.cpaMax && w.margen < 15) recs.push({ tone: "info", title: "Tu CPA está bien, pero el margen es justo", text: `Tu margen de la semana es ${w.margen.toFixed(1)}%. Prueba subir el precio, ofrecer un combo o un upsell para dejar más por pedido.` });
+  const pend = rows.filter(r => !r.c.real && trkDayDiff(today, r.date) >= TRK_CONFIRM_AFTER);
+  if (pend.length) recs.push({ tone: "info", title: `${pend.length} ${pend.length === 1 ? "día espera" : "días esperan"} tu resultado real`, text: "Ya pasó el tiempo de entrega. Confirma cuántos pedidos se entregaron para que tus números sean reales.", action: "confirm" });
+  if (!recs.length) recs.push({ tone: "green", title: "Vas bien", text: `Tu CPA (${fmt(w.cpaAvg)}) está por debajo de tu máximo (${fmt(w.cpaMax)}). Sigue registrando cada día.` });
+  const order = { red: 0, amber: 1, info: 2, green: 3 };
+  return recs.sort((x, y) => order[x.tone] - order[y.tone]);
+}
+const TRK_TONE = { red: C.red, amber: C.amber, info: C.accent, green: C.green };
+
+function TrackingProvider({ children }) {
+  const { user } = useAuth();
+  const [products, setProducts] = useState([]);
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    setProducts([]); setLoaded(false); setError("");
+    if (!user) return;
+    let alive = true;
+    getDocs(collection(db, "users", user.uid, "tracking"))
+      .then(snap => { if (!alive) return; setProducts(snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.createdMs || 0) - (b.createdMs || 0))); setLoaded(true); })
+      .catch(e => { console.error(e); if (alive) { setError("No pudimos cargar tu seguimiento. Recarga la página; si sigue igual, escríbenos."); setLoaded(true); } });
+    return () => { alive = false; };
+  }, [user && user.uid]);
+  const fail = (e) => { console.error(e); setError("No pudimos guardar el cambio. Revisa tu conexión e inténtalo otra vez."); };
+  const api = useMemo(() => ({
+    products, loaded, error,
+    saveProduct: async (v, id) => {
+      if (!user) return null;
+      setError("");
+      const pid = id || uid8();
+      try {
+        if (id) {
+          await setDoc(doc(db, "users", user.uid, "tracking", pid), v, { merge: true });
+          setProducts(ps => ps.map(p => (p.id === pid ? { ...p, ...v } : p)));
+        } else {
+          const full = { ...v, days: {}, createdMs: Date.now() };
+          await setDoc(doc(db, "users", user.uid, "tracking", pid), full);
+          setProducts(ps => [...ps, { id: pid, ...full }]);
+        }
+        return pid;
+      } catch (e) { fail(e); return null; }
+    },
+    saveDay: async (pid, date, day) => {
+      if (!user) return false;
+      setError("");
+      try {
+        await setDoc(doc(db, "users", user.uid, "tracking", pid), { days: { [date]: day } }, { merge: true });
+        setProducts(ps => ps.map(p => (p.id === pid ? { ...p, days: { ...(p.days || {}), [date]: day } } : p)));
+        return true;
+      } catch (e) { fail(e); return false; }
+    },
+    deleteDay: async (pid, date) => {
+      if (!user) return false;
+      setError("");
+      try {
+        await updateDoc(doc(db, "users", user.uid, "tracking", pid), new FieldPath("days", date), deleteField());
+        setProducts(ps => ps.map(p => { if (p.id !== pid) return p; const d = { ...(p.days || {}) }; delete d[date]; return { ...p, days: d }; }));
+        return true;
+      } catch (e) { fail(e); return false; }
+    },
+    deleteProduct: async (pid) => {
+      if (!user) return false;
+      setError("");
+      try { await deleteDoc(doc(db, "users", user.uid, "tracking", pid)); setProducts(ps => ps.filter(p => p.id !== pid)); return true; }
+      catch (e) { fail(e); return false; }
+    },
+  }), [products, loaded, error, user && user.uid]);
+  return <TrkCtx.Provider value={api}>{children}</TrkCtx.Provider>;
+}
+
+const trkInp = { width: "100%", boxSizing: "border-box", background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, padding: "11px 13px", color: C.text, fontSize: 14, fontFamily: "inherit", outline: "none", colorScheme: "dark" };
+const trkBtn = { background: C.text, border: "none", borderRadius: 10, padding: "11px 18px", color: C.bg, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" };
+const trkBtn2 = { background: "transparent", border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 16px", color: C.textDim, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" };
+const trkCard = { background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 18 };
+function TrkField({ label, hint, children }) {
+  return (
+    <label style={{ display: "block", minWidth: 0 }}>
+      <span style={{ display: "block", fontSize: 12, fontWeight: 600, color: C.textDim, marginBottom: 6 }}>{label}</span>
+      {children}
+      {hint && <span style={{ display: "block", fontSize: 11, color: C.textMuted, marginTop: 5, lineHeight: 1.45 }}>{hint}</span>}
+    </label>
+  );
+}
+function TrkLock({ text }) {
+  return (
+    <div style={{ ...trkCard, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", borderColor: `${C.gold}33`, background: `${C.gold}08` }}>
+      <div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.5, flex: "1 1 220px" }}><span style={{ color: C.gold, fontWeight: 700 }}><Ic n="lock" size={13} /> Solo PRO.</span> {text}</div>
+      <button onClick={openPlans} style={{ ...trkBtn, background: C.gold }}>Ver planes</button>
+    </div>
+  );
+}
+
+function ProductForm({ initial, onSave, onCancel, onDelete }) {
+  const { profile } = useAuth();
+  const pr = (profile && profile.prefs) || {};
+  const [f, setF] = useState(() => ({
+    name: (initial && initial.name) || "", cur: (initial && initial.cur) || pr.currency || "USD",
+    precio: initial ? initial.precio : "", costo: initial ? initial.costo : "", envio: initial ? initial.envio : (pr.envio ?? ""),
+    c: initial ? initial.pctConfirmados : (pr.pctConfirmados ?? 75), e: initial ? initial.pctEntregados : (pr.pctEntregados ?? 65),
+    comision: initial ? (initial.comision ?? 2.5) : 2.5, recupera: initial ? initial.recupera !== false : true,
+  }));
+  const [err, setErr] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [confirmDel, setConfirmDel] = useState(false);
+  const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
+  const submit = async (e) => {
+    e.preventDefault();
+    const v = { name: f.name.trim(), cur: f.cur, precio: trkNum(f.precio), costo: trkNum(f.costo), envio: trkNum(f.envio), pctConfirmados: trkNum(f.c), pctEntregados: trkNum(f.e), comision: trkNum(f.comision), recupera: !!f.recupera };
+    if (!v.name) return setErr("Ponle un nombre al producto.");
+    if (!(v.precio > 0)) return setErr("El precio de venta debe ser mayor que 0.");
+    if (![v.costo, v.envio, v.comision].every(n => n >= 0)) return setErr("Costo, envío y comisión deben ser números de 0 o más.");
+    if (![v.pctConfirmados, v.pctEntregados].every(n => n >= 0 && n <= 100)) return setErr("Las tasas van de 0 a 100.");
+    setErr(""); setSaving(true); await onSave(v); setSaving(false);
+  };
+  const grid = { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 14 };
+  return (
+    <form onSubmit={submit} style={{ ...trkCard, padding: 22, display: "grid", gap: 16 }}>
+      <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: "-0.01em" }}>{initial ? "Editar producto" : "Nuevo producto"}</div>
+      <div style={grid}>
+        <TrkField label="Nombre del producto"><input style={trkInp} value={f.name} onChange={set("name")} placeholder="Ej: Decant Club de Nuit" maxLength={60} /></TrkField>
+        <TrkField label="Moneda"><select style={trkInp} value={f.cur} onChange={set("cur")}>{CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}</select></TrkField>
+      </div>
+      <div style={grid}>
+        <TrkField label="Precio de venta"><input style={trkInp} inputMode="decimal" value={f.precio} onChange={set("precio")} placeholder="35.99" /></TrkField>
+        <TrkField label="Costo del producto"><input style={trkInp} inputMode="decimal" value={f.costo} onChange={set("costo")} placeholder="8" /></TrkField>
+        <TrkField label="Costo de envío"><input style={trkInp} inputMode="decimal" value={f.envio} onChange={set("envio")} placeholder="5" /></TrkField>
+      </div>
+      <div style={grid}>
+        <TrkField label="Pedidos confirmados (%)" hint="De cada 100 pedidos, cuántos confirma el cliente."><input style={trkInp} inputMode="decimal" value={f.c} onChange={set("c")} /></TrkField>
+        <TrkField label="Confirmados que se entregan (%)" hint="De los confirmados, cuántos recibe y paga."><input style={trkInp} inputMode="decimal" value={f.e} onChange={set("e")} /></TrkField>
+        <TrkField label="Comisión de plataforma (%)" hint="Dropi u otra. Déjalo en 0 si no aplica."><input style={trkInp} inputMode="decimal" value={f.comision} onChange={set("comision")} /></TrkField>
+      </div>
+      <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: C.textDim, cursor: "pointer" }}>
+        <input type="checkbox" checked={f.recupera} onChange={(e) => setF({ ...f, recupera: e.target.checked })} /> Recupero el producto cuando lo devuelven
+      </label>
+      {initial && <div style={{ fontSize: 12, color: C.textMuted, lineHeight: 1.5 }}>Los días ya registrados conservan los valores con los que se guardaron. El cambio aplica a los días nuevos.</div>}
+      {err && <div role="alert" style={{ fontSize: 13, color: C.red }}>{err}</div>}
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+        <button type="submit" disabled={saving} style={{ ...trkBtn, opacity: saving ? 0.7 : 1 }}>{saving ? "Guardando..." : "Guardar producto"}</button>
+        {onCancel && <button type="button" onClick={onCancel} style={trkBtn2}>Cancelar</button>}
+        {initial && onDelete && (confirmDel
+          ? <button type="button" onClick={onDelete} style={{ ...trkBtn2, color: C.red, borderColor: `${C.red}55`, marginLeft: "auto" }}>Sí, eliminar producto y su historial</button>
+          : <button type="button" onClick={() => setConfirmDel(true)} style={{ ...trkBtn2, marginLeft: "auto" }}>Eliminar</button>)}
+      </div>
+    </form>
+  );
+}
+
+function DayForm({ p, date, compact, onSaved }) {
+  const t = useTracking();
+  const existing = (p.days || {})[date];
+  const [cpa, setCpa] = useState(existing ? String(existing.cpa) : "");
+  const [ped, setPed] = useState(existing ? String(existing.pedidos) : "");
+  const [err, setErr] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [ok, setOk] = useState(false);
+  useEffect(() => { setCpa(existing ? String(existing.cpa) : ""); setPed(existing ? String(existing.pedidos) : ""); setOk(false); setErr(""); }, [p.id, date]);
+  const fmt = trkFmt(p);
+  const nC = trkNum(cpa), nP = trkNum(ped);
+  const preview = nC >= 0 && nP >= 0 && cpa !== "" && ped !== "" ? calcDay(p, { ...(existing || { snap: trkSnap(p) }), cpa: nC, pedidos: nP }) : null;
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!(nC >= 0) || !(nP >= 0) || cpa === "" || ped === "") return setErr("Escribe el CPA y los pedidos del día (puede ser 0).");
+    setErr(""); setBusy(true);
+    const day = { ...(existing || { snap: trkSnap(p) }), cpa: nC, pedidos: nP, updatedMs: Date.now() };
+    const done = await t.saveDay(p.id, date, day);
+    setBusy(false);
+    if (done) { setOk(true); onSaved && onSaved(); }
+  };
+  return (
+    <form onSubmit={submit} style={{ display: "grid", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: 12 }}>
+        <TrkField label="CPA del día"><input style={trkInp} inputMode="decimal" value={cpa} onChange={(e) => { setCpa(e.target.value); setOk(false); }} placeholder="4.50" /></TrkField>
+        <TrkField label="Pedidos del día"><input style={trkInp} inputMode="numeric" value={ped} onChange={(e) => { setPed(e.target.value); setOk(false); }} placeholder="12" /></TrkField>
+      </div>
+      {preview && (
+        <div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.5 }}>
+          Gastaste <b style={{ color: C.text }}>{fmt(preview.ads)}</b> en ads. Con tus tasas, la ganancia estimada es{" "}
+          <b style={{ color: preview.ganancia >= 0 ? C.green : C.red }}>{trkSigned(fmt, preview.ganancia)}</b>.
+        </div>
+      )}
+      {err && <div role="alert" style={{ fontSize: 13, color: C.red }}>{err}</div>}
+      {t.error && <div role="alert" style={{ fontSize: 13, color: C.red }}>{t.error}</div>}
+      <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+        <button type="submit" disabled={busy} style={{ ...trkBtn, opacity: busy ? 0.7 : 1 }}>{busy ? "Guardando..." : existing ? "Actualizar día" : "Guardar día"}</button>
+        {ok && <span style={{ fontSize: 13, color: C.green }}><Ic n="check" size={14} /> Guardado</span>}
+      </div>
+    </form>
+  );
+}
+
+function RealForm({ p, date, d, onDone }) {
+  const t = useTracking();
+  const c = calcDay(p, d);
+  const [conf, setConf] = useState(d.real ? String(d.real.conf) : "");
+  const [ent, setEnt] = useState(d.real ? String(d.real.ent) : "");
+  const [err, setErr] = useState("");
+  const save = async () => {
+    const a = trkNum(conf), b = trkNum(ent);
+    if (!(a >= 0) || !(b >= 0) || conf === "" || ent === "") return setErr("Escribe los dos números.");
+    if (a > c.pedidos) return setErr(`No puedes tener más confirmados (${a}) que pedidos (${c.pedidos}).`);
+    if (b > a) return setErr("Los entregados no pueden superar a los confirmados.");
+    setErr("");
+    const ok = await t.saveDay(p.id, date, { ...d, real: { conf: a, ent: b }, realMs: Date.now() });
+    if (ok) onDone();
+  };
+  return (
+    <div style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 12, padding: 14, display: "grid", gap: 10 }}>
+      <div style={{ fontSize: 12, color: C.textDim, lineHeight: 1.5 }}>De {c.pedidos} pedidos de ese día, ¿cuántos se confirmaron y cuántos se entregaron y pagaron?</div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: 10 }}>
+        <TrkField label="Confirmados"><input style={trkInp} inputMode="numeric" value={conf} onChange={(e) => setConf(e.target.value)} /></TrkField>
+        <TrkField label="Entregados"><input style={trkInp} inputMode="numeric" value={ent} onChange={(e) => setEnt(e.target.value)} /></TrkField>
+      </div>
+      {err && <div role="alert" style={{ fontSize: 12, color: C.red }}>{err}</div>}
+      <div style={{ display: "flex", gap: 8 }}>
+        <button type="button" onClick={save} style={{ ...trkBtn, padding: "9px 14px" }}>Confirmar resultado</button>
+        <button type="button" onClick={onDone} style={{ ...trkBtn2, padding: "9px 14px" }}>Cancelar</button>
+      </div>
+    </div>
+  );
+}
+
+function TrkStat({ label, value, color, sub }) {
+  return (
+    <div style={{ ...trkCard, padding: 16, minWidth: 0 }}>
+      <div style={{ fontSize: 12, color: C.textDim, marginBottom: 6 }}>{label}</div>
+      <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", color: color || C.text, overflowWrap: "anywhere" }}>{value}</div>
+      {sub && <div style={{ fontSize: 11, color: C.textMuted, marginTop: 4, lineHeight: 1.4 }}>{sub}</div>}
+    </div>
+  );
+}
+
+function trkMonthStats(rows, today) {
+  const mk = monthKey(today);
+  const m = trkSum(rows.filter(r => monthKey(r.date) === mk).map(r => r.c));
+  const n = rows.filter(r => monthKey(r.date) === mk).length;
+  const dim = new Date(+today.slice(0, 4), +today.slice(5, 7), 0).getDate();
+  const proj = n > 0 ? (m.ganancia / n) * dim : 0;
+  return { m, n, dim, proj };
+}
+
+function SeguimientoView() {
+  const { isPro } = useAuth();
+  const t = useTracking();
+  const today = todayISO();
+  const [sel, setSel] = useState(null);
+  const [mode, setMode] = useState("view");
+  const [date, setDate] = useState(today);
+  const [realFor, setRealFor] = useState(null);
+  const p = t.products.find(x => x.id === sel) || t.products[0] || null;
+  useEffect(() => { setRealFor(null); setDate(todayISO()); }, [p && p.id]);
+  const canAdd = isPro || t.products.length < TRK_FREE_PRODUCTS;
+  const startNew = () => { if (!canAdd) return openPlans(); setMode("new"); };
+  const wrap = { maxWidth: 1000, margin: "0 auto", padding: "28px 16px 60px" };
+  const head = (
+    <div style={{ marginBottom: 20 }}>
+      <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.03em", margin: "0 0 4px" }}>Seguimiento</h1>
+      <div style={{ fontSize: 14, color: C.textDim, lineHeight: 1.5 }}>Anota tu CPA y tus pedidos cada día. Cuadre calcula tu ganancia y te avisa cuando algo se sale de rumbo.</div>
+    </div>
+  );
+  if (!t.loaded) return <div style={wrap}>{head}<div style={{ fontSize: 13, color: C.textMuted }}>Cargando tus productos...</div></div>;
+  if (mode === "new" || (!t.products.length && !t.error)) {
+    return (
+      <div style={wrap}>{head}
+        {!t.products.length && <div style={{ ...trkCard, marginBottom: 16, fontSize: 13.5, color: C.textDim, lineHeight: 1.6 }}>Empieza guardando un producto con sus costos y tus tasas. Después solo anotas el CPA y los pedidos de cada día.</div>}
+        {t.error && <div role="alert" style={{ fontSize: 13, color: C.red, marginBottom: 12 }}>{t.error}</div>}
+        <ProductForm onCancel={t.products.length ? () => setMode("view") : null}
+          onSave={async (v) => { const id = await t.saveProduct(v); if (id) { setSel(id); setMode("view"); } }} />
+      </div>
+    );
+  }
+  if (!p) return <div style={wrap}>{head}<div role="alert" style={{ fontSize: 13, color: C.red }}>{t.error}</div></div>;
+  if (mode === "edit") {
+    return (
+      <div style={wrap}>{head}
+        {t.error && <div role="alert" style={{ fontSize: 13, color: C.red, marginBottom: 12 }}>{t.error}</div>}
+        <ProductForm initial={p} onCancel={() => setMode("view")}
+          onSave={async (v) => { const id = await t.saveProduct(v, p.id); if (id) setMode("view"); }}
+          onDelete={async () => { if (await t.deleteProduct(p.id)) { setSel(null); setMode("view"); } }} />
+      </div>
+    );
+  }
+  const fmt = trkFmt(p);
+  const all = trkRows(p);
+  const rows = trkVisible(all, isPro, today);
+  const hidden = all.length - rows.length;
+  const light = trkLight(rows);
+  const recs = trkRecs(p, rows, fmt, today);
+  const shownRecs = isPro ? recs : recs.slice(0, 1);
+  const wk = trkSum(rows.filter(r => trkDayDiff(today, r.date) < 7).map(r => r.c));
+  const tod = rows.find(r => r.date === today);
+  const ms = trkMonthStats(rows, today);
+  const chart = (() => { let acc = 0; return rows.map(r => { acc += r.c.ganancia; return { f: trkLabel(r.date), g: +acc.toFixed(2) }; }); })();
+  const sorted = [...rows].reverse();
+  return (
+    <div style={wrap}>{head}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16, alignItems: "center" }}>
+        {t.products.map(x => (
+          <button key={x.id} onClick={() => setSel(x.id)} style={{ ...trkBtn2, padding: "8px 14px", ...(x.id === p.id ? { background: C.accentDim, color: C.accent, borderColor: `${C.accent}55` } : {}) }}>{x.name}</button>
+        ))}
+        <button onClick={startNew} style={{ ...trkBtn2, padding: "8px 14px" }}>{canAdd ? "+ Producto" : <><Ic n="lock" size={12} /> Más productos (PRO)</>}</button>
+      </div>
+      {t.error && <div role="alert" style={{ fontSize: 13, color: C.red, marginBottom: 12 }}>{t.error}</div>}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))", gap: 14, marginBottom: 14 }}>
+        <div style={{ ...trkCard, display: "grid", gap: 14, alignContent: "start" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+            <div style={{ fontSize: 15, fontWeight: 700 }}>Registrar un día</div>
+            <button onClick={() => setMode("edit")} style={{ ...trkBtn2, padding: "6px 12px", fontSize: 12 }}>Editar producto</button>
+          </div>
+          <TrkField label="Fecha"><input type="date" style={trkInp} value={date} max={today} min={isPro ? undefined : (() => { const d = new Date(); d.setDate(d.getDate() - (TRK_FREE_DAYS - 1)); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; })()} onChange={(e) => e.target.value && setDate(e.target.value > today ? today : e.target.value)} /></TrkField>
+          <DayForm p={p} date={date} />
+        </div>
+        <div style={{ ...trkCard, display: "grid", gap: 10, alignContent: "start" }}>
+          <div style={{ fontSize: 15, fontWeight: 700 }}>Cómo vas</div>
+          {light ? (
+            <>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ width: 14, height: 14, borderRadius: 7, background: light.color, flexShrink: 0 }} />
+                <span style={{ fontSize: 18, fontWeight: 700, color: light.color }}>{light.label}</span>
+              </div>
+              <div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.55 }}>{light.text}</div>
+              <div style={{ fontSize: 12, color: C.textMuted, lineHeight: 1.5 }}>CPA {fmt(wk.cpaAvg)} · máximo {fmt(wk.cpaMax)} (últimos 7 días)</div>
+            </>
+          ) : <div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.55 }}>Registra tu primer día y aquí verás si vas en verde, en amarillo o en rojo.</div>}
+        </div>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 12, marginBottom: 14 }}>
+        <TrkStat label="Hoy" value={tod ? trkSigned(fmt, tod.c.ganancia) : "—"} color={tod ? (tod.c.ganancia >= 0 ? C.green : C.red) : C.textMuted} sub={tod ? (tod.c.real ? "confirmado" : "estimado") : "Aún sin registrar"} />
+        <TrkStat label="Últimos 7 días" value={trkSigned(fmt, wk.ganancia)} color={wk.ganancia >= 0 ? C.green : C.red} sub={`${fmtNum(wk.pedidos)} pedidos`} />
+        <TrkStat label={`Acumulado de ${MONTHS_ES[+today.slice(5, 7) - 1].toLowerCase()}`} value={trkSigned(fmt, ms.m.ganancia)} color={ms.m.ganancia >= 0 ? C.green : C.red} sub={`${ms.n} ${ms.n === 1 ? "día registrado" : "días registrados"}`} />
+        {isPro
+          ? <TrkStat label="Proyección del mes" value={ms.n ? trkSigned(fmt, ms.proj) : "—"} color={ms.proj >= 0 ? C.text : C.red} sub={ms.n ? `Si sigues al ritmo de tus ${ms.n} días` : "Necesita al menos un día"} />
+          : <button onClick={openPlans} style={{ ...trkCard, padding: 16, textAlign: "left", cursor: "pointer", fontFamily: "inherit", color: C.text, borderColor: `${C.gold}33` }}><div style={{ fontSize: 12, color: C.textDim, marginBottom: 6 }}>Proyección del mes</div><div style={{ fontSize: 13, color: C.gold, fontWeight: 700 }}><Ic n="lock" size={13} /> Solo PRO</div></button>}
+      </div>
+      <div style={{ ...trkCard, marginBottom: 14, display: "grid", gap: 12 }}>
+        <div style={{ fontSize: 15, fontWeight: 700 }}>Recomendaciones</div>
+        {!rows.length && <div style={{ fontSize: 13, color: C.textDim }}>Aparecerán cuando registres tus primeros días.</div>}
+        {shownRecs.map((r, i) => (
+          <div key={i} style={{ borderLeft: `3px solid ${TRK_TONE[r.tone]}`, paddingLeft: 12 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 3 }}>{r.title}</div>
+            <div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.55 }}>{r.text}</div>
+            {r.action === "edit" && <button onClick={() => setMode("edit")} style={{ ...trkBtn2, padding: "6px 12px", fontSize: 12, marginTop: 8 }}>Actualizar tasas del producto</button>}
+          </div>
+        ))}
+        {!isPro && recs.length > 1 && <TrkLock text={`Tienes ${recs.length - 1} ${recs.length - 1 === 1 ? "recomendación más" : "recomendaciones más"}. Con PRO las ves todas.`} />}
+      </div>
+      {isPro ? (
+        chart.length > 1 && (
+          <div style={{ ...trkCard, marginBottom: 14 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }}>Ganancia acumulada</div>
+            <div style={{ width: "100%", height: 220 }}>
+              <ResponsiveContainer>
+                <AreaChart data={chart} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                  <CartesianGrid stroke={C.border} strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="f" tick={{ fill: C.textMuted, fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: C.textMuted, fontSize: 11 }} axisLine={false} tickLine={false} width={48} />
+                  <Tooltip contentStyle={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 12 }} formatter={(v) => [trkSigned(fmt, v), "Acumulado"]} />
+                  <Area type="monotone" dataKey="g" stroke={C.accent} fill={C.accentDim} strokeWidth={2} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )
+      ) : <div style={{ marginBottom: 14 }}><TrkLock text="Gráfica de ganancia acumulada, historial completo, desglose de CPA por día y confirmación de resultados reales." /></div>}
+      <div style={{ ...trkCard, padding: 0, overflow: "hidden" }}>
+        <div style={{ padding: "16px 18px", fontSize: 15, fontWeight: 700 }}>Historial</div>
+        {!sorted.length && <div style={{ padding: "0 18px 18px", fontSize: 13, color: C.textDim }}>Todavía no hay días registrados.</div>}
+        {sorted.map(r => {
+          const pend = !r.c.real && trkDayDiff(today, r.date) >= TRK_CONFIRM_AFTER;
+          return (
+            <div key={r.date} style={{ borderTop: `1px solid ${C.border}`, padding: "14px 18px", display: "grid", gap: 8 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+                <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                  <b style={{ fontSize: 14 }}>{trkLabel(r.date)}</b>
+                  <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 20, color: r.c.real ? C.green : C.textDim, background: r.c.real ? `${C.green}18` : C.accentDim }}>{r.c.real ? "confirmado" : "estimado"}</span>
+                </div>
+                <b style={{ fontSize: 15, color: r.c.ganancia >= 0 ? C.green : C.red }}>{trkSigned(fmt, r.c.ganancia)}</b>
+              </div>
+              <div style={{ fontSize: 12.5, color: C.textDim, lineHeight: 1.55 }}>
+                {fmtNum(r.c.pedidos)} pedidos · CPA {fmt(r.c.cpa)} · ads {fmt(r.c.ads)}
+                {isPro && <> · entregados {r.c.ent.toFixed(r.c.real ? 0 : 1)} · costo por entregado {fmt(r.c.cpaReal)} · CPA máx. {fmt(r.c.cpaMax)}</>}
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {isPro
+                  ? <button onClick={() => setRealFor(realFor === r.date ? null : r.date)} style={{ ...trkBtn2, padding: "5px 11px", fontSize: 12, ...(pend ? { color: C.amber, borderColor: `${C.amber}55` } : {}) }}>{r.c.real ? "Editar resultado real" : "Confirmar resultado real"}</button>
+                  : <button onClick={openPlans} style={{ ...trkBtn2, padding: "5px 11px", fontSize: 12 }}><Ic n="lock" size={11} /> Confirmar resultado real</button>}
+                <button onClick={() => { setDate(r.date); window.scrollTo({ top: 0, behavior: "smooth" }); }} style={{ ...trkBtn2, padding: "5px 11px", fontSize: 12 }}>Corregir CPA/pedidos</button>
+                <button onClick={() => { if (window.confirm("¿Borrar este día?")) t.deleteDay(p.id, r.date); }} style={{ ...trkBtn2, padding: "5px 11px", fontSize: 12 }}>Borrar</button>
+              </div>
+              {realFor === r.date && <RealForm p={p} date={r.date} d={r.d} onDone={() => setRealFor(null)} />}
+            </div>
+          );
+        })}
+        {hidden > 0 && <div style={{ borderTop: `1px solid ${C.border}`, padding: 14 }}><TrkLock text={`Hay ${hidden} ${hidden === 1 ? "día más antiguo" : "días más antiguos"}. El plan gratis muestra los últimos ${TRK_FREE_DAYS}.`} /></div>}
+      </div>
+    </div>
+  );
+}
+
+function TodayCard() {
+  const { isPro } = useAuth();
+  const t = useTracking();
+  const today = todayISO();
+  const [sel, setSel] = useState(null);
+  if (!t.loaded) return null;
+  if (!t.products.length) {
+    return (
+      <div style={{ ...trkCard, marginBottom: 20, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+        <div style={{ flex: "1 1 240px" }}>
+          <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 3 }}>Sigue tu ganancia día a día</div>
+          <div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.5 }}>Guarda un producto y anota tu CPA y tus pedidos. Cuadre calcula tu resultado y te avisa si algo anda mal.</div>
+        </div>
+        <button onClick={() => navTo("track")} style={trkBtn}>Crear mi primer producto</button>
+      </div>
+    );
+  }
+  const p = t.products.find(x => x.id === sel) || t.products[0];
+  const fmt = trkFmt(p);
+  const rows = trkVisible(trkRows(p), isPro, today);
+  const tod = rows.find(r => r.date === today);
+  const ms = trkMonthStats(rows, today);
+  const light = trkLight(rows);
+  const top = trkRecs(p, rows, fmt, today)[0];
+  return (
+    <div style={{ ...trkCard, marginBottom: 20, display: "grid", gap: 14 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        <div style={{ fontSize: 15, fontWeight: 700 }}>Hoy</div>
+        {t.products.length > 1
+          ? <select aria-label="Producto" value={p.id} onChange={(e) => setSel(e.target.value)} style={{ ...trkInp, width: "auto", padding: "7px 10px", fontSize: 13 }}>{t.products.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}</select>
+          : <span style={{ fontSize: 13, color: C.textDim }}>{p.name}</span>}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 18 }}>
+        <div>
+          <div style={{ fontSize: 12, color: C.textDim, marginBottom: 8 }}>{tod ? "Ya registraste hoy. Puedes actualizarlo:" : "Anota el CPA y los pedidos de hoy"}</div>
+          <DayForm p={p} date={today} />
+        </div>
+        <div style={{ display: "grid", gap: 10, alignContent: "start" }}>
+          <div style={{ display: "flex", gap: 22, flexWrap: "wrap" }}>
+            <div><div style={{ fontSize: 12, color: C.textDim }}>Resultado de hoy</div><div style={{ fontSize: 20, fontWeight: 700, color: tod ? (tod.c.ganancia >= 0 ? C.green : C.red) : C.textMuted }}>{tod ? trkSigned(fmt, tod.c.ganancia) : "—"}</div></div>
+            <div><div style={{ fontSize: 12, color: C.textDim }}>Acumulado del mes</div><div style={{ fontSize: 20, fontWeight: 700, color: ms.m.ganancia >= 0 ? C.green : C.red }}>{trkSigned(fmt, ms.m.ganancia)}</div></div>
+          </div>
+          {light && <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}><span style={{ width: 10, height: 10, borderRadius: 5, background: light.color }} /><b style={{ color: light.color }}>{light.label}</b><span style={{ color: C.textDim }}>· {light.text}</span></div>}
+          {top && <div style={{ borderLeft: `3px solid ${TRK_TONE[top.tone]}`, paddingLeft: 10, fontSize: 13, color: C.textDim, lineHeight: 1.5 }}><b style={{ color: C.text }}>{top.title}.</b> {top.text}</div>}
+          <button onClick={() => navTo("track")} style={{ ...trkBtn2, justifySelf: "start", padding: "7px 12px", fontSize: 12 }}>Ver seguimiento completo</button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function FinanceCenter({ onBackToCalc, onHome, onBackToFree }) {
@@ -3494,6 +4019,7 @@ function AppInner() {
     const h = (e) => {
       const v = e.detail, a = actions.current;
       if (v === "panel") setView(a.user ? "panel" : "landing");
+      else if (v === "track") setView(a.user ? "track" : "landing");
       else if (v === "calc") (a.canPro ? setView("pro") : setView("free"));
       else if (v === "finance" && a.openFinance) a.openFinance();
       else if (v === "upgrade" && a.upgrade) a.upgrade();
@@ -3541,6 +4067,9 @@ function AppInner() {
   if (view === "account") return <AccountView trialDaysLeft={proTrial} onUpgrade={upgrade} onHome={goHome} onCalc={openPro} onFinance={openFinance} onBackToFree={openFree} />;
   if (view === "panel") return user
     ? <AppShell active="panel" onHome={goHome}><Dashboard trialDaysLeft={proTrial} onUpgrade={upgrade} /></AppShell>
+    : <Landing onOpenFree={openFree} onOpenPro={openPro} onStartTrial={startTrial} onUpgrade={upgrade} />;
+  if (view === "track") return user
+    ? <AppShell active="track" onHome={goHome}><SeguimientoView /></AppShell>
     : <Landing onOpenFree={openFree} onOpenPro={openPro} onStartTrial={startTrial} onUpgrade={upgrade} />;
   if (view === "free") return user
     ? <AppShell active="calc" onHome={goHome}><FreeCalculator embedded onUpgrade={upgrade} onOpenPro={openPro} onStartTrial={startTrial} onHome={goHome} /></AppShell>
@@ -3593,9 +4122,11 @@ function WelcomePro() {
 export default function App() {
   return (
     <AuthProvider>
-      <GlobalStyles />
-      <AppInner />
-      <WelcomePro />
+      <TrackingProvider>
+        <GlobalStyles />
+        <AppInner />
+        <WelcomePro />
+      </TrackingProvider>
     </AuthProvider>
   );
 }
