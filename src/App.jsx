@@ -2013,20 +2013,46 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
         </div>
       </section>
 
-      <footer style={{ borderTop: `1px solid ${C.border}`, padding: "24px 20px" }}>
-        <div style={{ maxWidth: 1000, margin: "0 auto", display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <Logo size={24} />
-            <div style={{ fontSize: 13, fontWeight: 800, color: C.text }}>Nexus COD <span style={{ color: C.gold }}>Pro</span></div>
+      <footer style={{ borderTop: `1px solid ${C.border}`, padding: "44px 20px 26px", marginTop: 20 }}>
+        <div style={{ maxWidth: 1000, margin: "0 auto" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: "28px 24px" }}>
+            <div style={{ gridColumn: "span 2", minWidth: 220 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 12 }}>
+                <Logo size={26} />
+                <div style={{ fontSize: 15, fontWeight: 700, color: C.text, letterSpacing: "-0.02em" }}>Nexus COD</div>
+              </div>
+              <div style={{ fontSize: 13, color: C.textMuted, lineHeight: 1.65, maxWidth: 320 }}>Calcula tu ganancia real en contraentrega: CPA real, devoluciones y costos que Ads Manager no te muestra.</div>
+            </div>
+            {[
+              { t: "Producto", l: [
+                { k: "Calculadora gratis", f: () => (user ? navTo("calc") : onOpenFree()) },
+                { k: "Precios", h: "#precios" },
+                { k: "Preguntas frecuentes", h: "#faq" },
+              ] },
+              { t: "Empresa", l: [
+                { k: "Quiénes somos", h: "#nosotros" },
+                { k: "Contacto", h: `mailto:${SUPPORT_EMAIL}` },
+              ] },
+              { t: "Legal", l: [
+                { k: "Términos", h: "/terminos", f: () => openLegal("terms") },
+                { k: "Privacidad", h: "/privacidad", f: () => openLegal("privacy") },
+                { k: "Reembolsos", h: "/reembolsos", f: () => openLegal("refund") },
+              ] },
+            ].map(col => (
+              <div key={col.t}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 12 }}>{col.t}</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+                  {col.l.map(x => (
+                    <a key={x.k} href={x.h || "#"} onClick={x.f ? (e) => { e.preventDefault(); x.f(); } : undefined} style={{ fontSize: 13, color: C.textMuted, textDecoration: "none" }}>{x.k}</a>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
-          <div style={{ display: "flex", gap: 16, fontSize: 11, color: C.textMuted, flexWrap: "wrap" }}>
-            <a href="#nosotros" style={{ color: C.textMuted, textDecoration: "none" }}>Quiénes somos</a>
-            <a href="/terminos" onClick={e => { e.preventDefault(); openLegal("terms"); }} style={{ color: C.textMuted, textDecoration: "none" }}>Términos</a>
-            <a href="/privacidad" onClick={e => { e.preventDefault(); openLegal("privacy"); }} style={{ color: C.textMuted, textDecoration: "none" }}>Privacidad</a>
-            <a href="/reembolsos" onClick={e => { e.preventDefault(); openLegal("refund"); }} style={{ color: C.textMuted, textDecoration: "none" }}>Reembolsos</a>
-            <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: C.textMuted, textDecoration: "none" }}>Contacto</a>
+          <div style={{ marginTop: 36, paddingTop: 18, borderTop: `1px solid ${C.border}`, display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: 8, fontSize: 12, color: C.textMuted }}>
+            <span>© 2026 Nexus COD · Hecho en Ecuador para LATAM</span>
+            <span>Pagos seguros con Paddle</span>
           </div>
-          <div style={{ fontSize: 11, color: C.textMuted }}>© 2026 Nexus COD Pro · LATAM</div>
         </div>
       </footer>
       <GlobalStyles />
@@ -2314,6 +2340,79 @@ function SavedCalcs({ inputs, currency, R, limit, onLoad }) {
 }
 
 // ─── MARCO DE LA APP PRO (menú lateral + barra superior) ──────────────────────
+const HELP_QA = [
+  { q: "¿Qué es el CPA real?", k: "cpa real que es costo adquisicion ads manager", a: "Es lo que de verdad te cuesta conseguir un pedido entregado: el gasto en publicidad dividido entre los pedidos que sí se entregan, no entre los que Ads Manager cuenta como compra." },
+  { q: "¿Qué diferencia hay entre CPA real y CPA máximo?", k: "cpa maximo real diferencia limite tope", a: "El CPA real es lo que pagas hoy por pedido entregado. El CPA máximo es lo más que puedes pagar sin perder dinero. Si el real supera al máximo, esa campaña te está haciendo perder." },
+  { q: "¿Cómo funciona la prueba gratis de PRO?", k: "prueba gratis trial 3 dias tarjeta cobro", a: "Tienes 3 días para probar PRO. Pones tu tarjeta al empezar y el primer cobro de $5.99 llega al terminar la prueba. Puedes cancelar antes y no se cobra." },
+  { q: "¿Cómo cancelo mi suscripción?", k: "cancelar cancelo suscripcion baja plan pro", a: "Ve a Ajustes → Suscripción y toca Administrar suscripción. Conservas PRO hasta que termine el periodo ya pagado." },
+  { q: "¿Cómo pido un reembolso?", k: "reembolso devolver devolucion dinero garantia", a: "Tienes 3 días de garantía desde tu primer pago. Pídelo desde Ajustes → Suscripción o escribiendo a soporte desde el correo de tu cuenta." },
+  { q: "Pagué pero sigo en plan Gratis", k: "pague pago sigue gratis no activa activo pro plan", a: "La activación tarda unos segundos. Recarga la página o cierra sesión y vuelve a entrar. Si después de unos minutos sigue igual, escríbenos con el correo de tu cuenta y lo resolvemos." },
+  { q: "¿Cómo funcionan los referidos?", k: "referidos referido amigo invitar dias pro gratis enlace", a: "Compartes tu enlace desde Ajustes → Referidos. Por cada amigo que se suscriba y pague, ganas 15 días de PRO, que se acreditan 3 días después de su primer pago. El tope acumulado es de 30 días." },
+  { q: "¿Qué incluye el plan PRO?", k: "pro incluye beneficios plan que ofrece precio", a: "Desglose de CPA y sensibilidad a la entrega, salud de campaña, benchmarks, escenarios, comparador A/B, asesor de IA y control financiero. Cuesta $5.99 al mes." },
+  { q: "¿Qué incluye el plan Gratis?", k: "gratis free incluye limite guardados monedas", a: "La calculadora de rentabilidad completa, CPA real y CPA máximo, 16 monedas de LATAM, hasta 5 cálculos guardados y compartir tu resultado." },
+  { q: "¿Cómo elimino mi cuenta y mis datos?", k: "eliminar borrar cuenta datos privacidad", a: "Ve a Ajustes → Datos y privacidad. Ahí puedes descargar o eliminar tus datos. Si tienes una suscripción activa, cancélala antes." },
+];
+const helpNorm = (t) => (t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+function HelpWidget() {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState("");
+  const [openQ, setOpenQ] = useState(null);
+  const [searched, setSearched] = useState("");
+  useEffect(() => {
+    if (!open) return;
+    const k = (e) => { if (e.key === "Escape") setOpen(false); };
+    window.addEventListener("keydown", k);
+    return () => window.removeEventListener("keydown", k);
+  }, [open]);
+  const words = helpNorm(searched).split(/[^a-z0-9]+/).filter(w => w.length > 2);
+  const results = words.length
+    ? HELP_QA.map(x => ({ x, n: words.filter(w => helpNorm(x.q + " " + x.k).includes(w)).length })).filter(r => r.n > 0).sort((a, b) => b.n - a.n).slice(0, 3).map(r => r.x)
+    : HELP_QA;
+  const send = (e) => { e.preventDefault(); const t = text.trim(); if (!t) return; setSearched(t); setOpenQ(null); };
+  const mail = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Consulta desde el panel")}&body=${encodeURIComponent(searched ? searched + "\n\n" : "")}`;
+  return (
+    <>
+      <style>{`@keyframes nxHelpIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}} .help-panel{animation:nxHelpIn .18s ease} @media (max-width:520px){.help-panel{right:12px!important;left:12px!important;width:auto!important;bottom:80px!important;max-height:calc(100vh - 110px)!important}}`}</style>
+      {open && (
+        <div className="help-panel" role="dialog" aria-label="Ayuda" style={{ position: "fixed", right: 20, bottom: 84, width: 360, maxHeight: "min(560px, calc(100vh - 120px))", display: "flex", flexDirection: "column", zIndex: 260, background: C.card, border: `1px solid ${C.borderBright}`, borderRadius: 16, boxShadow: "0 20px 50px rgba(0,0,0,0.55)", overflow: "hidden", fontFamily: "'InterVariable','Inter',system-ui,sans-serif" }}>
+          <div style={{ padding: "16px 16px 12px", borderBottom: `1px solid ${C.border}` }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: C.text, letterSpacing: "-0.01em" }}>¿En qué te ayudamos?</div>
+            <div style={{ fontSize: 12, color: C.textMuted, marginTop: 3 }}>Escribe tu duda o elige una pregunta.</div>
+          </div>
+          <div style={{ padding: 12, overflowY: "auto", flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+            {searched && results.length === 0 && (
+              <div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.55, padding: "6px 4px" }}>No encontré una respuesta para eso. Escríbenos y te respondemos por correo.</div>
+            )}
+            {results.map(x => (
+              <div key={x.q} style={{ border: `1px solid ${C.border}`, borderRadius: 10, background: openQ === x.q ? C.cardHover : "transparent" }}>
+                <button onClick={() => setOpenQ(openQ === x.q ? null : x.q)} aria-expanded={openQ === x.q} style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", padding: "11px 12px", color: C.text, fontSize: 13, fontWeight: 600, textAlign: "left", cursor: "pointer", fontFamily: "inherit" }}>
+                  <span style={{ flex: 1, minWidth: 0 }}>{x.q}</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ color: C.textMuted, transform: openQ === x.q ? "rotate(180deg)" : "none", transition: "transform .15s", flexShrink: 0 }}><path d="M6 9l6 6 6-6" /></svg>
+                </button>
+                {openQ === x.q && <div style={{ padding: "0 12px 12px", fontSize: 13, color: C.textDim, lineHeight: 1.6 }}>{x.a}</div>}
+              </div>
+            ))}
+            {searched && <button onClick={() => { setSearched(""); setText(""); setOpenQ(null); }} style={{ alignSelf: "flex-start", background: "none", border: "none", color: C.textMuted, fontSize: 12, cursor: "pointer", fontFamily: "inherit", padding: "4px" }}>Ver todas las preguntas</button>}
+          </div>
+          <div style={{ padding: 12, borderTop: `1px solid ${C.border}` }}>
+            <form onSubmit={send} style={{ display: "flex", gap: 8 }}>
+              <input value={text} onChange={e => setText(e.target.value)} placeholder="Escribe tu pregunta" aria-label="Escribe tu pregunta" style={{ flex: 1, minWidth: 0, background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 12px", color: C.text, fontSize: 13, fontFamily: "inherit", outline: "none" }} />
+              <button type="submit" style={{ background: C.text, border: "none", borderRadius: 10, padding: "0 14px", color: C.bg, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Buscar</button>
+            </form>
+            <a href={mail} style={{ display: "block", textAlign: "center", marginTop: 10, fontSize: 12, color: C.textMuted, textDecoration: "none" }}>¿Sigues con dudas? Escríbenos</a>
+          </div>
+        </div>
+      )}
+      <button onClick={() => setOpen(o => !o)} aria-label={open ? "Cerrar ayuda" : "Abrir ayuda"} aria-expanded={open} style={{ position: "fixed", right: 20, bottom: 20, zIndex: 260, width: 52, height: 52, borderRadius: "50%", border: "none", background: C.gold, color: C.bg, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 24px rgba(0,0,0,0.45)" }}>
+        {open
+          ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+          : <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" /><path d="M9.6 9.6a2.4 2.4 0 1 1 3.4 2.2c-.6.3-1 .8-1 1.4M12 16.2h.01" /></svg>}
+      </button>
+    </>
+  );
+}
+
 function AppShell({ active, onHome, right, children }) {
   const { user, isPro } = useAuth();
   const canPro = isPro || trialLeft() > 0;
@@ -2336,6 +2435,7 @@ function AppShell({ active, onHome, right, children }) {
   const legalLink = { background: "none", border: "none", padding: 0, color: C.textMuted, fontSize: 11, cursor: "pointer", fontFamily: "inherit" };
   return (
     <div className="shell" style={{ fontFamily: "'InterVariable','Inter',system-ui,-apple-system,sans-serif", color: C.text }}>
+      {user && <HelpWidget />}
       <div className={"shell-scrim" + (menuOpen ? " open" : "")} onClick={() => setMenuOpen(false)} />
       <aside className={"shell-drawer" + (menuOpen ? " open" : "")} aria-hidden={!menuOpen}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
