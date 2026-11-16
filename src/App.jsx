@@ -1806,7 +1806,7 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
               </>)}
             </div>
             <div style={{ marginTop: 18, display: "flex", gap: 18, flexWrap: "wrap", fontSize: 12, color: C.textMuted }}>
-              <span><Ic n="✓" /> Sin tarjeta</span><span><Ic n="✓" /> Sin registro</span><span><Ic n="✓" /> 16 monedas de LATAM</span>
+              <span><Ic n="✓" /> Calculadora gratis sin registro</span><span><Ic n="✓" /> Cancela cuando quieras</span><span><Ic n="✓" /> 16 monedas de LATAM</span>
             </div>
           </motion.div>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }}>
@@ -1992,7 +1992,7 @@ function Landing({ onOpenFree, onOpenPro, onStartTrial, onUpgrade }) {
       <section style={{ padding: "10px 20px 80px" }}>
         <div style={{ maxWidth: 560, margin: "0 auto", textAlign: "center", background: C.card, border: `1px solid ${C.gold}25`, borderRadius: 22, padding: "40px 24px" }}>
           <div style={{ fontSize: "clamp(20px,3vw,28px)", fontWeight: 700, color: C.text, letterSpacing: "-0.02em", marginBottom: 10 }}>¿Tu campaña es rentable de verdad?</div>
-          <div style={{ fontSize: 13, color: C.textMuted, marginBottom: 22, lineHeight: 1.7 }}>Descúbrelo en 30 segundos. Sin registro. Sin tarjeta.</div>
+          <div style={{ fontSize: 13, color: C.textMuted, marginBottom: 22, lineHeight: 1.7 }}>Descúbrelo en 30 segundos con la calculadora gratis, sin registro.</div>
           <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
             <button onClick={onOpenFree} style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 12, padding: "12px 22px", color: C.textDim, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Usar gratis</button>
             <motion.button onClick={onStartTrial} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
@@ -2337,7 +2337,7 @@ function Dashboard({ trialDaysLeft, onUpgrade }) {
   const canPro = isPro || trialDaysLeft > 0;
   const name = ((user && user.displayName) || "").split(" ")[0];
   const st = profile && profile.lsStatus;
-  const planNote = isPro ? (st === "bonus" ? "Tienes PRO por tus referidos." : "Tu plan PRO está activo.") : trialDaysLeft > 0 ? `Prueba gratis: te quedan ${trialDaysLeft} ${trialDaysLeft === 1 ? "día" : "días"}.` : "Estás en el plan gratis. PRO cuesta $5.99 al mes.";
+  const planNote = isPro ? (st === "bonus" ? "Tienes PRO por tus referidos." : st === "trialing" ? "Tu plan PRO está activo (en prueba gratis)." : "Tu plan PRO está activo.") : "Estás en el plan gratis. PRO cuesta $5.99 al mes.";
   const cards = [
     { i: "calculator", t: "Calculadora", d: canPro ? "Calcula tu ganancia real con envío, CPA, devoluciones y Dropi incluidos." : "Calcula tu ganancia real con todos los costos. Incluye tu CPA real y tu CPA máximo.", b: "Abrir calculadora", fn: () => navTo("calc") },
     { i: "target", t: "CPA real y desglose", d: canPro ? "Tu CPA real, los niveles de rentabilidad y qué pasa si cambia la entrega." : "Disponible solo en PRO: el desglose de CPA por niveles y la sensibilidad a la entrega.", b: canPro ? "Ver desglose" : "Ver planes", fn: () => { window.__nxCalcTab = "cpa"; navTo("calc"); }, lock: !canPro },
@@ -2952,8 +2952,6 @@ function AccountView({ trialDaysLeft, onUpgrade, onHome, onCalc, onFinance, onBa
       : st === "past_due" ? { name: "Plan PRO", chip: "Pago pendiente", tone: C.red, note: "No pudimos cobrar tu último pago. Actualiza tu método de pago para no perder PRO." }
       : st === "trialing" ? { name: "Plan PRO", chip: "En prueba", tone: C.green, note: nextBill ? `Tu primer cobro de $5.99 será el ${fmtLongDate(nextBill)}.` : "Estás en tu prueba gratis." }
       : { name: "Plan PRO", chip: "Activa", tone: C.green, note: nextBill ? `Próximo cobro de $5.99 el ${fmtLongDate(nextBill)}.` : "Tu suscripción está activa." };
-  } else if (trialDaysLeft > 0) {
-    plan = { name: "Prueba gratis de PRO", chip: "En prueba", tone: C.gold, note: `Te quedan ${trialDaysLeft} ${trialDaysLeft === 1 ? "día" : "días"} de PRO sin costo.` };
   }
 
   const saveBusiness = async () => {
@@ -3066,7 +3064,7 @@ function AccountView({ trialDaysLeft, onUpgrade, onHome, onCalc, onFinance, onBa
             <div style={{ ...panel, textAlign: "center", padding: "44px 24px" }}>
               <div style={{ width: 44, height: 44, borderRadius: 12, background: C.cardHover, color: C.textDim, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}><Ic n="calendar" size={20} /></div>
               <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 6 }}>Aún no tienes una suscripción activa</div>
-              <div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.6, maxWidth: 420, margin: "0 auto 22px" }}>{trialDaysLeft > 0 ? `Estás en tu prueba gratis de PRO: te quedan ${trialDaysLeft} ${trialDaysLeft === 1 ? "día" : "días"}. ` : ""}Activa PRO para desbloquear el desglose de CPA, benchmarks, escenarios y control financiero.</div>
+              <div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.6, maxWidth: 420, margin: "0 auto 22px" }}>Activa PRO para desbloquear el desglose de CPA, benchmarks, escenarios y control financiero.</div>
               <button onClick={() => setShowPlans(true)} style={btnMain}>Ver planes</button>
             </div>
           )}
@@ -3283,15 +3281,10 @@ function CheckoutView({ onBack, onDone }) {
   );
 }
 
-const TRIAL_KEY = "cod_trial_start";
-const trialLeft = () => {
-  try {
-    const t = Number(localStorage.getItem(TRIAL_KEY));
-    if (!t) return 0;
-    return Math.max(0, Math.ceil((t + 3 * 86400000 - Date.now()) / 86400000));
-  } catch { return 0; }
-};
-const trialUsed = () => { try { return !!localStorage.getItem(TRIAL_KEY); } catch { return false; } };
+// La prueba gratis ahora es solo la de Paddle (con tarjeta). Se limpia la prueba antigua del navegador.
+try { localStorage.removeItem("cod_trial_start"); } catch {}
+const trialLeft = () => 0;
+const trialUsed = () => true;
 
 function AppInner() {
   const { user, isPro, loadingAuth, loginWithGoogle } = useAuth();
@@ -3344,13 +3337,7 @@ function AppInner() {
     </div>
   );
 
-  const startTrial = () => {
-    try { if (!localStorage.getItem(TRIAL_KEY)) localStorage.setItem(TRIAL_KEY, String(Date.now())); } catch {}
-    const left = trialLeft();
-    setTrialDaysLeft(left);
-    if (left > 0 || isPro) setView("pro");
-    else { setPayMsg("Tu prueba gratis ya terminó. Activa PRO para seguir."); setView("paywall"); }
-  };
+  const startTrial = () => upgrade();
   const openPro = () => { if (canPro) setView("pro"); else { setPayMsg(""); setView("paywall"); } };
   const openFree = () => setView("free");
   const openFinance = () => { if (canPro) setView("finance"); else if (user) openPlans(); else { setPayMsg(""); setView("paywall"); } };
