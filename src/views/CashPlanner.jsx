@@ -10,6 +10,7 @@ const fmtDate = (d) => `${DIAS[d.getDay()]} ${d.getDate()} ${MESES[d.getMonth()]
 const short = (d) => `${d.getDate()} ${MESES[d.getMonth()]}`;
 const num = (v) => { const n = parseFloat(String(v ?? "").replace(",", ".")); return Number.isFinite(n) ? n : NaN; };
 const PLATAFORMAS = ["TikTok Ads", "Meta Ads", "Google Ads", "Otra"];
+const MIN_ADS = { "TikTok Ads": 20 }; // inversión mínima diaria por plataforma
 const EJEMPLO = { banco: "1000", dropi: "300", adsDia: "30", cpa: "2.5", precio: "35.99", costo: "8", envio: "6" };
 
 function PlanField({ k, label, hint, value, auto: a, plan, set, inp }) {
@@ -40,9 +41,13 @@ export function CashPlanner({ data, update, saldo, fmt }) {
   }, [products]);
   const pick = (k, fb) => { const v = num(plan[k]); if (Number.isFinite(v)) return v; if (auto && auto[k]) return +Number(auto[k]).toFixed(2); return fb; };
   const isAuto = (k) => !!auto && !Number.isFinite(num(plan[k])) && !!auto[k];
+  const plat = plan.plataforma || PLATAFORMAS[0];
+  const minAds = MIN_ADS[plat] || 0;
+  const adsRaw = pick("adsDia", 0);
+  const adsPick = adsRaw > 0 ? Math.max(adsRaw, minAds) : 0;
   const i = {
     banco: Number.isFinite(num(plan.banco)) ? num(plan.banco) : Math.max(0, saldo),
-    dropi: pick("dropi", 0), adsDia: pick("adsDia", 0), cpa: pick("cpa", 0),
+    dropi: pick("dropi", 0), adsDia: adsPick, cpa: pick("cpa", 0),
     precio: pick("precio", 0), costo: pick("costo", 0), envio: pick("envio", 6), comision: pick("comision", 2.5), otros: pick("otros", 0),
     pctConf: pick("pctConf", 75), pctEnt: pick("pctEnt", 65),
     entMin: pick("entMin", 3), entMax: pick("entMax", 5), retiro: pick("retiro", 1), transfer: pick("transfer", 1),
@@ -56,7 +61,8 @@ export function CashPlanner({ data, update, saldo, fmt }) {
   const ready = i.adsDia > 0 && i.cpa > 0 && i.precio > 0;
   const key = JSON.stringify(i);
 
-  const defEsc = [0.67, 1, 1.67, 2.67].map(m => Math.max(1, Math.round(i.adsDia * m)));
+  const defEsc = [0.67, 1, 1.67, 2.67].map(m => Math.max(minAds || 1, Math.round(i.adsDia * m)));
+  for (let k = 1; k < defEsc.length; k++) if (defEsc[k] <= defEsc[k - 1]) defEsc[k] = defEsc[k - 1] + (minAds ? 10 : 1);
   const escNames = ["Conservador", "Actual", "Crecimiento", "Agresivo"];
   const escAds = defEsc.map((d, k) => { const v = num(plan["esc" + k]); return Number.isFinite(v) && v > 0 ? v : d; });
 
@@ -92,11 +98,19 @@ export function CashPlanner({ data, update, saldo, fmt }) {
     const ok = s.failDay === null;
     const loses = s.perDay < 0;
     const color = ok ? (loses ? C.amber : C.green) : C.red;
-    const dropiRec = need.dropi, bancoRec = need.banco;
+    const short0 = i.banco + i.dropi < need.total - 0.005;
+    // Si el dinero no alcanza para todo el ciclo, se reparte entre las dos cuentas en proporción a lo que
+    // gasta cada una por día: así ambas se agotan a la vez y rinde la mayor cantidad de días.
+    const shipDay0 = (i.envioModo === "devolucion" ? main.s.dev : main.s.conf) * i.envio;
+    const dShare = shipDay0 + i.adsDia + i.otros > 0 ? shipDay0 / (shipDay0 + i.adsDia + i.otros) : 0;
+    const dropiRec = short0 ? (i.banco + i.dropi) * dShare : need.dropi;
+    const bancoRec = short0 ? (i.banco + i.dropi) - dropiRec : need.banco;
     const dropiFalta = Math.max(0, dropiRec - i.dropi);
     // lo que pases a Dropi sale del banco: el faltante del banco se mide después de ese traspaso
     const bancoFalta = Math.max(0, bancoRec - (i.banco - dropiFalta));
     const totalFalta = Math.max(0, need.total - i.banco - i.dropi);
+    const sobra = Math.max(0, i.banco + i.dropi - need.total);
+    const bajoMin = minAds > 0 && safe < minAds - 0.005;
     const retirable = ok ? Math.max(0, i.dropi - dropiRec) : 0;
     const lastAd = s.failDay !== null && s.failDay > 0 ? addDays(today, s.failDay - 1) : null;
     const failWho = s.failWhy === "dropi" ? "en Dropi (para los envíos)" : "en tu banco (para los ads)";
@@ -114,10 +128,12 @@ export function CashPlanner({ data, update, saldo, fmt }) {
 
     // Qué hacer: máximo 3 líneas, lo urgente primero
     const todo = [];
-    if (!ok) todo.push({ c: C.red, t: `Baja tu inversión a ${fmt(safe)} al día o menos para no quedarte sin dinero.` });
-    if (totalFalta > 0.005) todo.push({ c: C.red, t: `Para sostener ${fmt(i.adsDia)} al día te faltan ${fmt(totalFalta)} en total (banco + Dropi).` });
+    if (!ok && !bajoMin) todo.push({ c: C.red, t: `Baja tu inversión a ${fmt(safe)} al día o menos para no quedarte sin dinero.` });
+    if (bajoMin) todo.push({ c: C.red, t: `Reúne ${fmt(totalFalta)} más antes de lanzar, o espera a que entren cobros: ${plat} no deja invertir menos de ${fmt(minAds)} al día.` });
+    else if (totalFalta > 0.005) todo.push({ c: C.red, t: `Para sostener ${fmt(i.adsDia)} al día te faltan ${fmt(totalFalta)} en total (banco + Dropi).` });
     else if (dropiFalta > 0) todo.push({ c: C.red, t: `Pasa ${fmt(dropiFalta)} de tu banco a Dropi para cubrir los envíos.` });
     if (loses) todo.push({ c: C.red, t: `Tu campaña pierde ${fmt(-s.perDay)} al día. Baja el CPA o sube el precio antes de invertir más.` });
+    if (sobra > 0.5 && ok && !loses) todo.push({ c: C.accent, t: `Te sobran ${fmt(sobra)}: déjalos de colchón en el banco o úsalos para subir el presupuesto.` });
     if (retirable > 0) todo.push({ c: C.green, t: `Puedes sacar ${fmt(retirable)} de Dropi a tu banco sin problema.` });
     if (growNow) todo.push({ c: C.green, t: `Ya puedes subir a ${fmt(nextUp.ads)} al día.` });
     else if (growDate) todo.push({ c: C.accent, t: `Podrás subir a ${fmt(nextUp.ads)} al día cerca del ${fmtDate(growDate)}.` });
@@ -137,19 +153,20 @@ export function CashPlanner({ data, update, saldo, fmt }) {
         <div style={{ ...card, borderColor: `${color}55` }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
             <span style={{ width: 14, height: 14, borderRadius: 7, background: color, flexShrink: 0 }} />
-            <div style={{ fontSize: 18, fontWeight: 700, color }}>{ok ? `Puedes invertir hasta ${fmt(safe)} al día` : `Con tu dinero actual solo aguantas ${days}`}</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color }}>{bajoMin ? `Con tu dinero actual no alcanzas el mínimo de ${fmt(minAds)} al día de ${plat}` : ok ? `Puedes invertir hasta ${fmt(safe)} al día` : `Con tu dinero actual solo aguantas ${days}`}</div>
           </div>
           <div style={{ fontSize: 14.5, color: C.textDim, lineHeight: 1.65 }}>
             {ok
               ? <>Con {fmt(i.banco)} en el banco y {fmt(i.dropi)} en Dropi, tu inversión de {fmt(i.adsDia)} al día se puede sostener {days}.{first ? ` Tus primeras ventas te pagan el ${first}, y hasta entonces solo sale dinero.` : ""} Para aguantar ese tiempo deja <b style={{ color: C.text }}>{fmt(bancoRec)}</b> en tu banco (ads de unos {dd(bancoDias)}) y <b style={{ color: C.text }}>{fmt(dropiRec)}</b> en Dropi (envíos de {dd(dropiDias)}). Los envíos se pagan desde Dropi, no desde el banco.</>
+              : bajoMin ? <>{plat} exige invertir al menos {fmt(minAds)} al día. Para sostenerlo hasta tu primer cobro{first ? ` (${first})` : ""} necesitas {fmt(need.total)} entre banco y Dropi (banco {fmt(need.banco)} + Dropi {fmt(need.dropi)}) y tienes {fmt(i.banco + i.dropi)}: te faltan {fmt(totalFalta)}. Con lo que tienes, repártelo así: {fmt(bancoRec)} en el banco y {fmt(dropiRec)} en Dropi, y aguantas {days}.</>
               : <>Invirtiendo {fmt(i.adsDia)} al día se te acaba el dinero {failWho}{lastAd ? ` después del ${fmtDate(lastAd)}` : " desde el primer día"}. Lo máximo que aguanta hoy tu dinero es {fmt(safe)} al día. Para sostener {fmt(i.adsDia)} necesitas {fmt(bancoRec)} en el banco y {fmt(dropiRec)} en Dropi.</>}
           </div>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 12 }}>
           {hero("Invierte hasta", `${fmt(safe)}/día`, C.accent, safe >= i.adsDia ? `Hoy inviertes ${fmt(i.adsDia)}: vas bien.` : `Hoy inviertes ${fmt(i.adsDia)}: es mucho.`)}
-          {hero("Deja en tu banco", fmt(bancoRec), bancoFalta > 0.005 ? C.red : C.green, bancoFalta > 0.005 ? `Ads de unos ${dd(bancoDias)}. Tras pasar a Dropi te faltarían ${fmt(bancoFalta)}.` : `Ads de unos ${dd(bancoDias)}. Te alcanza.`)}
-          {hero("Deja en Dropi", fmt(dropiRec), dropiFalta > 0 ? C.red : C.amber, dropiFalta > 0 ? `Envíos de ${dd(dropiDias)}, hasta tu primer cobro. Pasa ${fmt(dropiFalta)} desde tu banco.` : `Envíos de ${dd(dropiDias)}, hasta tu primer cobro. Ya lo tienes.`)}
+          {hero(short0 ? "Reparte: banco" : "Deja en tu banco", fmt(bancoRec), bancoFalta > 0.005 ? C.red : C.green, bancoFalta > 0.005 ? `Ads de unos ${dd(bancoDias)}. Tras pasar a Dropi te faltarían ${fmt(bancoFalta)}.` : `Ads de unos ${dd(bancoDias)}. Te alcanza.`)}
+          {hero(short0 ? "Reparte: Dropi" : "Deja en Dropi", fmt(dropiRec), dropiFalta > 0 ? C.red : C.amber, dropiFalta > 0 ? `Envíos de ${dd(dropiDias)}, hasta tu primer cobro. Pasa ${fmt(dropiFalta)} desde tu banco.` : `Envíos de ${dd(dropiDias)}, hasta tu primer cobro. Ya lo tienes.`)}
           {hero("Te alcanza para", ok ? "Sin límite" : days, ok ? C.green : C.red, ok ? "Mientras mantengas estos números." : "Antes de quedarte sin dinero.")}
         </div>
 
@@ -271,7 +288,7 @@ export function CashPlanner({ data, update, saldo, fmt }) {
         <div style={grid}>
           <PlanField {...fp} k="banco" label="Dinero en tu banco" value={i.banco} hint="Por defecto, el saldo de Control financiero." />
           <PlanField {...fp} k="dropi" label="Dinero en Dropi" value={i.dropi} />
-          <PlanField {...fp} k="adsDia" label="Inviertes al día en ads" value={i.adsDia} auto={isAuto("adsDia")} />
+          <PlanField {...fp} k="adsDia" label="Inviertes al día en ads" value={i.adsDia} auto={isAuto("adsDia")} hint={minAds ? `Mínimo en ${plat}: ${fmt(minAds)}.` : undefined} />
           <PlanField {...fp} k="cpa" label="Cuánto cuesta cada pedido (CPA)" value={i.cpa} auto={isAuto("cpa")} />
           <PlanField {...fp} k="precio" label="Precio de venta" value={i.precio} auto={isAuto("precio")} />
           <PlanField {...fp} k="costo" label="Costo del producto" value={i.costo} auto={isAuto("costo")} />
