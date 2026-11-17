@@ -101,6 +101,10 @@ export function CashPlanner({ data, update, saldo, fmt }) {
     const lastAd = s.failDay !== null && s.failDay > 0 ? addDays(today, s.failDay - 1) : null;
     const failWho = s.failWhy === "dropi" ? "en Dropi (para los envíos)" : "en tu banco (para los ads)";
     const days = ok ? "sin límite" : s.failDay === 0 ? "ningún día" : `${s.failDay} ${s.failDay === 1 ? "día" : "días"}`;
+    const shipDay = (i.envioModo === "devolucion" ? s.dev : s.conf) * i.envio;
+    const dropiDias = shipDay > 0 ? Math.round(dropiRec / shipDay) : 0;
+    const bancoDias = i.adsDia + i.otros > 0 ? Math.round(bancoRec / (i.adsDia + i.otros)) : 0;
+    const dd = (n) => `${n} ${n === 1 ? "día" : "días"}`;
     const first = s.firstRecovery !== null ? fmtDate(addDays(today, s.firstRecovery)) : null;
 
     const nextUp = sc.filter(x => x.ads > i.adsDia + 0.01).sort((a, b) => a.ads - b.ads)[0];
@@ -137,15 +141,15 @@ export function CashPlanner({ data, update, saldo, fmt }) {
           </div>
           <div style={{ fontSize: 14.5, color: C.textDim, lineHeight: 1.65 }}>
             {ok
-              ? <>Con {fmt(i.banco)} en el banco y {fmt(i.dropi)} en Dropi, tu inversión de {fmt(i.adsDia)} al día se puede sostener {days}. Deja <b style={{ color: C.text }}>{fmt(bancoRec)}</b> en tu banco para los ads y <b style={{ color: C.text }}>{fmt(dropiRec)}</b> en Dropi para los envíos.{first ? ` Tus primeras ventas te pagan el ${first}; hasta entonces solo sale dinero.` : ""}</>
+              ? <>Con {fmt(i.banco)} en el banco y {fmt(i.dropi)} en Dropi, tu inversión de {fmt(i.adsDia)} al día se puede sostener {days}.{first ? ` Tus primeras ventas te pagan el ${first}, y hasta entonces solo sale dinero.` : ""} Para aguantar ese tiempo deja <b style={{ color: C.text }}>{fmt(bancoRec)}</b> en tu banco (ads de unos {dd(bancoDias)}) y <b style={{ color: C.text }}>{fmt(dropiRec)}</b> en Dropi (envíos de {dd(dropiDias)}). Los envíos se pagan desde Dropi, no desde el banco.</>
               : <>Invirtiendo {fmt(i.adsDia)} al día se te acaba el dinero {failWho}{lastAd ? ` después del ${fmtDate(lastAd)}` : " desde el primer día"}. Lo máximo que aguanta hoy tu dinero es {fmt(safe)} al día. Para sostener {fmt(i.adsDia)} necesitas {fmt(bancoRec)} en el banco y {fmt(dropiRec)} en Dropi.</>}
           </div>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 12 }}>
           {hero("Invierte hasta", `${fmt(safe)}/día`, C.accent, safe >= i.adsDia ? `Hoy inviertes ${fmt(i.adsDia)}: vas bien.` : `Hoy inviertes ${fmt(i.adsDia)}: es mucho.`)}
-          {hero("Deja en tu banco", fmt(bancoRec), bancoFalta > 0.005 ? C.red : C.green, bancoFalta > 0.005 ? `Para pagar ads. Después de pasar a Dropi te faltarían ${fmt(bancoFalta)}.` : "Para pagar los ads. Te alcanza.")}
-          {hero("Deja en Dropi", fmt(dropiRec), dropiFalta > 0 ? C.red : C.amber, dropiFalta > 0 ? `Para los envíos. Pasa ${fmt(dropiFalta)} desde tu banco.` : "Para los envíos. Ya lo tienes.")}
+          {hero("Deja en tu banco", fmt(bancoRec), bancoFalta > 0.005 ? C.red : C.green, bancoFalta > 0.005 ? `Ads de unos ${dd(bancoDias)}. Tras pasar a Dropi te faltarían ${fmt(bancoFalta)}.` : `Ads de unos ${dd(bancoDias)}. Te alcanza.`)}
+          {hero("Deja en Dropi", fmt(dropiRec), dropiFalta > 0 ? C.red : C.amber, dropiFalta > 0 ? `Envíos de ${dd(dropiDias)}, hasta tu primer cobro. Pasa ${fmt(dropiFalta)} desde tu banco.` : `Envíos de ${dd(dropiDias)}, hasta tu primer cobro. Ya lo tienes.`)}
           {hero("Te alcanza para", ok ? "Sin límite" : days, ok ? C.green : C.red, ok ? "Mientras mantengas estos números." : "Antes de quedarte sin dinero.")}
         </div>
 
