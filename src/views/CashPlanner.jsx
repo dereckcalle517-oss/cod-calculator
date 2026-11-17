@@ -219,9 +219,9 @@ export function CashPlanner({ data, update, saldo, fmt }) {
                                 <tr key={r.t} style={{ borderTop: `1px solid ${C.border}`, background: r.t === fp ? `${C.green}12` : "transparent" }}>
                                   <td style={{ ...cell, textAlign: "left", color: C.textDim }}>{fmtDate(r.date)}{r.t === fp ? " · primer cobro" : ""}</td>
                                   <td style={cell}>{fmt(r.ads)}</td>
-                                  <td style={cell}>{r.shipN.toFixed(1)}</td>
+                                  <td style={cell}>{r.shipN}</td>
                                   <td style={cell}>{fmt(r.ship)}</td>
-                                  <td style={{ ...cell, color: r.entN > 0 ? C.green : C.textMuted }}>{r.entN.toFixed(1)}</td>
+                                  <td style={{ ...cell, color: r.entN > 0 ? C.green : C.textMuted }}>{r.entN}</td>
                                   <td style={{ ...cell, color: r.pay > 0 ? C.green : C.textMuted }}>{fmt(r.pay)}</td>
                                   <td style={{ ...cell, fontWeight: 600, color: r.mv > 0.5 ? C.amber : r.mv < -0.5 ? C.green : C.textMuted }}>{r.mv > 0.5 ? `Banco → Dropi ${fmt(r.mv)}` : r.mv < -0.5 ? `Dropi → banco ${fmt(-r.mv)}` : "—"}</td>
                                   <td style={{ ...cell, fontWeight: 600 }}>{sg(r.bank)}</td>
@@ -321,7 +321,7 @@ export function CashPlanner({ data, update, saldo, fmt }) {
         {more("Más detalle", (
           <>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 12, marginBottom: 16 }}>
-              {[["Pedidos al día", s.orders.toFixed(1)], ["Entregas al día", s.ent.toFixed(1)], ["Ventas en 30 días", fmt(s.ingresosDia * 30)], ["Ganancia en 30 días", sg(s.perDay * 30)]].map(([l, v]) => (
+              {[["Pedidos al día (aprox.)", Math.round(s.orders)], ["Entregas al día (aprox.)", Math.round(s.ent)], ["Ventas en 30 días", fmt(s.ingresosDia * 30)], ["Ganancia en 30 días", sg(s.perDay * 30)]].map(([l, v]) => (
                 <div key={l} style={{ background: C.surface, borderRadius: 10, padding: 12 }}><div style={{ fontSize: 11.5, color: C.textMuted }}>{l}</div><div style={{ fontSize: 18, fontWeight: 700, marginTop: 2 }}>{v}</div></div>
               ))}
             </div>
