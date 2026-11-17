@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { C } from "../theme";
 import { useTracking, trkRows, trkSum } from "../lib/tracking";
-import { HORIZON, startOfToday, addDays, capitalNeeded, maxSafeAds, scenario } from "../lib/cashflow";
+import { HORIZON, startOfToday, addDays, capitalNeeded, maxSafeAds, scenario, bestPlan } from "../lib/cashflow";
 
 const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 const DIAS = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
@@ -68,7 +68,7 @@ export function CashPlanner({ data, update, saldo, fmt }) {
 
   const R = useMemo(() => {
     if (!ready) return null;
-    return { main: scenario(i, i.adsDia, lag), safe: maxSafeAds(i, lag), sc: escAds.map(a => scenario(i, a, lag)) };
+    return { opt: bestPlan(i, lag), main: scenario(i, i.adsDia, lag), safe: maxSafeAds(i, lag), sc: escAds.map(a => scenario(i, a, lag)) };
   }, [key, JSON.stringify(escAds), ready]);
   const today = startOfToday();
 
@@ -93,7 +93,7 @@ export function CashPlanner({ data, update, saldo, fmt }) {
 
   let view = null;
   if (R) {
-    const { main, safe, sc } = R;
+    const { main, safe, sc, opt } = R;
     const s = main.s, need = main.need;
     const ok = s.failDay === null;
     const loses = s.perDay < 0;
@@ -176,6 +176,40 @@ export function CashPlanner({ data, update, saldo, fmt }) {
             {todo.slice(0, 3).map((x, k) => <div key={k} style={{ borderLeft: `3px solid ${x.c}`, paddingLeft: 12, fontSize: 14, color: C.textDim, lineHeight: 1.55 }}>{x.t}</div>)}
           </div>
           {recover && <div style={{ fontSize: 13, color: C.textMuted, lineHeight: 1.55, marginTop: 12 }}>{recover}</div>}
+        </div>
+
+        <div style={{ ...card, borderColor: `${C.accent}55` }}>
+          <details>
+            <summary style={{ cursor: "pointer", listStyle: "none" }}>
+              <div style={{ fontSize: 15, fontWeight: 700 }}>Optimización del dinero <span style={{ color: C.accent, fontSize: 12, fontWeight: 600 }}>· ver</span></div>
+              <div style={{ fontSize: 12.5, color: C.textMuted, marginTop: 3, lineHeight: 1.5 }}>Cuánto dejar en cada cuenta para que no se pare Dropi ni te quede dinero parado.</div>
+            </summary>
+            <div style={{ marginTop: 14, display: "grid", gap: 12 }}>
+              {opt.ok ? (() => {
+                const h = opt.hoy, dif = h.dropi - i.dropi;
+                const win = opt.rows.filter(r => opt.firstPay === null || r.t < opt.firstPay);
+                const avg = win.length ? win.reduce((a, r) => a + Math.max(0, r.wallet), 0) / win.length : 0;
+                const lista = opt.moves.filter(m => m.amount >= 1 && (opt.firstPay === null || m.t <= opt.firstPay + 2 * opt.every)).slice(0, 5);
+                return (<>
+                  <div style={{ fontSize: 14, color: C.textDim, lineHeight: 1.65 }}>
+                    En vez de adelantar {fmt(need.dropi)} a Dropi desde hoy, mantén ahí solo <b style={{ color: C.text }}>{fmt(h.dropi)}</b> (los envíos de {dd(opt.every)}) y deja <b style={{ color: C.text }}>{fmt(h.banco)}</b> en tu banco para los ads. Recarga Dropi cada {dd(opt.every)}: nunca se queda sin saldo para los envíos y tu dinero no queda parado donde no se usa.
+                  </div>
+                  {Math.abs(dif) >= 1 && <div style={{ borderLeft: `3px solid ${C.accent}`, paddingLeft: 12, fontSize: 14, color: C.textDim, lineHeight: 1.55 }}>{dif > 0 ? `Ahora tienes ${fmt(i.dropi)} en Dropi: pasa ${fmt(dif)} más desde tu banco.` : `Ahora tienes ${fmt(i.dropi)} en Dropi: con este plan te sobran ${fmt(-dif)} ahí; puedes devolverlos a tu banco o dejarlos de colchón.`}</div>}
+                  {lista.length > 0 && <div style={{ display: "grid", gap: 6 }}>{lista.map(m => (
+                    <div key={m.t} style={{ display: "flex", justifyContent: "space-between", gap: 10, fontSize: 13, color: C.textDim, background: C.surface, borderRadius: 8, padding: "8px 12px" }}>
+                      <span>{fmtDate(m.date)}</span><b style={{ color: m.dir === "dropi" ? C.amber : C.green, textAlign: "right" }}>{m.dir === "dropi" ? `Pasa ${fmt(m.amount)} del banco a Dropi` : `Saca ${fmt(m.amount)} de Dropi al banco`}</b>
+                    </div>))}</div>}
+                  <div style={{ fontSize: 12.5, color: C.textMuted, lineHeight: 1.55 }}>
+                    Dinero promedio en Dropi hasta tu primer cobro: {fmt(avg)} en vez de {fmt(need.dropi)} si lo dejas todo desde el día 1. {opt.firstPay !== null ? "Cuando empiezan los cobros, lo que sobra en Dropi vuelve al banco." : ""}
+                  </div>
+                </>);
+              })() : (
+                <div style={{ fontSize: 14, color: C.textDim, lineHeight: 1.65 }}>
+                  Con {fmt(i.banco + i.dropi)} ni repartiéndolos mejor alcanza para sostener {fmt(i.adsDia)} al día hasta que entren los cobros. Necesitas {fmt(need.total)} en total, o bajar el presupuesto.
+                </div>
+              )}
+            </div>
+          </details>
         </div>
 
         <div style={card}>

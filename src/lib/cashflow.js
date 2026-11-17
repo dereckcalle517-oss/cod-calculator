@@ -50,13 +50,9 @@ function initialBatches(i, lag, today) {
   return out;
 }
 
-// Reserva que Dropi necesita para no quedarse sin saldo: lo que van a superar los envíos a los pagos
-// ya programados (mirando hacia adelante). R[0] es lo que debes tener en Dropi hoy; R[t+1] es lo que
-// debe quedar al cierre del día t. Sin colchones extra cuando el depósito es inmediato.
-export function reserveSchedule(i, lag, days = HORIZON, today = startOfToday()) {
+// Movimiento neto de Dropi por día (envíos en negativo, cobros en positivo), sin depósitos ni retiros
+export function walletFlow(i, lag, L, ahead, today = startOfToday()) {
   const u = unit(i);
-  if (!(i.adsDia > 0)) return new Array(days).fill(0);
-  const L = days + 40, ahead = days + 30;
   const flow = new Array(L).fill(0);
   const add = (t, v) => { if (t >= 0 && t < L) flow[t] += v; };
   for (const b of initialBatches(i, lag, today)) { if (!u.despacho) add(b.day, -b.dev * i.envio); add(b.unlockDay, b.ent * u.payDel); }
@@ -65,6 +61,17 @@ export function reserveSchedule(i, lag, days = HORIZON, today = startOfToday()) 
     if (u.despacho) add(t, -u.conf * i.envio); else add(t + r, -u.dev * i.envio);
     add(t + ul, u.ent * u.payDel);
   }
+  return flow;
+}
+
+// Reserva que Dropi necesita para no quedarse sin saldo: lo que van a superar los envíos a los pagos
+// ya programados (mirando hacia adelante). R[0] es lo que debes tener en Dropi hoy; R[t+1] es lo que
+// debe quedar al cierre del día t. Sin colchones extra cuando el depósito es inmediato.
+export function reserveSchedule(i, lag, days = HORIZON, today = startOfToday()) {
+  const u = unit(i);
+  if (!(i.adsDia > 0)) return new Array(days).fill(0);
+  const L = days + 40;
+  const flow = walletFlow(i, lag, L, days + 30, today);
   const daily = u.despacho ? u.conf * i.envio : u.dev * i.envio;
   const m = new Array(L + 1).fill(0);
   for (let t = L - 1; t >= 0; t--) m[t] = flow[t] + Math.min(0, m[t + 1]);
@@ -171,4 +178,47 @@ export function scenario(i, ads, lag, days = HORIZON) {
   const risk = s.failDay !== null ? "alto" : s.minBank < Math.max(ads * 3, 1) ? "medio" : "bajo";
   return { ads, s, need, risk, autonomia: s.failDay, pedidos30: s.orders * 30, entregas30: s.ent * 30,
     ingresos30: s.ingresosDia * 30, gastos30: s.gastosDia * 30, neta30: s.perDay * 30 };
+}
+
+// Optimización del dinero: cuánto tener en cada cuenta para que Dropi nunca se quede sin saldo
+// y no haya dinero parado de más. Dropi se recarga cada `every` días con lo que van a costar los
+// envíos hasta la siguiente recarga (más los días que tarda el depósito); lo que sobra vuelve al banco.
+export function optimizeCash(i, lag, every = 3, days = 30, today = startOfToday()) {
+  const u = unit(i);
+  const L = days + 40;
+  const flow = walletFlow(i, lag, L, days + 30, today);
+  const total = i.banco + i.dropi;
+  // lo que Dropi necesita para cubrir [t, t+w): peor caída acumulada del saldo en esa ventana
+  const needAt = (t, w) => { let c = 0, worst = 0; for (let k = t; k < t + w && k < L; k++) { c += flow[k]; worst = Math.min(worst, c); } return -worst; };
+  const dLag = i.deposito > 0 ? Math.round(i.deposito) : 0;
+  const w = Math.max(1, Math.round(every)) + dLag;
+  let wallet = 0, bank = 0, minBank = Infinity, minWallet = Infinity, sumW = 0, sumBase = 0;
+  const toBank = [], moves = [], rows = [];
+  const need0 = needAt(0, Math.max(1, Math.round(every)) + dLag);
+  wallet = Math.min(total, need0); bank = total - wallet;           // reparto de hoy
+  const hoy = { banco: bank, dropi: wallet, necesita: need0, alcanza: total >= need0 - 0.005 };
+  const ev = Math.max(1, Math.round(every));
+  for (let t = 0; t < days; t++) {
+    const date = addDays(today, t);
+    for (const x of toBank) if (x.day === t) bank += x.amount;
+    bank -= (u.orders > 0 ? i.adsDia : 0) + i.otros + (u.prepagaCosto ? u.conf * i.costo : 0);
+    wallet += flow[t];
+    // al cierre de cada ciclo se deja Dropi listo para el siguiente (o se devuelve lo que sobra)
+    if ((t + 1) % ev === 0) {
+      const need = needAt(t + 1, w), delta = need - wallet;
+      if (delta > 0.005) { const m = Math.min(delta, Math.max(0, bank)); bank -= m; wallet += m; if (m > 0.005) moves.push({ t: t + 1, date: addDays(today, t + 1), amount: m, dir: "dropi" }); }
+      else if (delta < -0.005) { const m = -delta; wallet -= m; const off = bizOffset(date, i.transfer); if (off === 0) bank += m; else toBank.push({ day: t + off, amount: m }); moves.push({ t: t + 1, date: addDays(today, t + 1), amount: m, dir: "banco" }); }
+    }
+    minBank = Math.min(minBank, bank); minWallet = Math.min(minWallet, wallet);
+    sumW += Math.max(0, wallet);
+    rows.push({ t, bank, wallet });
+  }
+  const first = flow.findIndex((v, k) => k > 0 && v > 0);
+  return { hoy, moves, minBank, minWallet, ok: minBank >= -0.005 && minWallet >= -0.005, avgDropi: sumW / days, every: Math.max(1, Math.round(every)), firstPay: first < 0 ? null : first, rows };
+}
+// Elige la recarga más espaciada (menos trabajo para el usuario) con la que ninguna cuenta se queda sin saldo
+export function bestPlan(i, lag, days = 30, today = startOfToday()) {
+  let last = null;
+  for (const e of [5, 3, 2, 1]) { last = optimizeCash(i, lag, e, days, today); if (last.ok) return last; }
+  return last;
 }
