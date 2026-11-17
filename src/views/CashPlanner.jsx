@@ -218,9 +218,26 @@ export function CashPlanner({ data, update, saldo, fmt }) {
                         </div>
                         {verGan && (() => {
                           const ult = filas[filas.length - 1], pos = opt.rows.find(r => r.gan >= 0);
+                          const cap0 = i.banco + i.dropi, cap1 = cap0 + ult.gan, pct = cap0 > 0 ? (ult.gan / cap0) * 100 : null;
+                          const col = ult.gan >= 0 ? C.green : C.red;
+                          const box = (l, v, c, sub) => (
+                            <div style={{ background: C.surface, borderRadius: 10, padding: 12, minWidth: 0 }}>
+                              <div style={{ fontSize: 11.5, color: C.textMuted }}>{l}</div>
+                              <div style={{ fontSize: 20, fontWeight: 700, marginTop: 2, color: c || C.text, overflowWrap: "anywhere" }}>{v}</div>
+                              {sub && <div style={{ fontSize: 11.5, color: C.textMuted, marginTop: 3, lineHeight: 1.45 }}>{sub}</div>}
+                            </div>
+                          );
                           return (
-                            <div style={{ borderLeft: `3px solid ${ult.gan >= 0 ? C.green : C.red}`, paddingLeft: 12, fontSize: 13.5, color: C.textDim, lineHeight: 1.65 }}>
-                              Si mantienes la campaña activa hasta el {fmtDate(ult.date)} y se entregan los pedidos de todos esos días, habrás ganado <b style={{ color: ult.gan >= 0 ? C.green : C.red }}>{sg(ult.gan)}</b>, ya descontando ads, envíos y costo del producto. {pos ? `Desde el ${fmtDate(pos.date)} la campaña ya va en positivo.` : "Todavía no llega a positivo en estos días."} Parte de ese dinero entra después y lo vas reinvirtiendo, pero es ganancia tuya.
+                            <div style={{ display: "grid", gap: 10 }}>
+                              <div style={{ borderLeft: `3px solid ${col}`, paddingLeft: 12, fontSize: 13.5, color: C.textDim, lineHeight: 1.65 }}>
+                                Si mantienes la campaña activa hasta el {fmtDate(ult.date)} y se entregan los pedidos de todos esos días, habrás ganado <b style={{ color: col }}>{sg(ult.gan)}</b>, ya descontando ads, envíos y costo del producto. {pos ? `Desde el ${fmtDate(pos.date)} la campaña ya va en positivo.` : "Todavía no llega a positivo en estos días."} Parte de ese dinero entra después y lo vas reinvirtiendo, pero es ganancia tuya.
+                              </div>
+                              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 10 }}>
+                                {box("Capital con el que empezaste", fmt(cap0), null, `${fmt(i.banco)} en el banco y ${fmt(i.dropi)} en Dropi`)}
+                                {box("Ganancia de la campaña", sg(ult.gan), col)}
+                                {box("Capital cuando se entregue todo", fmt(cap1), col, pct === null ? null : `${pct >= 0 ? "Sube" : "Baja"} ${Math.abs(pct).toFixed(1)}% frente a tu capital inicial`)}
+                              </div>
+                              <div style={{ fontSize: 12, color: C.textMuted, lineHeight: 1.5 }}>Ese capital incluye el dinero que todavía está en camino hacia tu cuenta. Al reinvertirlo en ads, sigues moviéndolo entre el banco y Dropi como indica el plan.</div>
                             </div>
                           );
                         })()}
