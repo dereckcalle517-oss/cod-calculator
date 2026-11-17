@@ -226,7 +226,11 @@ export function optimizeCash(i, lag, every = 3, days = 30, today = startOfToday(
     minBank = Math.min(minBank, bank); minWallet = Math.min(minWallet, wallet);
     sumW += Math.max(0, wallet);
     const mv = moves.slice(mv0).reduce((a, m) => a + (m.dir === "dropi" ? m.amount : -m.amount), 0);
-    rows.push({ t, date, bank, wallet, ads: adsHoy, ship: parts.ship[t], shipN: parts.shipN[t], pay: parts.pay[t], entN: parts.entN[t], mv });
+    // Ganancia acumulada de la campaña hasta este día, cuando se entreguen TODOS sus pedidos
+    // (pedidos enteros; no depende de cuándo llegue el dinero a tu cuenta)
+    const nC = Math.round((t + 1) * u.conf + 1e-9), nE = Math.round((t + 1) * u.ent + 1e-9), nD = nC - nE;
+    const gan = nE * (i.precio - i.envio - i.costo - u.com) - nD * i.envio - (t + 1) * (i.adsDia + i.otros);
+    rows.push({ t, date, gan, bank, wallet, ads: adsHoy, ship: parts.ship[t], shipN: parts.shipN[t], pay: parts.pay[t], entN: parts.entN[t], mv });
   }
   const first = flow.findIndex((v, k) => k > 0 && v > 0);
   return { hoy, moves, minBank, minWallet, ok: minBank >= -0.005 && minWallet >= -0.005 && cubre, avgDropi: sumW / days, every: Math.max(1, Math.round(every)), firstPay: first < 0 ? null : first, rows, falta: Math.max(0, -minBank, -minWallet), faltaFecha: minBankDate };
