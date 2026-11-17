@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { C } from "../theme";
 import { useTracking, trkRows, trkSum } from "../lib/tracking";
@@ -25,6 +25,7 @@ function PlanField({ k, label, hint, value, auto: a, plan, set, inp }) {
 
 export function CashPlanner({ data, update, saldo, fmt }) {
   const { products } = useTracking();
+  const [verGan, setVerGan] = useState(false);
   const plan = data.plan || {};
   const setRaw = (k, v) => update(d => ({ ...d, plan: { ...(d.plan || {}), [k]: v } }));
   const set = (k) => (e) => setRaw(k, e.target.value);
@@ -211,9 +212,21 @@ export function CashPlanner({ data, update, saldo, fmt }) {
                         <div style={{ fontSize: 13.5, color: C.textDim, lineHeight: 1.65 }}>
                           Inviertes <b style={{ color: C.text }}>{fmt(i.adsDia)} al día</b> en {plat}.{fp !== null ? <> Hasta tu primer cobro ({fmtDate(addDays(today, fp))}) solo sale dinero: {fmt(adsHasta)} en ads y {fmt(shipHasta)} en envíos. Desde ahí entran cobros de cada lote de pedidos entregados y el dinero empieza a volver: al banco para tus ads y a Dropi para los envíos.</> : null} {recover}
                         </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                          {chip("gan", verGan ? "Ocultar ganancia acumulada" : "Ver ganancia acumulada", verGan, () => setVerGan(v => !v))}
+                          {!verGan && <span style={{ fontSize: 12, color: C.textMuted }}>Cuánto habrás ganado cuando se entreguen los pedidos de cada día de campaña.</span>}
+                        </div>
+                        {verGan && (() => {
+                          const ult = filas[filas.length - 1], pos = opt.rows.find(r => r.gan >= 0);
+                          return (
+                            <div style={{ borderLeft: `3px solid ${ult.gan >= 0 ? C.green : C.red}`, paddingLeft: 12, fontSize: 13.5, color: C.textDim, lineHeight: 1.65 }}>
+                              Si mantienes la campaña activa hasta el {fmtDate(ult.date)} y se entregan los pedidos de todos esos días, habrás ganado <b style={{ color: ult.gan >= 0 ? C.green : C.red }}>{sg(ult.gan)}</b>, ya descontando ads, envíos y costo del producto. {pos ? `Desde el ${fmtDate(pos.date)} la campaña ya va en positivo.` : "Todavía no llega a positivo en estos días."} Parte de ese dinero entra después y lo vas reinvirtiendo, pero es ganancia tuya.
+                            </div>
+                          );
+                        })()}
                         <div style={{ overflowX: "auto" }}>
                           <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 860, fontSize: 12 }}>
-                            <thead><tr>{["Día", "Ads", "Pedidos enviados", "Costo envíos", "Pedidos entregados", "Te pagan", "Al cerrar el día", "Banco", "Dropi"].map((h, k) => <th key={h} style={{ textAlign: k === 0 ? "left" : "right", padding: "6px 8px", color: C.textMuted, fontWeight: 600, borderBottom: `2px solid ${C.accent}`, whiteSpace: "nowrap" }}>{h}</th>)}</tr></thead>
+                            <thead><tr>{["Día", "Ads", "Pedidos enviados", "Costo envíos", "Pedidos entregados", "Te pagan", "Al cerrar el día", "Banco", "Dropi", ...(verGan ? ["Ganancia hasta aquí"] : [])].map((h, k) => <th key={h} style={{ textAlign: k === 0 ? "left" : "right", padding: "6px 8px", color: C.textMuted, fontWeight: 600, borderBottom: `2px solid ${C.accent}`, whiteSpace: "nowrap" }}>{h}</th>)}</tr></thead>
                             <tbody>
                               {filas.map(r => (
                                 <tr key={r.t} style={{ borderTop: `1px solid ${C.border}`, background: r.t === fp ? `${C.green}12` : "transparent" }}>
@@ -226,6 +239,7 @@ export function CashPlanner({ data, update, saldo, fmt }) {
                                   <td style={{ ...cell, fontWeight: 600, color: r.mv > 0.5 ? C.amber : r.mv < -0.5 ? C.green : C.textMuted }}>{r.mv > 0.5 ? `Banco → Dropi ${fmt(r.mv)}` : r.mv < -0.5 ? `Dropi → banco ${fmt(-r.mv)}` : "—"}</td>
                                   <td style={{ ...cell, fontWeight: 600 }}>{sg(r.bank)}</td>
                                   <td style={{ ...cell, fontWeight: 600 }}>{sg(r.wallet)}</td>
+                                  {verGan && <td style={{ ...cell, fontWeight: 700, color: r.gan >= 0 ? C.green : C.red }}>{sg(r.gan)}</td>}
                                 </tr>
                               ))}
                             </tbody>
