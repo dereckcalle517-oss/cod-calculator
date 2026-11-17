@@ -195,9 +195,10 @@ export function optimizeCash(i, lag, every = 3, days = 30, today = startOfToday(
   const parts = {};
   const flow = walletFlow(i, lag, L, days + 30, today, parts, true);
   const total = i.banco + i.dropi;
-  // Dropi debe tener los envíos de [t, t+w) ya en su saldo, SIN contar cobros que todavía no llegan:
-  // si un día no alcanza el saldo, no se despacha y se pierde un día de campaña.
-  const needAt = (t, w) => { let c = 0; for (let k = t; k < t + w && k < L; k++) c += parts.ship[k]; return c; };
+  // Dropi debe poder pagar cada envío de [t, t+w) con lo que tenga ese día ANTES de despachar:
+  // el saldo de hoy más los cobros que lleguen en días anteriores a ese envío. Un cobro no cubre
+  // los envíos de su propio día (si se retrasa, no se despacha y se pierde un día de campaña).
+  const needAt = (t, w) => { let cs = 0, cp = 0, need = 0; for (let k = t; k < t + w && k < L; k++) { cs += parts.ship[k]; need = Math.max(need, cs - cp); cp += parts.pay[k]; } return need; };
   const dLag = i.deposito > 0 ? Math.round(i.deposito) : 0;
   const MARGEN = 0; // sin colchón extra: ya se exige tener los envíos antes de que ocurran
   const w = Math.max(1, Math.round(every)) + dLag + MARGEN;
