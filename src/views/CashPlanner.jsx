@@ -93,7 +93,10 @@ export function CashPlanner({ data, update, saldo, fmt }) {
     const loses = s.perDay < 0;
     const color = ok ? (loses ? C.amber : C.green) : C.red;
     const dropiRec = need.dropi, bancoRec = need.banco;
-    const dropiFalta = Math.max(0, dropiRec - i.dropi), bancoFalta = Math.max(0, bancoRec - i.banco);
+    const dropiFalta = Math.max(0, dropiRec - i.dropi);
+    // lo que pases a Dropi sale del banco: el faltante del banco se mide después de ese traspaso
+    const bancoFalta = Math.max(0, bancoRec - (i.banco - dropiFalta));
+    const totalFalta = Math.max(0, need.total - i.banco - i.dropi);
     const retirable = ok ? Math.max(0, i.dropi - dropiRec) : 0;
     const lastAd = s.failDay !== null && s.failDay > 0 ? addDays(today, s.failDay - 1) : null;
     const failWho = s.failWhy === "dropi" ? "en Dropi (para los envíos)" : "en tu banco (para los ads)";
@@ -108,8 +111,8 @@ export function CashPlanner({ data, update, saldo, fmt }) {
     // Qué hacer: máximo 3 líneas, lo urgente primero
     const todo = [];
     if (!ok) todo.push({ c: C.red, t: `Baja tu inversión a ${fmt(safe)} al día o menos para no quedarte sin dinero.` });
-    if (dropiFalta > 0) todo.push({ c: C.red, t: `Pasa ${fmt(dropiFalta)} más a tu cuenta de Dropi para cubrir los envíos.` });
-    if (bancoFalta > 0) todo.push({ c: C.red, t: `Te faltan ${fmt(bancoFalta)} en el banco para sostener ${fmt(i.adsDia)} al día.` });
+    if (totalFalta > 0.005) todo.push({ c: C.red, t: `Para sostener ${fmt(i.adsDia)} al día te faltan ${fmt(totalFalta)} en total (banco + Dropi).` });
+    else if (dropiFalta > 0) todo.push({ c: C.red, t: `Pasa ${fmt(dropiFalta)} de tu banco a Dropi para cubrir los envíos.` });
     if (loses) todo.push({ c: C.red, t: `Tu campaña pierde ${fmt(-s.perDay)} al día. Baja el CPA o sube el precio antes de invertir más.` });
     if (retirable > 0) todo.push({ c: C.green, t: `Puedes sacar ${fmt(retirable)} de Dropi a tu banco sin problema.` });
     if (growNow) todo.push({ c: C.green, t: `Ya puedes subir a ${fmt(nextUp.ads)} al día.` });
@@ -141,8 +144,8 @@ export function CashPlanner({ data, update, saldo, fmt }) {
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 12 }}>
           {hero("Invierte hasta", `${fmt(safe)}/día`, C.accent, safe >= i.adsDia ? `Hoy inviertes ${fmt(i.adsDia)}: vas bien.` : `Hoy inviertes ${fmt(i.adsDia)}: es mucho.`)}
-          {hero("Deja en tu banco", fmt(bancoRec), bancoFalta > 0 ? C.red : C.green, bancoFalta > 0 ? `Para pagar ads. Te faltan ${fmt(bancoFalta)}.` : "Para pagar los ads. Ya lo tienes.")}
-          {hero("Deja en Dropi", fmt(dropiRec), dropiFalta > 0 ? C.red : C.amber, dropiFalta > 0 ? `Para los envíos. Te faltan ${fmt(dropiFalta)}.` : "Para los envíos. Ya lo tienes.")}
+          {hero("Deja en tu banco", fmt(bancoRec), bancoFalta > 0.005 ? C.red : C.green, bancoFalta > 0.005 ? `Para pagar ads. Después de pasar a Dropi te faltarían ${fmt(bancoFalta)}.` : "Para pagar los ads. Te alcanza.")}
+          {hero("Deja en Dropi", fmt(dropiRec), dropiFalta > 0 ? C.red : C.amber, dropiFalta > 0 ? `Para los envíos. Pasa ${fmt(dropiFalta)} desde tu banco.` : "Para los envíos. Ya lo tienes.")}
           {hero("Te alcanza para", ok ? "Sin límite" : days, ok ? C.green : C.red, ok ? "Mientras mantengas estos números." : "Antes de quedarte sin dinero.")}
         </div>
 
