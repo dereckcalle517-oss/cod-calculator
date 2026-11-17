@@ -8,6 +8,7 @@ import { Ic, Rich } from "../components/ui";
 import { makeFmt } from "../lib/calc";
 import { FIN_CATS, FIN_COLORS, FIN_LS, monthKey, monthLabel, sumBy, todayISO, uid8 } from "../lib/dates";
 import { db, useAuth } from "../lib/firebase";
+import { CashPlanner } from "./CashPlanner";
 
 
 export function useFinance() {
@@ -135,6 +136,7 @@ export function FinanceCenter({ onBackToCalc, onHome, onBackToFree }) {
 
   const SECTIONS = [
     { id: "resumen", label: "📊 Resumen" },
+    { id: "caja", label: "🧮 Caja y ads" },
     { id: "gastos", label: "🧾 Gastos" },
     { id: "categorias", label: "🗂 Por categoría" },
     { id: "historial", label: "📅 Historial" },
@@ -224,6 +226,8 @@ export function FinanceCenter({ onBackToCalc, onHome, onBackToFree }) {
         )}
 
         {/* GASTOS */}
+        {section === "caja" && <CashPlanner data={data} update={update} saldo={cur.saldo} fmt={fmt} />}
+
         {section === "gastos" && (
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>
