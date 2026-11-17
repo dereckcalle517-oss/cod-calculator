@@ -51,19 +51,23 @@ function initialBatches(i, lag, today) {
 }
 
 // Movimiento neto de Dropi por día (envíos en negativo, cobros en positivo), sin depósitos ni retiros
-export function walletFlow(i, lag, L, ahead, today = startOfToday(), parts = null) {
+export function walletFlow(i, lag, L, ahead, today = startOfToday(), parts = null, integer = false) {
   const u = unit(i);
-  const flow = new Array(L).fill(0);
-  if (parts) { parts.ship = new Array(L).fill(0); parts.pay = new Array(L).fill(0); parts.shipN = new Array(L).fill(0); parts.entN = new Array(L).fill(0); }
-  const cnt = (k, t, n) => { if (parts && t >= 0 && t < L) parts[k][t] += n; };
-  const add = (t, v) => { if (t >= 0 && t < L) { flow[t] += v; if (parts) { if (v < 0) parts.ship[t] -= v; else parts.pay[t] += v; } } };
-  for (const b of initialBatches(i, lag, today)) { if (!u.despacho) { add(b.day, -b.dev * i.envio); cnt("shipN", b.day, b.dev); } add(b.unlockDay, b.ent * u.payDel); cnt("entN", b.unlockDay, b.ent); }
+  const shipN = new Array(L).fill(0), entN = new Array(L).fill(0);
+  const cnt = (arr, t, n) => { if (t >= 0 && t < L) arr[t] += n; };
+  for (const b of initialBatches(i, lag, today)) { if (!u.despacho) cnt(shipN, b.day, b.dev); cnt(entN, b.unlockDay, b.ent); }
   for (let t = 0; t < ahead; t++) {
     const d = addDays(today, t), r = bizOffset(d, lag), ul = r + bizOffset(addDays(d, r), i.retiro);
-    if (u.despacho) { add(t, -u.conf * i.envio); cnt("shipN", t, u.conf); } else { add(t + r, -u.dev * i.envio); cnt("shipN", t + r, u.dev); }
-    add(t + ul, u.ent * u.payDel); cnt("entN", t + ul, u.ent);
+    if (u.despacho) cnt(shipN, t, u.conf); else cnt(shipN, t + r, u.dev);
+    cnt(entN, t + ul, u.ent);
   }
-  return flow;
+  // Los pedidos son enteros: se redondea el acumulado para que cada día sea un número entero
+  // y la suma total siga siendo la misma.
+  const whole = (arr) => { let cum = 0, prev = 0; return arr.map(v => { cum += v; const r = Math.round(cum + 1e-9); const q = r - prev; prev = r; return q; }); };
+  const sN = integer ? whole(shipN) : shipN, eN = integer ? whole(entN) : entN;
+  const ship = sN.map(n => n * i.envio), pay = eN.map(n => n * u.payDel);
+  if (parts) { parts.ship = ship; parts.pay = pay; parts.shipN = sN; parts.entN = eN; }
+  return ship.map((v, k) => pay[k] - v);
 }
 
 // Reserva que Dropi necesita para no quedarse sin saldo: lo que van a superar los envíos a los pagos
@@ -189,7 +193,7 @@ export function optimizeCash(i, lag, every = 3, days = 30, today = startOfToday(
   const u = unit(i);
   const L = days + 40;
   const parts = {};
-  const flow = walletFlow(i, lag, L, days + 30, today, parts);
+  const flow = walletFlow(i, lag, L, days + 30, today, parts, true);
   const total = i.banco + i.dropi;
   // Dropi debe tener los envíos de [t, t+w) ya en su saldo, SIN contar cobros que todavía no llegan:
   // si un día no alcanza el saldo, no se despacha y se pierde un día de campaña.
