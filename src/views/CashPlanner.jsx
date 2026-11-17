@@ -185,14 +185,15 @@ export function CashPlanner({ data, update, saldo, fmt }) {
               <div style={{ fontSize: 12.5, color: C.textMuted, marginTop: 3, lineHeight: 1.5 }}>Cuánto dejar en cada cuenta para que no se pare Dropi ni te quede dinero parado.</div>
             </summary>
             <div style={{ marginTop: 14, display: "grid", gap: 12 }}>
-              {opt.ok ? (() => {
+              {(opt.ok || opt.falta <= 0.3 * (i.banco + i.dropi)) ? (() => {
                 const h = opt.hoy, dif = h.dropi - i.dropi;
                 const win = opt.rows.filter(r => opt.firstPay === null || r.t < opt.firstPay);
                 const avg = win.length ? win.reduce((a, r) => a + Math.max(0, r.wallet), 0) / win.length : 0;
                 const lista = opt.moves.filter(m => m.amount >= 1 && (opt.firstPay === null || m.t <= opt.firstPay + 2 * opt.every)).slice(0, 5);
                 return (<>
+                  {!opt.ok && <div style={{ borderLeft: `3px solid ${C.red}`, paddingLeft: 12, fontSize: 14, color: C.textDim, lineHeight: 1.55 }}>Con este margen de seguridad te faltan {fmt(opt.falta)}: el banco llegaría a quedar sin dinero el {fmtDate(opt.faltaFecha)}. Para no arriesgar días de campaña, reúne ese dinero o baja un poco la inversión diaria.</div>}
                   <div style={{ fontSize: 14, color: C.textDim, lineHeight: 1.65 }}>
-                    En vez de adelantar {fmt(need.dropi)} a Dropi desde hoy, mantén ahí solo <b style={{ color: C.text }}>{fmt(h.dropi)}</b> (los envíos de {dd(opt.every)}) y deja <b style={{ color: C.text }}>{fmt(h.banco)}</b> en tu banco para los ads. Recarga Dropi cada {dd(opt.every)}: nunca se queda sin saldo para los envíos y tu dinero no queda parado donde no se usa.
+                    En vez de adelantar {fmt(need.dropi)} a Dropi desde hoy, mantén en Dropi <b style={{ color: C.text }}>{fmt(h.dropi)}</b> (los envíos de {dd(opt.every)}, ya disponibles antes de despachar, sin contar cobros que aún no llegan) y deja <b style={{ color: C.text }}>{fmt(h.banco)}</b> en tu banco para los ads. Recarga Dropi cada {dd(opt.every)}: nunca se queda sin saldo para los envíos y tu dinero no queda parado donde no se usa.
                   </div>
                   {Math.abs(dif) >= 1 && <div style={{ borderLeft: `3px solid ${C.accent}`, paddingLeft: 12, fontSize: 14, color: C.textDim, lineHeight: 1.55 }}>{dif > 0 ? `Ahora tienes ${fmt(i.dropi)} en Dropi: pasa ${fmt(dif)} más desde tu banco.` : `Ahora tienes ${fmt(i.dropi)} en Dropi: con este plan te sobran ${fmt(-dif)} ahí; puedes devolverlos a tu banco o dejarlos de colchón.`}</div>}
                   {lista.length > 0 && <div style={{ display: "grid", gap: 6 }}>{lista.map(m => (
@@ -211,14 +212,16 @@ export function CashPlanner({ data, update, saldo, fmt }) {
                           Inviertes <b style={{ color: C.text }}>{fmt(i.adsDia)} al día</b> en {plat}.{fp !== null ? <> Hasta tu primer cobro ({fmtDate(addDays(today, fp))}) solo sale dinero: {fmt(adsHasta)} en ads y {fmt(shipHasta)} en envíos. Desde ahí entran cobros de cada lote de pedidos entregados y el dinero empieza a volver: al banco para tus ads y a Dropi para los envíos.</> : null} {recover}
                         </div>
                         <div style={{ overflowX: "auto" }}>
-                          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 640, fontSize: 12 }}>
-                            <thead><tr>{["Día", "Ads", "Envíos", "Te pagan", "Al cerrar el día", "Banco", "Dropi"].map((h, k) => <th key={h} style={{ textAlign: k === 0 ? "left" : "right", padding: "6px 8px", color: C.textMuted, fontWeight: 600, borderBottom: `2px solid ${C.accent}`, whiteSpace: "nowrap" }}>{h}</th>)}</tr></thead>
+                          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 860, fontSize: 12 }}>
+                            <thead><tr>{["Día", "Ads", "Pedidos enviados", "Costo envíos", "Pedidos entregados", "Te pagan", "Al cerrar el día", "Banco", "Dropi"].map((h, k) => <th key={h} style={{ textAlign: k === 0 ? "left" : "right", padding: "6px 8px", color: C.textMuted, fontWeight: 600, borderBottom: `2px solid ${C.accent}`, whiteSpace: "nowrap" }}>{h}</th>)}</tr></thead>
                             <tbody>
                               {filas.map(r => (
                                 <tr key={r.t} style={{ borderTop: `1px solid ${C.border}`, background: r.t === fp ? `${C.green}12` : "transparent" }}>
                                   <td style={{ ...cell, textAlign: "left", color: C.textDim }}>{fmtDate(r.date)}{r.t === fp ? " · primer cobro" : ""}</td>
                                   <td style={cell}>{fmt(r.ads)}</td>
+                                  <td style={cell}>{r.shipN.toFixed(1)}</td>
                                   <td style={cell}>{fmt(r.ship)}</td>
+                                  <td style={{ ...cell, color: r.entN > 0 ? C.green : C.textMuted }}>{r.entN.toFixed(1)}</td>
                                   <td style={{ ...cell, color: r.pay > 0 ? C.green : C.textMuted }}>{fmt(r.pay)}</td>
                                   <td style={{ ...cell, fontWeight: 600, color: r.mv > 0.5 ? C.amber : r.mv < -0.5 ? C.green : C.textMuted }}>{r.mv > 0.5 ? `Banco → Dropi ${fmt(r.mv)}` : r.mv < -0.5 ? `Dropi → banco ${fmt(-r.mv)}` : "—"}</td>
                                   <td style={{ ...cell, fontWeight: 600 }}>{sg(r.bank)}</td>
@@ -228,7 +231,7 @@ export function CashPlanner({ data, update, saldo, fmt }) {
                             </tbody>
                           </table>
                         </div>
-                        <div style={{ fontSize: 11.5, color: C.textMuted, lineHeight: 1.5 }}>Banco y Dropi son los saldos al terminar el día, después de los movimientos. Los números salen de tus datos y son estimaciones.</div>
+                        <div style={{ fontSize: 11.5, color: C.textMuted, lineHeight: 1.5 }}>Banco y Dropi son los saldos al terminar el día, después de los movimientos. Dropi siempre cierra con los envíos del día siguiente ya pagados. Los números salen de tus datos y son estimaciones.</div>
                       </div>
                     );
                   })()}

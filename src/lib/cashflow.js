@@ -54,13 +54,14 @@ function initialBatches(i, lag, today) {
 export function walletFlow(i, lag, L, ahead, today = startOfToday(), parts = null) {
   const u = unit(i);
   const flow = new Array(L).fill(0);
-  if (parts) { parts.ship = new Array(L).fill(0); parts.pay = new Array(L).fill(0); }
+  if (parts) { parts.ship = new Array(L).fill(0); parts.pay = new Array(L).fill(0); parts.shipN = new Array(L).fill(0); parts.entN = new Array(L).fill(0); }
+  const cnt = (k, t, n) => { if (parts && t >= 0 && t < L) parts[k][t] += n; };
   const add = (t, v) => { if (t >= 0 && t < L) { flow[t] += v; if (parts) { if (v < 0) parts.ship[t] -= v; else parts.pay[t] += v; } } };
-  for (const b of initialBatches(i, lag, today)) { if (!u.despacho) add(b.day, -b.dev * i.envio); add(b.unlockDay, b.ent * u.payDel); }
+  for (const b of initialBatches(i, lag, today)) { if (!u.despacho) { add(b.day, -b.dev * i.envio); cnt("shipN", b.day, b.dev); } add(b.unlockDay, b.ent * u.payDel); cnt("entN", b.unlockDay, b.ent); }
   for (let t = 0; t < ahead; t++) {
     const d = addDays(today, t), r = bizOffset(d, lag), ul = r + bizOffset(addDays(d, r), i.retiro);
-    if (u.despacho) add(t, -u.conf * i.envio); else add(t + r, -u.dev * i.envio);
-    add(t + ul, u.ent * u.payDel);
+    if (u.despacho) { add(t, -u.conf * i.envio); cnt("shipN", t, u.conf); } else { add(t + r, -u.dev * i.envio); cnt("shipN", t + r, u.dev); }
+    add(t + ul, u.ent * u.payDel); cnt("entN", t + ul, u.ent);
   }
   return flow;
 }
@@ -190,13 +191,15 @@ export function optimizeCash(i, lag, every = 3, days = 30, today = startOfToday(
   const parts = {};
   const flow = walletFlow(i, lag, L, days + 30, today, parts);
   const total = i.banco + i.dropi;
-  // lo que Dropi necesita para cubrir [t, t+w): peor caída acumulada del saldo en esa ventana
-  const needAt = (t, w) => { let c = 0, worst = 0; for (let k = t; k < t + w && k < L; k++) { c += flow[k]; worst = Math.min(worst, c); } return -worst; };
+  // Dropi debe tener los envíos de [t, t+w) ya en su saldo, SIN contar cobros que todavía no llegan:
+  // si un día no alcanza el saldo, no se despacha y se pierde un día de campaña.
+  const needAt = (t, w) => { let c = 0; for (let k = t; k < t + w && k < L; k++) c += parts.ship[k]; return c; };
   const dLag = i.deposito > 0 ? Math.round(i.deposito) : 0;
-  const w = Math.max(1, Math.round(every)) + dLag;
-  let wallet = 0, bank = 0, minBank = Infinity, minWallet = Infinity, sumW = 0, sumBase = 0;
+  const MARGEN = 0; // sin colchón extra: ya se exige tener los envíos antes de que ocurran
+  const w = Math.max(1, Math.round(every)) + dLag + MARGEN;
+  let wallet = 0, bank = 0, minBank = Infinity, minWallet = Infinity, sumW = 0, cubre = true, minBankDate = today;
   const toBank = [], moves = [], rows = [];
-  const need0 = needAt(0, Math.max(1, Math.round(every)) + dLag);
+  const need0 = needAt(0, w);
   wallet = Math.min(total, need0); bank = total - wallet;           // reparto de hoy
   const hoy = { banco: bank, dropi: wallet, necesita: need0, alcanza: total >= need0 - 0.005 };
   const ev = Math.max(1, Math.round(every));
@@ -213,13 +216,15 @@ export function optimizeCash(i, lag, every = 3, days = 30, today = startOfToday(
       if (delta > 0.005) { const m = Math.min(delta, Math.max(0, bank)); bank -= m; wallet += m; if (m > 0.005) moves.push({ t: t + 1, date, amount: m, dir: "dropi" }); }
       else if (delta < -0.005) { const m = -delta; wallet -= m; const off = bizOffset(date, i.transfer); if (off === 0) bank += m; else toBank.push({ day: t + off, amount: m }); moves.push({ t: t + 1, date, amount: m, dir: "banco" }); }
     }
+    if (wallet < parts.ship[t + 1] - 0.005) cubre = false; // mañana no se podrían despachar todos los pedidos
+    if (bank < minBank) minBankDate = date;
     minBank = Math.min(minBank, bank); minWallet = Math.min(minWallet, wallet);
     sumW += Math.max(0, wallet);
     const mv = moves.slice(mv0).reduce((a, m) => a + (m.dir === "dropi" ? m.amount : -m.amount), 0);
-    rows.push({ t, date, bank, wallet, ads: adsHoy, ship: parts.ship[t], pay: parts.pay[t], mv });
+    rows.push({ t, date, bank, wallet, ads: adsHoy, ship: parts.ship[t], shipN: parts.shipN[t], pay: parts.pay[t], entN: parts.entN[t], mv });
   }
   const first = flow.findIndex((v, k) => k > 0 && v > 0);
-  return { hoy, moves, minBank, minWallet, ok: minBank >= -0.005 && minWallet >= -0.005, avgDropi: sumW / days, every: Math.max(1, Math.round(every)), firstPay: first < 0 ? null : first, rows };
+  return { hoy, moves, minBank, minWallet, ok: minBank >= -0.005 && minWallet >= -0.005 && cubre, avgDropi: sumW / days, every: Math.max(1, Math.round(every)), firstPay: first < 0 ? null : first, rows, falta: Math.max(0, -minBank, -minWallet), faltaFecha: minBankDate };
 }
 // Elige la recarga más espaciada (menos trabajo para el usuario) con la que ninguna cuenta se queda sin saldo
 export function bestPlan(i, lag, days = 30, today = startOfToday()) {
