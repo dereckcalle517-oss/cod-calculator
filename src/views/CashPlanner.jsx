@@ -24,7 +24,6 @@ function PlanField({ k, label, hint, value, auto: a, plan, set, inp }) {
 
 export function CashPlanner({ data, update, saldo, fmt }) {
   const { products } = useTracking();
-  const [scen, setScen] = useState("peor");
   const plan = data.plan || {};
   const setRaw = (k, v) => update(d => ({ ...d, plan: { ...(d.plan || {}), [k]: v } }));
   const set = (k) => (e) => setRaw(k, e.target.value);
@@ -52,10 +51,9 @@ export function CashPlanner({ data, update, saldo, fmt }) {
     envioModo: plan.envioModo === "devolucion" ? "devolucion" : "despacho",
     costoModo: plan.costoModo === "despacho" ? "despacho" : "liquidar",
   };
-  const lags = { mejor: i.entMin, medio: Math.round((i.entMin + i.entMax) / 2), peor: i.entMax };
-  const lag = lags[scen];
+  const lag = i.entMax;
   const ready = i.adsDia > 0 && i.cpa > 0 && i.precio > 0;
-  const key = JSON.stringify(i) + scen;
+  const key = JSON.stringify(i);
 
   const defEsc = [0.67, 1, 1.67, 2.67].map(m => Math.max(1, Math.round(i.adsDia * m)));
   const escNames = ["Conservador", "Actual", "Crecimiento", "Agresivo"];
@@ -96,7 +94,7 @@ export function CashPlanner({ data, update, saldo, fmt }) {
     const dropiFalta = Math.max(0, dropiRec - i.dropi), bancoFalta = Math.max(0, bancoRec - i.banco);
     const retirable = ok ? Math.max(0, i.dropi - dropiRec) : 0;
     const lastAd = s.failDay !== null && s.failDay > 0 ? addDays(today, s.failDay - 1) : null;
-    const scenName = scen === "peor" ? "entrega más lenta" : scen === "mejor" ? "entrega más rápida" : "entrega promedio";
+    const scenName = `${i.entMax} días de entrega`;
     const failWho = s.failWhy === "dropi" ? "en Dropi (para los envíos)" : "en tu banco (para los ads)";
 
     const nextUp = sc.filter(x => x.ads > i.adsDia + 0.01).sort((a, b) => a.ads - b.ads)[0];
@@ -136,35 +134,41 @@ export function CashPlanner({ data, update, saldo, fmt }) {
 
     view = (
       <>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-          <span style={{ fontSize: 12, color: C.textMuted }}>Velocidad de entrega:</span>
-          {chip("peor", `Más lenta (${lags.peor} días)`, scen === "peor", () => setScen("peor"))}
-          {chip("medio", `Promedio (${lags.medio})`, scen === "medio", () => setScen("medio"))}
-          {chip("mejor", `Más rápida (${lags.mejor})`, scen === "mejor", () => setScen("mejor"))}
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 12 }}>
-          {hero("Puedes invertir al día", fmt(safe), C.accent, safe >= i.adsDia ? `Hasta ese monto. Tu ritmo de ${fmt(i.adsDia)} está dentro del límite.` : `Es el máximo que aguanta tu dinero. Hoy inviertes ${fmt(i.adsDia)}.`)}
-          {hero("Ten en Dropi", fmt(dropiRec), dropiFalta > 0 ? C.red : C.amber, dropiFalta > 0 ? `Para cubrir envíos. Te faltan ${fmt(dropiFalta)}.` : "Para cubrir los envíos hasta que lleguen tus pagos.")}
-          {hero("Ten en tu banco", fmt(bancoRec), bancoFalta > 0 ? C.red : C.green, bancoFalta > 0 ? `Para ads y costos. Te faltan ${fmt(bancoFalta)}.` : "Para pagar la publicidad y los costos.")}
-          {hero("Días que sostienes tu operación", ok ? `${HORIZON}+` : String(s.failDay), ok ? C.green : C.red, ok ? "Sin quedarte sin dinero en ninguna cuenta." : `Hasta que se acaba el dinero ${failWho}.`)}
-        </div>
-
         <div style={{ ...card, borderColor: `${color}55` }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
             <span style={{ width: 14, height: 14, borderRadius: 7, background: color, flexShrink: 0 }} />
-            <div style={{ fontSize: 15, fontWeight: 700, color }}>{ok ? (loses ? "Aguantas, pero tu campaña pierde dinero" : "Tu operación es sostenible") : "Riesgo de quedarte sin dinero"}</div>
+            <div style={{ fontSize: 17, fontWeight: 700, color }}>{ok ? `Puedes invertir hasta ${fmt(safe)} al día` : `Con tu dinero actual solo aguantas ${days}`}</div>
           </div>
-          <div style={{ fontSize: 14, color: C.textDim, lineHeight: 1.65 }}>{main1}</div>
-          <div style={{ fontSize: 13.5, color: C.textDim, lineHeight: 1.65, marginTop: 10 }}>{recover}</div>
-          <div style={{ fontSize: 13.5, color: C.textDim, lineHeight: 1.65, marginTop: 6 }}>{grow}</div>
+          <div style={{ fontSize: 14, color: C.textDim, lineHeight: 1.65 }}>
+            {ok
+              ? `Con ${fmt(i.banco)} en el banco y ${fmt(i.dropi)} en Dropi, tu inversión de ${fmt(i.adsDia)} al día se sostiene ${days}${loses ? `, pero tu campaña pierde ${fmt(-s.perDay)} al día` : ""}.`
+              : `Invirtiendo ${fmt(i.adsDia)} al día se te acaba el dinero ${failWho}${lastAd ? ` después del ${fmtDate(lastAd)}` : " desde el primer día"}. Lo máximo que aguanta hoy tu dinero es ${fmt(safe)} al día.`}
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 12 }}>
+          {hero("Puedes invertir al día", fmt(safe), C.accent, safe >= i.adsDia ? `Tu ritmo de ${fmt(i.adsDia)} está dentro del límite.` : `Hoy inviertes ${fmt(i.adsDia)}.`)}
+          {hero("Ten en tu banco", fmt(bancoRec), bancoFalta > 0 ? C.red : C.green, bancoFalta > 0 ? `Para pagar ads. Te faltan ${fmt(bancoFalta)}.` : "Para pagar los ads.")}
+          {hero("Ten en Dropi", fmt(dropiRec), dropiFalta > 0 ? C.red : C.amber, dropiFalta > 0 ? `Para los envíos. Te faltan ${fmt(dropiFalta)}.` : "Para pagar los envíos.")}
+          {hero("Días que aguantas", ok ? `${HORIZON}+` : String(s.failDay), ok ? C.green : C.red, ok ? "Sin quedarte sin dinero." : "Hasta que se acaba el dinero.")}
+        </div>
+
+        <div style={card}>
+          <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 10 }}>Cómo funciona tu ciclo</div>
+          <ul style={{ margin: 0, paddingLeft: 18, display: "grid", gap: 8, fontSize: 13.5, color: C.textDim, lineHeight: 1.6 }}>
+            <li>Hoy inviertes <b style={{ color: C.text }}>{fmt(i.adsDia)}</b> y te entran unos <b style={{ color: C.text }}>{s.orders.toFixed(0)}</b> pedidos ({s.ent.toFixed(0)} se entregan).</li>
+            <li>Se entregan en <b style={{ color: C.text }}>{i.entMax} días hábiles</b>{s.firstRecovery !== null ? <> y ese dinero entra a tu Dropi cerca del <b style={{ color: C.text }}>{fmtDate(addDays(today, s.firstRecovery))}</b></> : null}.</li>
+            <li>Hasta esa fecha, tu <b style={{ color: C.text }}>banco</b> paga los ads (necesita {fmt(bancoRec)}) y tu <b style={{ color: C.text }}>Dropi</b> paga los envíos (necesita {fmt(dropiRec)}).</li>
+            <li>{!ok ? "Con tu dinero actual se acaba antes de que entre esa plata." : loses ? "Después entra dinero cada día, pero tu campaña pierde más de lo que recupera: baja el CPA o sube el precio." : "Después entra dinero a Dropi todos los días y tu operación se sostiene sola."}</li>
+          </ul>
+          <div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.6, marginTop: 12, paddingTop: 12, borderTop: `1px solid ${C.border}` }}>{recover} {grow}</div>
         </div>
 
         {alerts.length > 0 && (
           <div style={card}>
             <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 10 }}>Qué hacer</div>
             <div style={{ display: "grid", gap: 10 }}>
-              {alerts.map((x, k) => <div key={k} style={{ borderLeft: `3px solid ${x.c}`, paddingLeft: 12, fontSize: 13, color: C.textDim, lineHeight: 1.55 }}>{x.t}</div>)}
+              {alerts.slice(0, 3).map((x, k) => <div key={k} style={{ borderLeft: `3px solid ${x.c}`, paddingLeft: 12, fontSize: 13, color: C.textDim, lineHeight: 1.55 }}>{x.t}</div>)}
             </div>
           </div>
         )}
@@ -268,7 +272,7 @@ export function CashPlanner({ data, update, saldo, fmt }) {
     <div style={{ display: "grid", gap: 14 }}>
       <div style={card}>
         <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>¿Cuánto puedo invertir en publicidad?</div>
-        <div style={{ fontSize: 12, color: C.textDim, lineHeight: 1.6, marginBottom: 14 }}>Escribe tus saldos y tus números. Tu banco paga la publicidad y tu cuenta de Dropi paga los envíos; simulo cada día para decirte cuánto gastar y cuánto reservar en cada cuenta.</div>
+        <div style={{ fontSize: 12, color: C.textDim, lineHeight: 1.6, marginBottom: 14 }}>Escribe tus saldos y tus números. Tu banco paga los ads, Dropi paga los envíos, y el dinero de los pedidos vuelve cuando se entregan.</div>
         <div style={grid}>
           <PlanField {...fp} k="banco" label="Saldo en tu banco" value={i.banco} hint="Por defecto: tu saldo de Control financiero." />
           <PlanField {...fp} k="dropi" label="Saldo en Dropi" value={i.dropi} hint="Disponible hoy." />
@@ -279,6 +283,7 @@ export function CashPlanner({ data, update, saldo, fmt }) {
           <PlanField {...fp} k="envio" label="Costo de envío" value={i.envio} auto={isAuto("envio")} hint="Promedio por envío." />
           <PlanField {...fp} k="pctConf" label="Confirmados (%)" value={i.pctConf} auto={isAuto("pctConf")} hint="De los pedidos, cuántos confirman." />
           <PlanField {...fp} k="pctEnt" label="Entregados (%)" value={i.pctEnt} auto={isAuto("pctEnt")} hint="De los confirmados, cuántos se entregan." />
+          <PlanField {...fp} k="entMax" label="Días de entrega" value={i.entMax} hint="Del pedido a la entrega (sin domingos)." />
         </div>
         <details style={{ marginTop: 16 }}>
           <summary style={{ fontSize: 13, color: C.textDim, cursor: "pointer", fontWeight: 600 }}>Datos avanzados (plazos, comisión y otros)</summary>
@@ -290,8 +295,6 @@ export function CashPlanner({ data, update, saldo, fmt }) {
               <select style={inp} value={plan.plataforma || PLATAFORMAS[0]} onChange={set("plataforma")}>{PLATAFORMAS.map(p => <option key={p}>{p}</option>)}</select>
               <span style={{ display: "block", fontSize: 10, color: C.textMuted, marginTop: 4 }}>Dónde pautas.</span>
             </label>
-            <PlanField {...fp} k="entMin" label="Entrega, mínimo (días hábiles)" value={i.entMin} hint="Del pedido a la entrega. Mejor caso." />
-            <PlanField {...fp} k="entMax" label="Entrega, máximo (días hábiles)" value={i.entMax} hint="Peor caso." />
             <PlanField {...fp} k="retiro" label="Días hasta poder retirar" value={i.retiro} hint="De la entrega a dinero disponible en Dropi." />
             <PlanField {...fp} k="transfer" label="Días de Dropi al banco" value={i.transfer} hint="Lo que tarda tu retiro. 0 si es inmediato." />
             <PlanField {...fp} k="deposito" label="Días del banco a Dropi" value={i.deposito} hint="Lo que tarda un depósito. 0 si es inmediato." />
