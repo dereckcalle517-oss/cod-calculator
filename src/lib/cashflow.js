@@ -50,9 +50,9 @@ function initialBatches(i, lag, today) {
   return out;
 }
 
-// Reserva que Dropi necesita cada día para no quedarse sin saldo: lo que van a superar los envíos
-// a los pagos que ya están programados (mirando hacia adelante), más un colchón de un día de envíos
-// por cada día que tarda un depósito. R[0] es lo que debes tener en Dropi hoy.
+// Reserva que Dropi necesita para no quedarse sin saldo: lo que van a superar los envíos a los pagos
+// ya programados (mirando hacia adelante). R[0] es lo que debes tener en Dropi hoy; R[t+1] es lo que
+// debe quedar al cierre del día t. Sin colchones extra cuando el depósito es inmediato.
 export function reserveSchedule(i, lag, days = HORIZON, today = startOfToday()) {
   const u = unit(i);
   if (!(i.adsDia > 0)) return new Array(days).fill(0);
@@ -66,10 +66,14 @@ export function reserveSchedule(i, lag, days = HORIZON, today = startOfToday()) 
     add(t + ul, u.ent * u.payDel);
   }
   const daily = u.despacho ? u.conf * i.envio : u.dev * i.envio;
-  const cushion = daily * (1 + Math.max(0, i.deposito));
   const m = new Array(L + 1).fill(0);
   for (let t = L - 1; t >= 0; t--) m[t] = flow[t] + Math.min(0, m[t + 1]);
-  return Array.from({ length: days }, (_, t) => Math.max(0, -m[t]) + cushion);
+  // R[t] = saldo que Dropi necesita al INICIO del día t. Si el depósito del banco tarda, hay que
+  // tener además los envíos de los días que pasan hasta que llegue (con depósito inmediato: 0).
+  return Array.from({ length: days + 1 }, (_, t) => {
+    const off = i.deposito > 0 ? bizOffset(addDays(today, t), i.deposito) : 0;
+    return Math.max(0, -m[t]) + daily * Math.max(0, off - 1);
+  });
 }
 export const reserveDropi = (i, lag, days = HORIZON, today = startOfToday()) => reserveSchedule(i, lag, days, today)[0] || 0;
 
@@ -108,13 +112,16 @@ export function simulate(i, lag, days = HORIZON, today = startOfToday(), R = res
     // 4) pagos que quedan disponibles hoy
     for (const x of unlocks) if (x.day === t) { locked -= x.amount; wallet += x.amount; recovered += x.amount; unlockedToday += x.amount; }
     if (firstRecovery === null && unlockedToday > 0) firstRecovery = t;
-    // 5) depósito desde el banco si Dropi está por debajo de su reserva
-    const K = R[t] || 0;
+    // 5) depósito desde el banco, justo a tiempo: solo lo que falta para pagar los envíos
+    //    (más los que se pagarán mientras el depósito está en camino). No se pre-financia Dropi.
+    const K = R[t + 1] || 0;
     const have = wallet + trDropi;
-    if (have < K - 0.005) {
-      const m = K - have;
+    const dOff = i.deposito > 0 ? bizOffset(date, i.deposito) : 0;
+    const Kdep = (u.despacho ? u.conf : u.dev) * i.envio * Math.max(0, dOff - 1);
+    if (have < Kdep - 0.005) {
+      const m = Kdep - have;
       bank -= m; depToday = m;
-      if (i.deposito <= 0) wallet += m; else { trDropi += m; toDropi.push({ day: t + bizOffset(date, i.deposito), amount: m }); }
+      if (dOff === 0) wallet += m; else { trDropi += m; toDropi.push({ day: t + dOff, amount: m }); }
     } else if (++sinceWd >= Math.max(1, Math.round(i.retiroCada)) && wallet > K + 0.005) {
       // 6) retiro del excedente de Dropi al banco, cada cierto número de días
       const m = wallet - K; wallet -= m; wdToday = m; sinceWd = 0;
