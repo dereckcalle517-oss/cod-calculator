@@ -1,7 +1,16 @@
 // Motor de simulación de flujo de caja para negocios contraentrega (COD).
-// Dos fondos independientes: banco (paga ads y costos) y Dropi (paga envíos).
-// Los pedidos de cada día se simulan por separado: se entregan, se liquidan y se pueden
-// retirar en días distintos. Los domingos no cuentan para los plazos.
+//
+// Dos cuentas separadas:
+//  · Banco: paga ads, otros costos y (si compras el inventario) el costo del producto.
+//  · Dropi: paga los envíos. Cobra el envío de cada pedido al despacharlo, o solo el de los
+//    devueltos (según envioModo). El costo del producto se descuenta al liquidar el pedido
+//    (modelo Dropi) o lo pagas tú al despachar (costoModo).
+//
+// Cada día genera un lote de pedidos que se simula por separado: se entrega, se liquida,
+// queda disponible para retirar y se transfiere al banco en días distintos. Los domingos
+// no cuentan para ningún plazo. Dropi mantiene una reserva fija (reserveDropi): si baja de
+// ahí se deposita desde el banco; lo que sobra se retira cada pocos días.
+// La operación "falla" cuando el banco no puede pagar o Dropi no puede pagar envíos.
 
 export const HORIZON = 45;
 const DAY = 86400000;
@@ -14,92 +23,130 @@ export function bizOffset(start, n) {
   return off;
 }
 
-// i: banco, dropi, adsDia, cpa, precio, costo, envio, comision(%), otros(por día),
-//    pctConf, pctEnt, retiro (días hábiles entrega→disponible), transfer (días hábiles Dropi→banco),
-//    enCamino (pedidos ya despachados), envioModo: "despacho" (Dropi cobra el envío al despachar)
-//    o "devolucion" (solo cobra el envío de lo que se devuelve).
-export function simulate(i, lag, days = HORIZON, today = startOfToday()) {
+// Valores por pedido y por día derivados de las entradas
+function unit(i) {
   const despacho = i.envioModo !== "devolucion";
+  const prepagaCosto = i.costoModo === "despacho";
   const orders = i.cpa > 0 ? i.adsDia / i.cpa : 0;
   const conf = orders * i.pctConf / 100;
   const ent = conf * i.pctEnt / 100, dev = conf - ent;
-  const payDel = despacho ? i.precio - i.costo - i.precio * i.comision / 100
-                          : i.precio - i.envio - i.costo - i.precio * i.comision / 100;
-  const perDay = ent * (i.precio - i.envio - i.costo - i.precio * i.comision / 100) - dev * i.envio - i.adsDia - i.otros;
+  const com = i.precio * i.comision / 100;
+  // Lo que Dropi deposita en tu saldo por un pedido entregado
+  const payDel = i.precio - com - (despacho ? 0 : i.envio) - (prepagaCosto ? 0 : i.costo);
+  // Ganancia por día en régimen (igual en cualquier modo): lo que queda después de todo
+  const perDay = ent * (i.precio - i.envio - i.costo - com) - dev * i.envio - i.adsDia - i.otros;
+  return { despacho, prepagaCosto, orders, conf, ent, dev, com, payDel, perDay };
+}
 
-  const batches = [], unlocks = [], arrivals = [];
-  if (i.enCamino > 0) {
-    const span = Math.max(1, bizOffset(today, lag));
-    for (let k = 1; k <= span; k++) {
-      const c = i.enCamino / span, e = c * i.pctEnt / 100;
-      const rd = addDays(today, k);
-      batches.push({ day: k, ent: e, dev: c - e, unlockDay: k + bizOffset(rd, i.retiro), ads: 0, ship: 0, conf: c });
-    }
+// Pedidos que ya están en camino hoy: se resuelven repartidos en el plazo de entrega
+function initialBatches(i, lag, today) {
+  const out = [];
+  if (!(i.enCamino > 0)) return out;
+  const span = Math.max(1, bizOffset(today, lag));
+  for (let k = 1; k <= span; k++) {
+    const c = i.enCamino / span, e = c * i.pctEnt / 100;
+    out.push({ day: k, ent: e, dev: c - e, conf: c, unlockDay: k + bizOffset(addDays(today, k), i.retiro), ads: 0, ship: 0 });
   }
-  let bank = i.banco, wallet = i.dropi, locked = 0, inTr = 0, recovered = 0;
-  let injected = 0, withdrawn = 0, peakNet = 0, failDay = null, adsOn = i.adsDia > 0;
+  return out;
+}
+
+// Reserva que Dropi necesita cada día para no quedarse sin saldo: lo que van a superar los envíos
+// a los pagos que ya están programados (mirando hacia adelante), más un colchón de un día de envíos
+// por cada día que tarda un depósito. R[0] es lo que debes tener en Dropi hoy.
+export function reserveSchedule(i, lag, days = HORIZON, today = startOfToday()) {
+  const u = unit(i);
+  if (!(i.adsDia > 0)) return new Array(days).fill(0);
+  const L = days + 40, ahead = days + 30;
+  const flow = new Array(L).fill(0);
+  const add = (t, v) => { if (t >= 0 && t < L) flow[t] += v; };
+  for (const b of initialBatches(i, lag, today)) { if (!u.despacho) add(b.day, -b.dev * i.envio); add(b.unlockDay, b.ent * u.payDel); }
+  for (let t = 0; t < ahead; t++) {
+    const d = addDays(today, t), r = bizOffset(d, lag), ul = r + bizOffset(addDays(d, r), i.retiro);
+    if (u.despacho) add(t, -u.conf * i.envio); else add(t + r, -u.dev * i.envio);
+    add(t + ul, u.ent * u.payDel);
+  }
+  const daily = u.despacho ? u.conf * i.envio : u.dev * i.envio;
+  const cushion = daily * (1 + Math.max(0, i.deposito));
+  const m = new Array(L + 1).fill(0);
+  for (let t = L - 1; t >= 0; t--) m[t] = flow[t] + Math.min(0, m[t + 1]);
+  return Array.from({ length: days }, (_, t) => Math.max(0, -m[t]) + cushion);
+}
+export const reserveDropi = (i, lag, days = HORIZON, today = startOfToday()) => reserveSchedule(i, lag, days, today)[0] || 0;
+
+export function simulate(i, lag, days = HORIZON, today = startOfToday(), R = reserveSchedule(i, lag, days, today)) {
+  const u = unit(i);
+  const batches = initialBatches(i, lag, today);
+  const unlocks = [], toBank = [], toDropi = [];
+  let bank = i.banco, wallet = i.dropi, locked = 0, trBank = 0, trDropi = 0, inventory = 0, recovered = 0;
+  let failDay = null, failWhy = null, adsOn = i.adsDia > 0;
   const total0 = bank + wallet;
-  let minBank = Infinity, firstRecovery = null, paybackDay = null, dipped = false, peakCommitted = 0;
+  let minBank = Infinity, minWallet = Infinity, firstRecovery = null, paybackDay = null, dipped = false, peakCommitted = 0, sinceWd = 0;
   const rows = [];
   for (let t = 0; t < days; t++) {
     const date = addDays(today, t);
-    let unlockedToday = 0, shipToday = 0, injToday = 0, wdToday = 0;
-    for (const a of arrivals) if (a.day === t) { bank += a.amount; inTr -= a.amount; }
+    let unlockedToday = 0, shipToday = 0, depToday = 0, wdToday = 0, prodToday = 0;
+    // 0) llegan transferencias en camino
+    for (const a of toBank) if (a.day === t) { bank += a.amount; trBank -= a.amount; }
+    for (const a of toDropi) if (a.day === t) { wallet += a.amount; trDropi -= a.amount; }
     // 1) gastos del banco
     const adsToday = adsOn ? i.adsDia : 0;
     bank -= adsToday + i.otros;
     // 2) pedidos del día
-    if (adsOn && orders > 0) {
+    if (adsOn && u.orders > 0) {
       const rOff = bizOffset(date, lag), rd = addDays(date, rOff);
-      batches.push({ day: t + rOff, ent, dev, unlockDay: t + rOff + bizOffset(rd, i.retiro), ads: adsToday, ship: despacho ? conf * i.envio : 0, conf });
-      if (despacho) { wallet -= conf * i.envio; shipToday = conf * i.envio; }
+      batches.push({ day: t + rOff, ent: u.ent, dev: u.dev, conf: u.conf, ads: adsToday, ship: u.despacho ? u.conf * i.envio : 0, unlockDay: t + rOff + bizOffset(rd, i.retiro) });
+      if (u.despacho) { wallet -= u.conf * i.envio; shipToday = u.conf * i.envio; }
+      if (u.prepagaCosto) { bank -= u.conf * i.costo; prodToday = u.conf * i.costo; }
     }
     // 3) pedidos que se resuelven hoy
     for (const b of batches) if (b.day === t) {
-      if (!despacho) wallet -= b.dev * i.envio;
-      const pay = b.ent * payDel;
+      if (!u.despacho) wallet -= b.dev * i.envio;
+      if (u.prepagaCosto) inventory += b.dev * i.costo;   // lo devuelto vuelve a tu stock
+      const pay = b.ent * u.payDel;
       locked += pay; unlocks.push({ day: b.unlockDay, amount: pay });
     }
     // 4) pagos que quedan disponibles hoy
-    for (const u of unlocks) if (u.day === t) { locked -= u.amount; wallet += u.amount; recovered += u.amount; unlockedToday += u.amount; }
+    for (const x of unlocks) if (x.day === t) { locked -= x.amount; wallet += x.amount; recovered += x.amount; unlockedToday += x.amount; }
     if (firstRecovery === null && unlockedToday > 0) firstRecovery = t;
-    // 5) reserva objetivo de Dropi
-    const pending = batches.filter(b => b.day > t);
-    const target = despacho ? (adsOn ? conf * i.envio : 0) : pending.reduce((s, b) => s + b.dev * i.envio, 0);
-    // 6) reequilibrio
-    if (wallet < target) { const m = target - wallet; bank -= m; wallet += m; injected += m; injToday = m; }
-    else if (wallet > target) {
-      const m = wallet - target; wallet -= m; withdrawn += m; wdToday = m;
+    // 5) depósito desde el banco si Dropi está por debajo de su reserva
+    const K = R[t] || 0;
+    const have = wallet + trDropi;
+    if (have < K - 0.005) {
+      const m = K - have;
+      bank -= m; depToday = m;
+      if (i.deposito <= 0) wallet += m; else { trDropi += m; toDropi.push({ day: t + bizOffset(date, i.deposito), amount: m }); }
+    } else if (++sinceWd >= Math.max(1, Math.round(i.retiroCada)) && wallet > K + 0.005) {
+      // 6) retiro del excedente de Dropi al banco, cada cierto número de días
+      const m = wallet - K; wallet -= m; wdToday = m; sinceWd = 0;
       const off = bizOffset(date, i.transfer);
-      if (off === 0) bank += m; else { inTr += m; arrivals.push({ day: t + off, amount: m }); }
+      if (off === 0) bank += m; else { trBank += m; toBank.push({ day: t + off, amount: m }); }
     }
-    peakNet = Math.max(peakNet, injected - withdrawn);
-    minBank = Math.min(minBank, bank);
-    if (failDay === null && bank < -0.005) { failDay = t; adsOn = false; }
+    minBank = Math.min(minBank, bank); minWallet = Math.min(minWallet, wallet);
+    if (failDay === null && (bank < -0.005 || wallet < -0.005)) { failDay = t; failWhy = bank < -0.005 ? "banco" : "dropi"; adsOn = false; }
+    const pending = batches.filter(b => b.day > t);
     const committed = pending.reduce((s, b) => s + b.ads + b.ship, 0);
     peakCommitted = Math.max(peakCommitted, committed);
-    const totalNow = bank + wallet + locked + inTr;
+    const totalNow = bank + wallet + locked + trBank + trDropi + inventory;
     if (totalNow < total0 - 0.01) dipped = true;
     if (dipped && paybackDay === null && totalNow >= total0 - 0.01) paybackDay = t;
-    rows.push({ t, date, bank, wallet, locked, inTr, ads: adsToday, otros: i.otros, ship: shipToday, unlocked: unlockedToday,
-      recovered, committed, total: totalNow, target, injToday, wdToday });
+    rows.push({ t, date, bank, wallet, locked, inTr: trBank + trDropi, ads: adsToday, otros: i.otros, ship: shipToday, prod: prodToday,
+      unlocked: unlockedToday, recovered, committed, total: totalNow, K, dep: depToday, wd: wdToday });
   }
-  return { rows, failDay, orders, conf, ent, dev, perDay, minBank, peakNet, firstRecovery, paybackDay: dipped ? paybackDay : 0,
-    peakCommitted, maxTarget: Math.max(0, ...rows.map(r => r.target)), payDel,
-    ingresosDia: ent * i.precio,
-    gastosDia: i.adsDia + i.otros + conf * i.envio + ent * i.costo + ent * i.precio * i.comision / 100 };
+  return { rows, failDay, failWhy, orders: u.orders, conf: u.conf, ent: u.ent, dev: u.dev, perDay: u.perDay, minBank, minWallet,
+    firstRecovery, paybackDay: dipped ? paybackDay : 0, peakCommitted, K: R[0] || 0, Kmin: Math.min(...R), payDel: u.payDel,
+    ingresosDia: u.ent * i.precio,
+    gastosDia: i.adsDia + i.otros + u.conf * i.envio + u.ent * i.costo + u.ent * u.com };
 }
 
-// Capital total que habría que tener (banco + Dropi) para sostener la campaña sin fallar,
-// y cuánto de eso tiene que vivir en Dropi.
+// Capital necesario: Dropi con su reserva y cuánto banco hace falta para pagar ads y depósitos
 export function capitalNeeded(i, lag, days = HORIZON) {
+  const K = reserveDropi(i, lag, days);
   const big = 1e9;
-  const s = simulate({ ...i, banco: big, dropi: 0 }, lag, days);
-  const total = Math.max(0, big - s.minBank);
-  const dropi = Math.min(total, s.peakNet);
-  return { total, dropi, banco: Math.max(0, total - dropi) };
+  const s = simulate({ ...i, banco: big, dropi: K }, lag, days);
+  const banco = Math.max(0, big - s.minBank);
+  return { dropi: K, banco, total: K + banco };
 }
-// Mayor inversión diaria que sostiene tu dinero actual durante el horizonte
+// Mayor inversión diaria que sostiene tu dinero actual (cada cuenta por separado)
 export function maxSafeAds(i, lag, days = HORIZON) {
   if (!(i.cpa > 0)) return 0;
   let lo = 0, hi = Math.max(1000, i.adsDia * 4 + i.banco + i.dropi);
@@ -114,9 +161,7 @@ export function scenario(i, ads, lag, days = HORIZON) {
   const x = { ...i, adsDia: ads };
   const s = simulate(x, lag, days);
   const need = capitalNeeded(x, lag, days);
-  const last = s.rows[Math.min(29, s.rows.length - 1)];
-  const sum30 = s.rows.slice(0, 30);
   const risk = s.failDay !== null ? "alto" : s.minBank < Math.max(ads * 3, 1) ? "medio" : "bajo";
   return { ads, s, need, risk, autonomia: s.failDay, pedidos30: s.orders * 30, entregas30: s.ent * 30,
-    ingresos30: s.ingresosDia * 30, gastos30: s.gastosDia * 30, neta30: s.perDay * 30, bankEnd: last.bank, walletEnd: last.wallet };
+    ingresos30: s.ingresosDia * 30, gastos30: s.gastosDia * 30, neta30: s.perDay * 30 };
 }
