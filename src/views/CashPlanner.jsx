@@ -38,6 +38,17 @@ export function planCash(i) {
     noFundsFrom: runway !== null ? addDays(today, runway) : null };
 }
 
+// Fuera de CashPlanner a propósito: si se define dentro, React lo recrea en cada tecla y el campo pierde el foco.
+function PlanField({ k, label, hint, value, auto: a, plan, set, inp }) {
+  return (
+    <label style={{ display: "block", minWidth: 0 }}>
+      <span style={{ display: "block", fontSize: 11, color: C.textDim, marginBottom: 5, fontWeight: 600 }}>{label}</span>
+      <input style={inp} inputMode="decimal" value={plan[k] ?? ""} onChange={set(k)} placeholder={String(value)} />
+      <span style={{ display: "block", fontSize: 10, color: C.textMuted, marginTop: 4, lineHeight: 1.4 }}>{a ? "Tomado de tu Seguimiento. " : ""}{hint}</span>
+    </label>
+  );
+}
+
 export function CashPlanner({ data, update, saldo, fmt }) {
   const { products } = useTracking();
   const plan = data.plan || {};
@@ -74,13 +85,7 @@ export function CashPlanner({ data, update, saldo, fmt }) {
 
   const card = { background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 16 };
   const inp = { background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "10px 11px", color: C.text, fontSize: 13, fontFamily: "inherit", outline: "none", minWidth: 0, width: "100%", boxSizing: "border-box", colorScheme: "dark" };
-  const Field = ({ k, label, hint, value, auto: a }) => (
-    <label style={{ display: "block", minWidth: 0 }}>
-      <span style={{ display: "block", fontSize: 11, color: C.textDim, marginBottom: 5, fontWeight: 600 }}>{label}</span>
-      <input style={inp} inputMode="decimal" value={plan[k] ?? ""} onChange={set(k)} placeholder={String(value)} />
-      <span style={{ display: "block", fontSize: 10, color: C.textMuted, marginTop: 4, lineHeight: 1.4 }}>{a ? "Tomado de tu Seguimiento. " : ""}{hint}</span>
-    </label>
-  );
+  const fp = { plan, set, inp };
   const big = (label, value, color, sub) => (
     <div style={{ ...card, borderLeft: `3px solid ${color}`, minWidth: 0 }}>
       <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 6 }}>{label}</div>
@@ -144,17 +149,17 @@ export function CashPlanner({ data, update, saldo, fmt }) {
       <div style={card}>
         <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Tus datos</div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 14 }}>
-          <Field k="banco" label="Dinero disponible en tu banco" value={i.banco} hint="Por defecto: el saldo de tu Control financiero este mes." />
-          <Field k="dropi" label="Fondos en Dropi" value={i.dropi} hint="Lo que tienes hoy en tu cuenta de Dropi." />
-          <Field k="adsDia" label="Inversión diaria en ads" value={i.adsDia} auto={!!auto && !plan.adsDia} hint="Lo que gastas por día." />
-          <Field k="pedidosDia" label="Pedidos por día" value={i.pedidosDia} auto={!!auto && !plan.pedidosDia} hint="Promedio de pedidos que te entran." />
-          <Field k="envio" label="Costo promedio de envío" value={i.envio} auto={!!auto && !plan.envio} hint="Lo que cuesta cada envío." />
-          <Field k="pctConf" label="Confirmados (%)" value={i.pctConf} auto={!!auto && !plan.pctConf} hint="De los pedidos, cuántos confirman." />
-          <Field k="pctEnt" label="Entregados (%)" value={i.pctEnt} auto={!!auto && !plan.pctEnt} hint="De los confirmados, cuántos se entregan." />
-          <Field k="enCamino" label="Pedidos en camino ahora (opcional)" value={Math.round(r.transit)} hint="Si lo dejas vacío, lo estimo con tus pedidos por día." />
-          <Field k="entMin" label="Entrega, mínimo (días hábiles)" value={i.entMin} hint="Mejor caso." />
-          <Field k="entMax" label="Entrega, máximo (días hábiles)" value={i.entMax} hint="Peor caso." />
-          <Field k="retiro" label="Días para poder retirar" value={i.retiro} hint="Después de la entrega." />
+          <PlanField {...fp} k="banco" label="Dinero disponible en tu banco" value={i.banco} hint="Por defecto: el saldo de tu Control financiero este mes." />
+          <PlanField {...fp} k="dropi" label="Fondos en Dropi" value={i.dropi} hint="Lo que tienes hoy en tu cuenta de Dropi." />
+          <PlanField {...fp} k="adsDia" label="Inversión diaria en ads" value={i.adsDia} auto={!!auto && !plan.adsDia} hint="Lo que gastas por día." />
+          <PlanField {...fp} k="pedidosDia" label="Pedidos por día" value={i.pedidosDia} auto={!!auto && !plan.pedidosDia} hint="Promedio de pedidos que te entran." />
+          <PlanField {...fp} k="envio" label="Costo promedio de envío" value={i.envio} auto={!!auto && !plan.envio} hint="Lo que cuesta cada envío." />
+          <PlanField {...fp} k="pctConf" label="Confirmados (%)" value={i.pctConf} auto={!!auto && !plan.pctConf} hint="De los pedidos, cuántos confirman." />
+          <PlanField {...fp} k="pctEnt" label="Entregados (%)" value={i.pctEnt} auto={!!auto && !plan.pctEnt} hint="De los confirmados, cuántos se entregan." />
+          <PlanField {...fp} k="enCamino" label="Pedidos en camino ahora (opcional)" value={Math.round(r.transit)} hint="Si lo dejas vacío, lo estimo con tus pedidos por día." />
+          <PlanField {...fp} k="entMin" label="Entrega, mínimo (días hábiles)" value={i.entMin} hint="Mejor caso." />
+          <PlanField {...fp} k="entMax" label="Entrega, máximo (días hábiles)" value={i.entMax} hint="Peor caso." />
+          <PlanField {...fp} k="retiro" label="Días para poder retirar" value={i.retiro} hint="Después de la entrega." />
         </div>
         <div style={{ fontSize: 11, color: C.textMuted, lineHeight: 1.6, marginTop: 14 }}>
           <Ic n="bulb" size={12} /> Cómo se calcula: la reserva de Dropi cubre el envío de los pedidos en camino que podrían devolverse (envío × pedidos en camino × % que no se entrega). El dinero para ads es tu banco más tus fondos de Dropi menos esa reserva. Es una estimación: ajusta los datos a tu operación.
