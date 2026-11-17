@@ -93,7 +93,7 @@ export const HELP_QA = [
   { q: "¿Cómo pido un reembolso?", k: "reembolso devolver devolucion dinero garantia", a: "Tienes 3 días de garantía desde tu primer pago. Pídelo desde Ajustes → Suscripción o escribiendo a soporte desde el correo de tu cuenta." },
   { q: "Pagué pero sigo en plan Gratis", k: "pague pago sigue gratis no activa activo pro plan", a: "La activación tarda unos segundos. Recarga la página o cierra sesión y vuelve a entrar. Si después de unos minutos sigue igual, escríbenos con el correo de tu cuenta y lo resolvemos." },
   { q: "¿Cómo funcionan los referidos?", k: "referidos referido amigo invitar dias pro gratis enlace", a: "Compartes tu enlace desde Ajustes → Referidos. Por cada amigo que se suscriba y pague, ganas 15 días de PRO, que se acreditan 3 días después de su primer pago. El tope acumulado es de 30 días." },
-  { q: "¿Qué incluye el plan PRO?", k: "pro incluye beneficios plan que ofrece precio", a: "Desglose de CPA y sensibilidad a la entrega, salud de campaña, benchmarks, escenarios, comparador A/B, asesor de IA y control financiero. Cuesta $5.99 al mes." },
+  { q: "¿Qué incluye el plan PRO?", k: "pro incluye beneficios plan que ofrece precio", a: "Desglose de CPA y sensibilidad a la entrega, salud de campaña, benchmarks, escenarios, comparador A/B, asesor de IA, planificador de ads y control financiero. Cuesta $5.99 al mes." },
   { q: "¿Qué incluye el plan Gratis?", k: "gratis free incluye limite guardados monedas", a: "La calculadora de rentabilidad completa, CPA real y CPA máximo, 16 monedas de LATAM, hasta 5 cálculos guardados y compartir tu resultado." },
   { q: "¿Cómo elimino mi cuenta y mis datos?", k: "eliminar borrar cuenta datos privacidad", a: "Ve a Ajustes → Datos y privacidad. Ahí puedes descargar o eliminar tus datos. Si tienes una suscripción activa, cancélala antes." },
 ];
@@ -177,10 +177,11 @@ export function AppShell({ active, onHome, right, children }) {
     ...(user ? [{ id: "panel", label: "Panel", icon: "home", fn: () => navTo("panel") }] : []),
     { id: "calc", label: "Calculadora", icon: "calculator", fn: () => navTo("calc") },
     ...(user ? [{ id: "track", label: "Seguimiento", icon: "trendUp", fn: () => navTo("track") }] : []),
+    { id: "plan", label: "Planificador de ads", icon: "megaphone", fn: () => navTo("planner"), lock: !canPro },
     { id: "fin", label: "Control financiero", icon: "wallet", fn: () => navTo("finance"), lock: !canPro },
     { id: "acct", label: "Ajustes", icon: "settings", fn: () => openAccount("perfil") },
   ];
-  const titles = { track: "Seguimiento", panel: "Panel", calc: "Calculadora", fin: "Control financiero", ref: "Referidos", acct: "Ajustes" };
+  const titles = { track: "Seguimiento", panel: "Panel", calc: "Calculadora", plan: "Planificador de ads", fin: "Control financiero", ref: "Referidos", acct: "Ajustes" };
   const brandGo = user ? () => navTo("panel") : onHome;
   const legalLink = { background: "none", border: "none", padding: 0, color: C.textMuted, fontSize: 11, cursor: "pointer", fontFamily: "inherit" };
   return (
