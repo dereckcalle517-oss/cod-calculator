@@ -51,10 +51,11 @@ function initialBatches(i, lag, today) {
 }
 
 // Movimiento neto de Dropi por día (envíos en negativo, cobros en positivo), sin depósitos ni retiros
-export function walletFlow(i, lag, L, ahead, today = startOfToday()) {
+export function walletFlow(i, lag, L, ahead, today = startOfToday(), parts = null) {
   const u = unit(i);
   const flow = new Array(L).fill(0);
-  const add = (t, v) => { if (t >= 0 && t < L) flow[t] += v; };
+  if (parts) { parts.ship = new Array(L).fill(0); parts.pay = new Array(L).fill(0); }
+  const add = (t, v) => { if (t >= 0 && t < L) { flow[t] += v; if (parts) { if (v < 0) parts.ship[t] -= v; else parts.pay[t] += v; } } };
   for (const b of initialBatches(i, lag, today)) { if (!u.despacho) add(b.day, -b.dev * i.envio); add(b.unlockDay, b.ent * u.payDel); }
   for (let t = 0; t < ahead; t++) {
     const d = addDays(today, t), r = bizOffset(d, lag), ul = r + bizOffset(addDays(d, r), i.retiro);
@@ -186,7 +187,8 @@ export function scenario(i, ads, lag, days = HORIZON) {
 export function optimizeCash(i, lag, every = 3, days = 30, today = startOfToday()) {
   const u = unit(i);
   const L = days + 40;
-  const flow = walletFlow(i, lag, L, days + 30, today);
+  const parts = {};
+  const flow = walletFlow(i, lag, L, days + 30, today, parts);
   const total = i.banco + i.dropi;
   // lo que Dropi necesita para cubrir [t, t+w): peor caída acumulada del saldo en esa ventana
   const needAt = (t, w) => { let c = 0, worst = 0; for (let k = t; k < t + w && k < L; k++) { c += flow[k]; worst = Math.min(worst, c); } return -worst; };
@@ -201,17 +203,20 @@ export function optimizeCash(i, lag, every = 3, days = 30, today = startOfToday(
   for (let t = 0; t < days; t++) {
     const date = addDays(today, t);
     for (const x of toBank) if (x.day === t) bank += x.amount;
-    bank -= (u.orders > 0 ? i.adsDia : 0) + i.otros + (u.prepagaCosto ? u.conf * i.costo : 0);
+    const adsHoy = (u.orders > 0 ? i.adsDia : 0) + i.otros + (u.prepagaCosto ? u.conf * i.costo : 0);
+    bank -= adsHoy;
     wallet += flow[t];
+    const mv0 = moves.length;
     // al cierre de cada ciclo se deja Dropi listo para el siguiente (o se devuelve lo que sobra)
     if ((t + 1) % ev === 0) {
       const need = needAt(t + 1, w), delta = need - wallet;
-      if (delta > 0.005) { const m = Math.min(delta, Math.max(0, bank)); bank -= m; wallet += m; if (m > 0.005) moves.push({ t: t + 1, date: addDays(today, t + 1), amount: m, dir: "dropi" }); }
-      else if (delta < -0.005) { const m = -delta; wallet -= m; const off = bizOffset(date, i.transfer); if (off === 0) bank += m; else toBank.push({ day: t + off, amount: m }); moves.push({ t: t + 1, date: addDays(today, t + 1), amount: m, dir: "banco" }); }
+      if (delta > 0.005) { const m = Math.min(delta, Math.max(0, bank)); bank -= m; wallet += m; if (m > 0.005) moves.push({ t: t + 1, date, amount: m, dir: "dropi" }); }
+      else if (delta < -0.005) { const m = -delta; wallet -= m; const off = bizOffset(date, i.transfer); if (off === 0) bank += m; else toBank.push({ day: t + off, amount: m }); moves.push({ t: t + 1, date, amount: m, dir: "banco" }); }
     }
     minBank = Math.min(minBank, bank); minWallet = Math.min(minWallet, wallet);
     sumW += Math.max(0, wallet);
-    rows.push({ t, bank, wallet });
+    const mv = moves.slice(mv0).reduce((a, m) => a + (m.dir === "dropi" ? m.amount : -m.amount), 0);
+    rows.push({ t, date, bank, wallet, ads: adsHoy, ship: parts.ship[t], pay: parts.pay[t], mv });
   }
   const first = flow.findIndex((v, k) => k > 0 && v > 0);
   return { hoy, moves, minBank, minWallet, ok: minBank >= -0.005 && minWallet >= -0.005, avgDropi: sumW / days, every: Math.max(1, Math.round(every)), firstPay: first < 0 ? null : first, rows };
