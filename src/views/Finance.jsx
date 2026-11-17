@@ -8,7 +8,7 @@ import { Ic, Rich } from "../components/ui";
 import { makeFmt } from "../lib/calc";
 import { FIN_CATS, FIN_COLORS, FIN_LS, monthKey, monthLabel, sumBy, todayISO, uid8 } from "../lib/dates";
 import { db, useAuth } from "../lib/firebase";
-import { CashPlanner } from "./CashPlanner";
+import { navTo } from "../lib/nav";
 
 
 export function useFinance() {
@@ -61,6 +61,8 @@ export function FinanceCenter({ onBackToCalc, onHome, onBackToFree }) {
   const fmt = makeFmt("$");
   const curMonth = todayISO().slice(0, 7);
   const [section, setSection] = useState("resumen");
+  const [movedSeen, setMovedSeen] = useState(() => { try { return localStorage.getItem("nx_plan_moved") === "1"; } catch { return false; } });
+  const hideMoved = () => { setMovedSeen(true); try { localStorage.setItem("nx_plan_moved", "1"); } catch {} };
   const [month, setMonth] = useState(curMonth);
   const [catFilter, setCatFilter] = useState("all");
 
@@ -136,7 +138,6 @@ export function FinanceCenter({ onBackToCalc, onHome, onBackToFree }) {
 
   const SECTIONS = [
     { id: "resumen", label: "📊 Resumen" },
-    { id: "caja", label: "🧮 Caja y ads" },
     { id: "gastos", label: "🧾 Gastos" },
     { id: "categorias", label: "🗂 Por categoría" },
     { id: "historial", label: "📅 Historial" },
@@ -166,6 +167,14 @@ export function FinanceCenter({ onBackToCalc, onHome, onBackToFree }) {
           {!user && <div style={{ fontSize: 11, color: C.amber, marginTop: 6 }}>Inicia sesión para guardar tus finanzas en tu cuenta. Ahora se guardan solo en este navegador.</div>}
           <div className="show-mobile-only" style={{ fontSize: 10, color: status === "error" ? C.red : C.textMuted, marginTop: 6 }}>{statusText}</div>
         </div>
+
+        {!movedSeen && (
+          <div style={{ background: C.card, border: `1px solid ${C.accent}55`, borderRadius: 12, padding: "12px 14px", marginBottom: 14, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            <div style={{ flex: 1, minWidth: 220, fontSize: 13, color: C.textDim, lineHeight: 1.5 }}><b style={{ color: C.text }}>Caja y ads ahora es el Planificador de ads.</b> Tiene su propia sección en el menú, con tus datos intactos.</div>
+            <button onClick={() => { hideMoved(); navTo("planner"); }} style={{ background: C.accent, border: "none", borderRadius: 8, padding: "9px 14px", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Ir al Planificador de ads</button>
+            <button onClick={hideMoved} aria-label="Cerrar aviso" style={{ background: "transparent", border: "none", color: C.textMuted, fontSize: 18, cursor: "pointer", lineHeight: 1, padding: 4 }}>×</button>
+          </div>
+        )}
 
         {needsSetup && (
           <div style={{ ...card, maxWidth: 480, margin: "30px auto", textAlign: "center", border: `1px solid ${C.gold}40` }}>
@@ -226,8 +235,6 @@ export function FinanceCenter({ onBackToCalc, onHome, onBackToFree }) {
         )}
 
         {/* GASTOS */}
-        {section === "caja" && <CashPlanner data={data} update={update} saldo={cur.saldo} fmt={fmt} />}
-
         {section === "gastos" && (
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>

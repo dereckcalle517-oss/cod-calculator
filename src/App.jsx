@@ -18,6 +18,7 @@ const FinanceCenter = lazy(() => import("./views/Finance").then(m => ({ default:
 const FreeCalculator = lazy(() => import("./views/FreeCalculator").then(m => ({ default: m.FreeCalculator })));
 const LegalView = lazy(() => import("./views/Legal").then(m => ({ default: m.LegalView })));
 const ProCalculator = lazy(() => import("./views/ProCalculator").then(m => ({ default: m.ProCalculator })));
+const PlannerView = lazy(() => import("./views/Planner").then(m => ({ default: m.PlannerView })));
 const SeguimientoView = lazy(() => import("./views/Seguimiento").then(m => ({ default: m.SeguimientoView })));
 
 
@@ -56,6 +57,7 @@ function AppInner() {
       else if (v === "track") setView(a.user ? "track" : "landing");
       else if (v === "calc") (a.canPro ? setView("pro") : setView("free"));
       else if (v === "finance" && a.openFinance) a.openFinance();
+      else if (v === "planner" && a.openPlanner) a.openPlanner();
       else if (v === "upgrade" && a.upgrade) a.upgrade();
     };
     window.addEventListener("nx:nav", h); return () => window.removeEventListener("nx:nav", h);
@@ -71,6 +73,7 @@ function AppInner() {
   const openPro = () => { if (canPro) setView("pro"); else { setPayMsg(""); setView("paywall"); } };
   const openFree = () => setView("free");
   const openFinance = () => { if (canPro) setView("finance"); else if (user) openPlans(); else { setPayMsg(""); setView("paywall"); } };
+  const openPlanner = () => { if (canPro) setView("planner"); else if (user) openPlans(); else { setPayMsg(""); setView("paywall"); } };
   const goHome = () => { try { if (window.location.pathname !== "/") window.history.pushState({}, "", "/"); } catch {} setView("landing"); window.scrollTo(0, 0); };
 
   // Ir a pagar: pide sesión (para saber a qué cuenta activar PRO) y abre el pago dentro de la página
@@ -84,9 +87,9 @@ function AppInner() {
     setView("checkout");
   };
 
-  actions.current = { user, canPro, openFinance, upgrade };
+  actions.current = { user, canPro, openFinance, openPlanner, upgrade };
   const proTrial = isPro ? 0 : trialDaysLeft;
-  if ((view === "pro" || view === "finance") && !canPro) return <Paywall onUpgrade={upgrade} onStartTrial={startTrial} onHome={goHome} trialAvailable={!trialUsed()} message={payMsg} justPaid={false} />;
+  if ((view === "pro" || view === "finance" || view === "planner") && !canPro) return <Paywall onUpgrade={upgrade} onStartTrial={startTrial} onHome={goHome} trialAvailable={!trialUsed()} message={payMsg} justPaid={false} />;
   if (view === "legal") return <LegalView kind={legalKind || "terms"} onHome={goHome} />;
   if (view === "checkout") return <CheckoutView onBack={goHome} onDone={() => setView("pro")} />;
   if (view === "paywall") return <Paywall onUpgrade={upgrade} onStartTrial={startTrial} onHome={goHome} trialAvailable={!trialUsed()} message={payMsg} justPaid={justPaid && !isPro} />;
@@ -101,6 +104,7 @@ function AppInner() {
     ? <AppShell active="calc" onHome={goHome}><FreeCalculator embedded onUpgrade={upgrade} onOpenPro={openPro} onStartTrial={startTrial} onHome={goHome} /></AppShell>
     : <FreeCalculator onUpgrade={upgrade} onOpenPro={openPro} onStartTrial={startTrial} onHome={goHome} />;
   if (view === "pro") return <ProCalculator trialDaysLeft={proTrial} onUpgrade={upgrade} onBackToFree={openFree} onHome={goHome} onFinance={() => setView("finance")} />;
+  if (view === "planner") return <PlannerView onHome={goHome} />;
   if (view === "finance") return <FinanceCenter onBackToCalc={openPro} onHome={goHome} onBackToFree={openFree} />;
   return <Landing onOpenFree={openFree} onOpenPro={openPro} onStartTrial={startTrial} onUpgrade={upgrade} />;
 }
