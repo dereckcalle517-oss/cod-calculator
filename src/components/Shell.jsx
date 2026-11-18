@@ -203,6 +203,7 @@ export function AppShell({ active, onHome, right, children }) {
         </nav>
         <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: 10, padding: "0 12px" }}>
           <button className="nav-item" onClick={go(onHome)} style={{ margin: "0 -12px" }}><Ic n="globe" size={17} /> Ver sitio</button>
+          <button className="nav-item" onClick={go(() => navTo("landing1"))} style={{ margin: "0 -12px" }}><Ic n="globe" size={17} /> Landing 1</button>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
             <button style={legalLink} onClick={go(() => openLegal("terms"))}>Términos</button>
             <button style={legalLink} onClick={go(() => openLegal("privacy"))}>Privacidad</button>
@@ -221,6 +222,7 @@ export function AppShell({ active, onHome, right, children }) {
         </nav>
         <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: 10, padding: "0 12px" }}>
           <button className="nav-item" onClick={onHome} style={{ margin: "0 -12px" }}><Ic n="globe" size={17} /> Ver sitio</button>
+          <button className="nav-item" onClick={() => navTo("landing1")} style={{ margin: "0 -12px" }}><Ic n="globe" size={17} /> Landing 1</button>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
             <button style={legalLink} onClick={() => openLegal("terms")}>Términos</button>
             <button style={legalLink} onClick={() => openLegal("privacy")}>Privacidad</button>
