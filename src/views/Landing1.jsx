@@ -84,7 +84,7 @@ export function LiveLedger() {
 }
 
 // Una semana en barras: lo que sale cada día frente a lo que entra
-function WeekBars() {
+export function WeekBars() {
   const d = useDemo({ ads: "25", cpa: "3", precio: "35.99", total: "500" });
   const today = startOfToday();
   const rows = d.rows.slice(0, 12);
