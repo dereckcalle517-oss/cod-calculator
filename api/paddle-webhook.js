@@ -30,6 +30,34 @@ function verify(raw, header, secret) {
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
+const TT_PIXEL = process.env.TIKTOK_PIXEL_ID || "DBUM34BC77U89HHSHBH0";
+
+// Envía el pago a TikTok desde el servidor (API de eventos). No hace nada si falta el token.
+async function sendTikTok(eventName, eventId, email, value) {
+  const token = process.env.TIKTOK_ACCESS_TOKEN;
+  if (!token) return;
+  try {
+    const user = email ? { email: crypto.createHash("sha256").update(String(email).trim().toLowerCase()).digest("hex") } : {};
+    const r = await fetch("https://business-api.tiktok.com/open_api/v1.3/event/track/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Access-Token": token },
+      body: JSON.stringify({
+        event_source: "web",
+        event_source_id: TT_PIXEL,
+        data: [{
+          event: eventName,
+          event_time: Math.floor(Date.now() / 1000),
+          event_id: eventId,
+          user,
+          properties: { currency: "USD", value },
+          page: { url: "https://cod-calculator-ten.vercel.app/" },
+        }],
+      }),
+    });
+    if (!r.ok) console.error("tiktok", r.status, await r.text());
+  } catch (e) { console.error("tiktok", e); }
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).send("Method not allowed");
   const raw = await readRaw(req);
@@ -57,6 +85,14 @@ export default async function handler(req, res) {
     proUntil: endsAt || null,
     updatedAt: new Date().toISOString(),
   }, { merge: true });
+  // TikTok: alta de suscripción (prueba o pago) enviada desde el servidor
+  if (event.event_type === "subscription.created" && ["trialing", "active"].includes(d.status)) {
+    let email = "";
+    try { email = ((await db.collection("users").doc(uid).get()).data() || {}).email || ""; } catch {}
+    const id = "sub_" + (d.id || uid);
+    await sendTikTok("Subscribe", id, email, 5.99);
+    await sendTikTok("CompletePayment", "pay_" + (d.id || uid), email, 5.99);
+  }
   // Referidos: primer pago de un referido => premio pendiente (se acredita pasados 3 días)
   try {
     const WINDOW_MS = 3 * 24 * 3600 * 1000;
