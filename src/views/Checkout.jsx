@@ -42,7 +42,7 @@ export function CheckoutView({ onBack, onDone }) {
   useEffect(() => {
     let alive = true;
     track("InitiateCheckout", { value: 5.99, currency: "USD" }, "ic");
-    loadPaddle((e) => { if (e && e.name === "checkout.completed" && alive) { try { sessionStorage.setItem("nx_pay_pending", "1"); } catch {} track("Subscribe", { value: 5.99, currency: "USD" }, "sub"); track("CompletePayment", { value: 5.99, currency: "USD" }, "pay"); setPaid(true); } }).then((P) => {
+    loadPaddle((e) => { if (e && e.name === "checkout.completed" && alive) { try { sessionStorage.setItem("nx_pay_pending", "1"); } catch {} setPaid(true); } }).then((P) => {
       if (!alive) return;
       if (!P || !PADDLE_PRICE_ID) { setState("error"); return; }
       try {
