@@ -21,6 +21,7 @@ const ProCalculator = lazy(() => import("./views/ProCalculator").then(m => ({ de
 const PlannerView = lazy(() => import("./views/Planner").then(m => ({ default: m.PlannerView })));
 const Landing1 = lazy(() => import("./views/Landing1").then(m => ({ default: m.Landing1 })));
 const Landing2 = lazy(() => import("./views/Landing2").then(m => ({ default: m.Landing2 })));
+const Landing3 = lazy(() => import("./views/Landing3").then(m => ({ default: m.Landing3 })));
 const SeguimientoView = lazy(() => import("./views/Seguimiento").then(m => ({ default: m.SeguimientoView })));
 
 
@@ -58,6 +59,7 @@ function AppInner() {
       if (v === "panel") setView(a.user ? "panel" : "landing");
       else if (v === "landing1") { setView("landing1"); window.scrollTo(0, 0); }
       else if (v === "landing2") { setView("landing2"); window.scrollTo(0, 0); }
+      else if (v === "landing3") { setView("landing3"); window.scrollTo(0, 0); }
       else if (v === "track") setView(a.user ? "track" : "landing");
       else if (v === "calc") (a.canPro ? setView("pro") : setView("free"));
       else if (v === "finance" && a.openFinance) a.openFinance();
@@ -94,6 +96,7 @@ function AppInner() {
   actions.current = { user, canPro, openFinance, openPlanner, upgrade };
   const proTrial = isPro ? 0 : trialDaysLeft;
   if ((view === "pro" || view === "finance" || view === "planner") && !canPro) return <Paywall onUpgrade={upgrade} onStartTrial={startTrial} onHome={goHome} trialAvailable={!trialUsed()} message={payMsg} justPaid={false} />;
+  if (view === "landing3") return <Landing3 onOpenFree={openFree} onStartTrial={startTrial} onUpgrade={upgrade} onHome={goHome} />;
   if (view === "landing2") return <Landing2 onOpenFree={openFree} onStartTrial={startTrial} onUpgrade={upgrade} onHome={goHome} />;
   if (view === "landing1") return <Landing1 onOpenFree={openFree} onStartTrial={startTrial} onUpgrade={upgrade} onHome={goHome} />;
   if (view === "legal") return <LegalView kind={legalKind || "terms"} onHome={goHome} />;
