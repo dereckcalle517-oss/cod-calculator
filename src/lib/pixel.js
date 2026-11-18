@@ -1,5 +1,5 @@
 // TikTok Pixel: no hace nada mientras VITE_TIKTOK_PIXEL_ID esté vacío.
-const ID = (import.meta.env && import.meta.env.VITE_TIKTOK_PIXEL_ID) || "";
+const ID = (import.meta.env && import.meta.env.VITE_TIKTOK_PIXEL_ID) || "DBUM34BC77U89HHSHBH0";
 let ready = false;
 export function initPixel() {
   if (!ID || ready || typeof window === "undefined") return;
