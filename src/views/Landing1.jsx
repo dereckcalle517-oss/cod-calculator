@@ -43,7 +43,7 @@ function Field({ label, k, f, set, prefix = "$" }) {
   );
 }
 
-function LiveLedger() {
+export function LiveLedger() {
   const [f, setF] = useState({ ads: "25", cpa: "3", precio: "35.99", total: "500" });
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
   const d = useDemo(f);
