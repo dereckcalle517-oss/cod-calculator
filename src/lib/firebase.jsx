@@ -4,6 +4,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChang
 import { getFirestore, doc, getDoc, setDoc, collection, addDoc, getDocs, deleteDoc, query, orderBy, serverTimestamp, onSnapshot } from "firebase/firestore";
 import { PREFS_KEY } from "./nav";
 import { refApi } from "./referral";
+import { track } from "./pixel";
 
 
 // ─── FIREBASE & AUTH ─────────────────────────────────────────────────────────
@@ -118,6 +119,7 @@ export function AuthProvider({ children }) {
               name: fu.displayName, photo: fu.photoURL,
               plan: "free", createdAt: serverTimestamp(),
             });
+            track("CompleteRegistration", {}, "reg");
           }
         } catch (err) {
           console.error("Firestore error (revisa las reglas):", err);
