@@ -4,6 +4,7 @@ import { GlobalStyles } from "../components/GlobalStyles";
 import { Ic } from "../components/ui";
 import { PADDLE_PRICE_ID, loadPaddle, useAuth } from "../lib/firebase";
 import { openLegal } from "../lib/nav";
+import { track } from "../lib/pixel";
 
 
 export function Paywall({ onUpgrade, onStartTrial, onHome, trialAvailable, message, justPaid }) {
@@ -40,7 +41,8 @@ export function CheckoutView({ onBack, onDone }) {
   const [paid, setPaid] = useState(false);
   useEffect(() => {
     let alive = true;
-    loadPaddle((e) => { if (e && e.name === "checkout.completed" && alive) { try { sessionStorage.setItem("nx_pay_pending", "1"); } catch {} setPaid(true); } }).then((P) => {
+    track("InitiateCheckout", { value: 5.99, currency: "USD" }, "ic");
+    loadPaddle((e) => { if (e && e.name === "checkout.completed" && alive) { try { sessionStorage.setItem("nx_pay_pending", "1"); } catch {} track("Subscribe", { value: 5.99, currency: "USD" }, "sub"); track("CompletePayment", { value: 5.99, currency: "USD" }, "pay"); setPaid(true); } }).then((P) => {
       if (!alive) return;
       if (!P || !PADDLE_PRICE_ID) { setState("error"); return; }
       try {

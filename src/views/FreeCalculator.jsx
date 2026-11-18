@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { track } from "../lib/pixel";
 import { motion } from "framer-motion";
 import { Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { C } from "../theme";
@@ -14,6 +15,7 @@ import { CpaCard } from "./Cpa";
 
 // ─── FREE CALCULATOR ──────────────────────────────────────────────────────────
 export function FreeCalculator({ onUpgrade, onStartTrial, onHome, onOpenPro, embedded }) {
+  useEffect(() => { track("ViewContent", { content_name: "calculadora" }, "calc"); }, []);
   const [currencyCode, setCurrencyCode] = useState(() => readPrefs().currency || "USD");
   const currency = CURRENCIES.find(c => c.code === currencyCode) || CURRENCIES[0];
   const fmt = makeFmt(currency.symbol);
