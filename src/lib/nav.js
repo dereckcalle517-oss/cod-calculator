@@ -34,6 +34,9 @@ export const navTo = (v) => window.dispatchEvent(new CustomEvent("nx:nav", { det
 export const SUPPORT_EMAIL = "soporte@cuadre.app";
 
 
+export const botFromPath = () => { try { return window.location.pathname.replace(/\/+$/, "") === "/bot"; } catch { return false; } };
+
+
 export const LEGAL_PATHS = { terms: "/terminos", privacy: "/privacidad", refund: "/reembolsos" };
 
 
