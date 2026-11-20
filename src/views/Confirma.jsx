@@ -1,9 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../lib/firebase";
 import { navTo } from "../lib/nav";
 import { EST, botDownload, botFetch } from "../lib/botApi";
 import { ICONS } from "../lib/confirmaIcons";
 import "./confirma.css";
+
+// El editor de flujos es pesado (lienzo de cuadros): se carga solo al abrir la pestaña
+const FlowsTab = lazy(() => import("./ConfirmaFlows"));
 
 // ─── CUADRE CONFIRMA ─────────────────────────────────────────────────────────
 // Panel del asistente de WhatsApp con el mismo diseño del panel del bot (oscuro y morado).
@@ -68,6 +71,7 @@ export function ConfirmaView() {
   const tabs = [
     ...(bot?.exists ? [
       { id: "pedidos", label: "Pedidos", icon: "package", count: bot.attention },
+      { id: "flujos", label: "Flujos", icon: "flow" },
       { id: "info", label: "Info tienda", icon: "file", count: bot.infoPending, soft: true },
       { id: "ajustes", label: "Ajustes", icon: "sliders" },
     ] : []),
@@ -89,6 +93,7 @@ export function ConfirmaView() {
       ))}
     </nav>
     {current === "pedidos" ? <Pedidos user={user} bot={bot} onOpenChat={setChat} notify={notify} onChanged={loadBot} />
+      : current === "flujos" ? <Suspense fallback={<div className="empty"><b>Abriendo el editor de flujos...</b></div>}><FlowsTab user={user} bot={bot} notify={notify} /></Suspense>
       : current === "info" ? <InfoTienda user={user} notify={notify} onSaved={loadBot} />
       : current === "ajustes" ? <Ajustes user={user} bot={bot} notify={notify} onSaved={setBot} />
       : <Admin user={user} notify={notify} onChanged={loadBot} />}
@@ -290,6 +295,7 @@ function Chat({ user, phone, onBack, notify }) {
         )}
         <div className="ctrl">
           <span className={`badge ${paused ? "t-amber" : "t-green"}`}><i />{paused ? `Bot en pausa hasta ${new Date(c.pausedUntil).toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })}` : "Bot respondiendo"}</span>
+          {c.flow?.name && !paused && <span className="badge t-violet"><i />En el flujo "{c.flow.name}"</span>}
           <button type="button" className={"btn ghost sm" + (busy === "pause" ? " loading" : "")} disabled={!!busy} onClick={() => act("pause", () => botFetch(user, `/bot/chats/${phone}/${paused ? "resume" : "pause"}`, { method: "POST" }))}><Icon n={paused ? "play" : "pause"} size={15} />{paused ? "Reanudar bot" : "Pausar bot 12 h"}</button>
           {o && o.estado !== EST.bad && o.estado !== EST.go && <button type="button" className={"btn ghost sm" + (busy === "listo" ? " loading" : "")} disabled={!!busy} onClick={() => act("listo", () => botFetch(user, `/bot/orders/${o.id}/listo`, { method: "POST" }), "Pedido marcado como listo para despachar.")}><Icon n="truck" size={15} />Marcar listo</button>}
           {o && o.estado !== EST.bad && <button type="button" className={"btn danger sm" + (busy === "cancel" ? " loading" : "")} disabled={!!busy} onClick={() => { if (confirm("¿Cancelar este pedido?")) act("cancel", () => botFetch(user, `/bot/orders/${o.id}/cancelar`, { method: "POST" }), "Pedido cancelado."); }}><Icon n="x" size={15} />Cancelar pedido</button>}
