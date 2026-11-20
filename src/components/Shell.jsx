@@ -4,6 +4,7 @@ import { C } from "../theme";
 import { Brand, Ic } from "./ui";
 import { useAuth } from "../lib/firebase";
 import { SUPPORT_EMAIL, navTo, openAccount, openLegal, openPlans, trialLeft } from "../lib/nav";
+import { confirmaEnabled } from "../lib/botApi";
 
 
 // ─── USER MENU ────────────────────────────────────────────────────────────────
@@ -177,11 +178,12 @@ export function AppShell({ active, onHome, right, children }) {
     ...(user ? [{ id: "panel", label: "Panel", icon: "home", fn: () => navTo("panel") }] : []),
     { id: "calc", label: "Calculadora", icon: "calculator", fn: () => navTo("calc") },
     ...(user ? [{ id: "track", label: "Seguimiento", icon: "trendUp", fn: () => navTo("track") }] : []),
+    ...(user && confirmaEnabled ? [{ id: "confirma", label: "Confirma", icon: "message", fn: () => navTo("confirma") }] : []),
     { id: "plan", label: "Planificador de ads", icon: "megaphone", fn: () => navTo("planner"), lock: !canPro },
     { id: "fin", label: "Control financiero", icon: "wallet", fn: () => navTo("finance"), lock: !canPro },
     { id: "acct", label: "Ajustes", icon: "settings", fn: () => openAccount("perfil") },
   ];
-  const titles = { track: "Seguimiento", panel: "Panel", calc: "Calculadora", plan: "Planificador de ads", fin: "Control financiero", ref: "Referidos", acct: "Ajustes" };
+  const titles = { confirma: "Confirma", track: "Seguimiento", panel: "Panel", calc: "Calculadora", plan: "Planificador de ads", fin: "Control financiero", ref: "Referidos", acct: "Ajustes" };
   const brandGo = user ? () => navTo("panel") : onHome;
   const legalLink = { background: "none", border: "none", padding: 0, color: C.textMuted, fontSize: 11, cursor: "pointer", fontFamily: "inherit" };
   return (

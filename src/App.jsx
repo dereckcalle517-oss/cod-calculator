@@ -7,6 +7,7 @@ import { Splash } from "./components/Splash";
 import { AuthProvider, useAuth } from "./lib/firebase";
 import { ACCOUNT_EVT, botFromPath, legalFromPath, openPlans, trialLeft, trialUsed } from "./lib/nav";
 import { TrackingProvider } from "./lib/tracking";
+import { confirmaEnabled } from "./lib/botApi";
 import { Dashboard } from "./views/Dashboard";
 import { Landing } from "./views/Landing";
 
@@ -25,6 +26,7 @@ const Landing3 = lazy(() => import("./views/Landing3").then(m => ({ default: m.L
 const CuadreBot = lazy(() => import("./views/CuadreBot").then(m => ({ default: m.CuadreBot })));
 const Landing4 = lazy(() => import("./views/Landing4").then(m => ({ default: m.Landing4 })));
 const SeguimientoView = lazy(() => import("./views/Seguimiento").then(m => ({ default: m.SeguimientoView })));
+const ConfirmaView = lazy(() => import("./views/Confirma").then(m => ({ default: m.ConfirmaView })));
 
 
 function AppInner() {
@@ -65,6 +67,7 @@ function AppInner() {
       else if (v === "bot") { try { if (window.location.pathname !== "/bot") window.history.pushState({}, "", "/bot"); } catch {} setView("bot"); window.scrollTo(0, 0); }
       else if (v === "landing4") { setView("landing4"); window.scrollTo(0, 0); }
       else if (v === "track") setView(a.user ? "track" : "landing");
+      else if (v === "confirma") setView(a.user && confirmaEnabled ? "confirma" : "landing");
       else if (v === "calc") (a.canPro ? setView("pro") : setView("free"));
       else if (v === "finance" && a.openFinance) a.openFinance();
       else if (v === "planner" && a.openPlanner) a.openPlanner();
@@ -111,6 +114,9 @@ function AppInner() {
   if (view === "account") return <AccountView trialDaysLeft={proTrial} onUpgrade={upgrade} onHome={goHome} onCalc={openPro} onFinance={openFinance} onBackToFree={openFree} />;
   if (view === "panel") return user
     ? <AppShell active="panel" onHome={goHome}><Dashboard trialDaysLeft={proTrial} onUpgrade={upgrade} /></AppShell>
+    : <Landing onOpenFree={openFree} onOpenPro={openPro} onStartTrial={startTrial} onUpgrade={upgrade} />;
+  if (view === "confirma") return user && confirmaEnabled
+    ? <AppShell active="confirma" onHome={goHome}><ConfirmaView /></AppShell>
     : <Landing onOpenFree={openFree} onOpenPro={openPro} onStartTrial={startTrial} onUpgrade={upgrade} />;
   if (view === "track") return user
     ? <AppShell active="track" onHome={goHome}><SeguimientoView /></AppShell>
