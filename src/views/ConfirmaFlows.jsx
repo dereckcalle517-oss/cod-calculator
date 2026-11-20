@@ -118,7 +118,7 @@ function FlowNode({ id, data, selected }) {
             const btn = h.startsWith("b:");
             const b = btn ? n.buttons.find(x => `b:${x.id}` === h) : null;
             return (
-              <div key={h} className={`fx-out${btn ? " btn" : ""}${h === "timeout" ? " to" : ""}${h === "mismatch" || h === "no" ? " alt" : ""}`}>
+              <div key={h} className={`fx-out${btn ? " fxb" : ""}${h === "timeout" ? " to" : ""}${h === "mismatch" || h === "no" ? " alt" : ""}`}>
                 <span>{label}</span>{b?.action && <span className="fx-pill">{BUTTON_ACTIONS[b.action]}</span>}
                 <Handle type="source" position={Position.Right} id={h} className="fx-h out" />
               </div>
@@ -130,6 +130,7 @@ function FlowNode({ id, data, selected }) {
   );
 }
 const nodeTypes = { cf: FlowNode };
+const PALETTE = [["message", "Mensaje", "message", "Texto, con burbujas separadas"], ["buttons", "Botones", "pointer", "Mensaje con hasta 3 opciones"], ["question", "Pregunta", "help", "Guarda lo que responda"], ["location", "Ubicación", "pin", "Pide la ubicación con botón"], ["ai", "Agente IA", "sparkles", "Conversa hasta lograr un objetivo"], ["action", "Acción", "checkCircle", "Confirmar, cancelar, avisarte..."], ["end", "Fin", "flag", "Termina el flujo"]];
 
 // ─── Lista de flujos ─────────────────────────────────────────────────────────
 export default function FlowsTab({ user, bot, notify }) {
@@ -247,7 +248,12 @@ function FlowEditor({ user, bot, id, meta, notify, onClose }) {
   const [full, setFull] = useState(false);
   const [saving, setSaving] = useState(false);
   const [liveId, setLiveId] = useState("");
+  const [dropMenu, setDropMenu] = useState(null); // menú "¿qué sigue?" al soltar una flecha en el vacío
   const rf = useReactFlow();
+  useEffect(() => {
+    document.body.classList.add("fx-editing");
+    return () => document.body.classList.remove("fx-editing");
+  }, []);
   // Al abrir, mostrar el flujo completo (cuando los cuadros ya tienen tamaño)
   const inited = useNodesInitialized();
   const fitted = useRef(false);
@@ -261,7 +267,7 @@ function FlowEditor({ user, bot, id, meta, notify, onClose }) {
     const minX = Math.min(...ns.map(n => n.position.x)), maxX = Math.max(...ns.map(n => n.position.x + (n.measured?.width || 260)));
     const minY = Math.min(...ns.map(n => n.position.y)), maxY = Math.max(...ns.map(n => n.position.y + (n.measured?.height || 160)));
     const fit = Math.min(box.width / (maxX - minX + 120), box.height / (maxY - minY + 120));
-    if (fit >= 0.55) return rf.fitView({ padding: 0.1, maxZoom: 0.9 });
+    if (fit >= 0.55) { rf.fitView({ padding: 0.1, maxZoom: 0.9 }); return; } // (no devolver la promesa: React la tomaría como limpieza)
     const start = ns.find(n => n.data.node.type === "start") || ns[0];
     const z = 0.65;
     rf.setViewport({ zoom: z, x: 40 - start.position.x * z, y: box.height / 2 - (start.position.y + 60) * z });
@@ -329,23 +335,55 @@ function FlowEditor({ user, bot, id, meta, notify, onClose }) {
   const selected = nodes.find(r => r.selected);
   const selNode = selected?.data.node || null;
 
-  function add(kind) {
+  // Agrega un cuadro en `pos` (o en un lugar libre cerca del centro) y, si viene de una flecha, lo conecta
+  function add(kind, { pos = null, from = null } = {}) {
     const n = newNode(kind);
     const el = document.querySelector(".fx-canvas");
     const box = el?.getBoundingClientRect();
     const center = box ? rf.screenToFlowPosition({ x: box.left + box.width / 2, y: box.top + box.height / 2 }) : { x: 0, y: 0 };
-    setNodes(ns => {
-      // Buscar un lugar libre cerca del centro de la pantalla, para no tapar otros cuadros
+    // Lugar del cuadro nuevo: donde se soltó la flecha, o uno libre cerca del centro de la pantalla
+    const ns0 = rf.getNodes();
+    let p = pos;
+    if (!p) {
       const W = 270, H = 190;
-      const hits = (x, y) => ns.some(r => { const w = r.measured?.width || 260, h = r.measured?.height || 160; return x < r.position.x + w + 20 && x + W > r.position.x - 20 && y < r.position.y + h + 20 && y + H > r.position.y - 20; });
-      let pos = { x: center.x - 130, y: center.y - 80 };
-      for (let i = 1; i < 40 && hits(pos.x, pos.y); i++) {
+      const hits = (x, y) => ns0.some(r => { const w = r.measured?.width || 260, h = r.measured?.height || 160; return x < r.position.x + w + 20 && x + W > r.position.x - 20 && y < r.position.y + h + 20 && y + H > r.position.y - 20; });
+      p = { x: center.x - 130, y: center.y - 80 };
+      for (let i = 1; i < 40 && hits(p.x, p.y); i++) {
         const a = i * 0.9, d = 60 + i * 28;
-        pos = { x: center.x - 130 + Math.cos(a) * d, y: center.y - 80 + Math.sin(a) * d };
+        p = { x: center.x - 130 + Math.cos(a) * d, y: center.y - 80 + Math.sin(a) * d };
       }
-      return [...ns.map(r => ({ ...r, selected: false })), { id: n.id, type: "cf", position: pos, data: { node: n }, selected: true }];
-    });
+    }
+    setNodes(ns => [
+      ...ns.map(r => {
+        const base = { ...r, selected: false };
+        return from && r.id === from.source ? { ...base, data: { node: setTarget(r.data.node, from.handle, n.id) } } : base;
+      }),
+      { id: n.id, type: "cf", position: p, data: { node: n }, selected: true },
+    ]);
+    // Al abrirse el panel de edición el lienzo se angosta: centrar el cuadro nuevo para que no quede tapado
+    setTimeout(() => rf.setCenter(p.x + 130, p.y + 90, { zoom: rf.getZoom(), duration: 300 }), 80);
+    setDropMenu(null);
   }
+  // Soltar una flecha: sobre un cuadro → se conecta; en el vacío → menú para crear el siguiente cuadro
+  const onConnectEnd = useCallback((event, cs) => {
+    if (cs.isValid || !cs.fromNode || cs.fromHandle?.type !== "source") return;
+    const handle = cs.fromHandle.id || "next";
+    if (cs.toNode && cs.toNode.id !== cs.fromNode.id && cs.toNode.data?.node?.type !== "start") {
+      patchNode(cs.fromNode.id, n => setTarget(n, handle, cs.toNode.id));
+      return;
+    }
+    const pt = "changedTouches" in event && event.changedTouches.length ? event.changedTouches[0] : event;
+    const box = document.querySelector(".fx-canvas")?.getBoundingClientRect();
+    if (!box) return;
+    const fp = rf.screenToFlowPosition({ x: pt.clientX, y: pt.clientY });
+    setDropMenu({ x: Math.min(pt.clientX - box.left + 8, box.width - 232), y: Math.min(pt.clientY - box.top - 20, box.height - 430), pos: { x: fp.x, y: fp.y - 40 }, from: { source: cs.fromNode.id, handle } });
+  }, [patchNode, rf]);
+  useEffect(() => {
+    if (!dropMenu) return;
+    const k = e => { if (e.key === "Escape") setDropMenu(null); };
+    window.addEventListener("keydown", k);
+    return () => window.removeEventListener("keydown", k);
+  }, [dropMenu]);
   function removeNode(nid) {
     onNodesChangeSafe([{ type: "remove", id: nid }]);
   }
@@ -404,7 +442,7 @@ function FlowEditor({ user, bot, id, meta, notify, onClose }) {
 
       <div className="fx-body">
         <div className="fx-palette" role="toolbar" aria-label="Agregar cuadros">
-          {[["message", "Mensaje", "message"], ["buttons", "Botones", "pointer"], ["question", "Pregunta", "help"], ["location", "Ubicación", "pin"], ["ai", "Agente IA", "sparkles"], ["action", "Acción", "checkCircle"], ["end", "Fin", "flag"]].map(([k, l, ic]) => (
+          {PALETTE.map(([k, l, ic]) => (
             <button key={k} type="button" className={`fx-pal tone-${META[k === "buttons" ? "message" : k]?.tone || "blue"}`} onClick={() => add(k)} title={`Agregar ${l}`}>
               <Icon n={ic} size={16} /><span>{l}</span>
             </button>
@@ -415,8 +453,8 @@ function FlowEditor({ user, bot, id, meta, notify, onClose }) {
           <UiCtx.Provider value={{ liveId, incoming }}>
             <ReactFlow
               nodes={nodes} edges={edges} nodeTypes={nodeTypes}
-              onNodesChange={onNodesChangeSafe} onEdgesChange={onEdgesChange} onConnect={onConnect}
-              onPaneClick={() => setSelEdge("")}
+              onNodesChange={onNodesChangeSafe} onEdgesChange={onEdgesChange} onConnect={onConnect} onConnectEnd={onConnectEnd}
+              onPaneClick={() => { setSelEdge(""); setDropMenu(null); }} onMoveStart={() => setDropMenu(null)}
               colorMode="dark" minZoom={0.15} maxZoom={1.6}
               deleteKeyCode={["Backspace", "Delete"]} connectionRadius={36} proOptions={{ hideAttribution: true }}
               defaultEdgeOptions={{ type: "smoothstep" }} connectionLineStyle={{ stroke: "#a78bfa", strokeWidth: 2 }}
@@ -425,7 +463,17 @@ function FlowEditor({ user, bot, id, meta, notify, onClose }) {
               <Controls showInteractive={false} position="bottom-left" />
             </ReactFlow>
           </UiCtx.Provider>
-          {!selNode && !panel && !selEdge && <div className="fx-tip fx-hide-sm"><Icon n="pointer" size={14} />Toca un cuadro para editarlo · arrastra desde un punto de la derecha hasta otro cuadro para unirlos · arrastra el fondo para moverte</div>}
+          {dropMenu && (
+            <div className="fx-drop" style={{ left: Math.max(8, dropMenu.x), top: Math.max(8, dropMenu.y) }} role="menu" aria-label="Agregar el siguiente cuadro">
+              <div className="fx-drop-h">¿Qué sigue?<button type="button" className="fx-x" aria-label="Cerrar" onClick={() => setDropMenu(null)}><Icon n="close" size={14} /></button></div>
+              {PALETTE.map(([k, l, ic, d]) => (
+                <button key={k} type="button" role="menuitem" className={`fx-drop-i tone-${META[k === "buttons" ? "message" : k]?.tone || "blue"}`} onClick={() => add(k, { pos: dropMenu.pos, from: dropMenu.from })}>
+                  <span className="fx-ni"><Icon n={ic} size={15} /></span><span className="min0"><b>{l}</b><small>{d}</small></span>
+                </button>
+              ))}
+            </div>
+          )}
+          {!selNode && !panel && !selEdge && !dropMenu && <div className="fx-tip fx-hide-sm"><Icon n="pointer" size={14} />Toca un cuadro para editarlo · arrastra desde un punto de la derecha: suéltalo en otro cuadro para unirlos, o en el vacío para crear el siguiente · arrastra el fondo para moverte</div>}
           {selEdge && (
             <button type="button" className="btn danger sm fx-edge-del" onClick={() => onEdgesChange([{ type: "remove", id: selEdge }])}><Icon n="trash" size={14} />Quitar flecha</button>
           )}
