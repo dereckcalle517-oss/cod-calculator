@@ -34,10 +34,17 @@ export function GlobalStyles() {
       .shell-tabs-m { display: none; }
       .acct-select { display: none; }
       .shell-burger, .shell-drawer, .shell-scrim { display: none; }
+      .shell.collapsed { grid-template-columns: minmax(0,1fr); }
+      .shell.collapsed .shell-side { display: none; }
+      .shell-top-d { display: flex; align-items: center; gap: 10px; }
+      .shell-collapse { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; margin-left: -6px; background: transparent; border: none; border-radius: 9px; color: #A1A1AA; cursor: pointer; }
+      .shell-collapse:hover { background: #222226; color: #fff; }
+      .shell-collapse:focus-visible { outline: 2px solid #D4AF37; outline-offset: 1px; }
       @media (max-width: 900px) {
         .hero-grid { grid-template-columns: minmax(0,1fr) !important; gap: 36px !important; }
         .shell { grid-template-columns: minmax(0,1fr); }
         .shell-side { display: none; }
+        .shell-collapse { display: none; }
         .shell-top { padding: 0 12px; }
         .shell-top-l { display: block; }
         .shell-top-l { display: flex; align-items: center; gap: 10px; }

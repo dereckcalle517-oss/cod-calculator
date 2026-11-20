@@ -167,6 +167,27 @@ export function AppShell({ active, onHome, right, children }) {
   const { user, isPro } = useAuth();
   const canPro = isPro || trialLeft() > 0;
   const [menuOpen, setMenuOpen] = useState(false);
+  // Barra lateral oculta (escritorio): se recuerda en este navegador
+  const [collapsed, setCollapsed] = useState(() => {
+    try { return localStorage.getItem("cuadre.side") === "0"; } catch { return false; }
+  });
+  const toggleSide = () => setCollapsed(c => {
+    const n = !c;
+    try { localStorage.setItem("cuadre.side", n ? "0" : "1"); } catch { /* sin almacenamiento */ }
+    return n;
+  });
+  useEffect(() => {
+    const k = (e) => {
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "b") {
+        const t = e.target;
+        if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+        e.preventDefault();
+        toggleSide();
+      }
+    };
+    window.addEventListener("keydown", k);
+    return () => window.removeEventListener("keydown", k);
+  }, []);
   useEffect(() => {
     if (!menuOpen) return;
     const k = (e) => { if (e.key === "Escape") setMenuOpen(false); };
@@ -187,7 +208,7 @@ export function AppShell({ active, onHome, right, children }) {
   const brandGo = user ? () => navTo("panel") : onHome;
   const legalLink = { background: "none", border: "none", padding: 0, color: C.textMuted, fontSize: 11, cursor: "pointer", fontFamily: "inherit" };
   return (
-    <div className="shell" style={{ fontFamily: "'InterVariable','Inter',system-ui,-apple-system,sans-serif", color: C.text }}>
+    <div className={"shell" + (collapsed ? " collapsed" : "")} style={{ fontFamily: "'InterVariable','Inter',system-ui,-apple-system,sans-serif", color: C.text }}>
       {user && <HelpWidget />}
       <div className={"shell-scrim" + (menuOpen ? " open" : "")} onClick={() => setMenuOpen(false)} />
       <aside className={"shell-drawer" + (menuOpen ? " open" : "")} aria-hidden={!menuOpen}>
@@ -249,7 +270,12 @@ export function AppShell({ active, onHome, right, children }) {
             </button>
             <Brand onClick={brandGo} size={26} pro={isPro} />
           </div>
-          <div className="hide-mobile" style={{ fontSize: 13, color: C.textDim, fontWeight: 600 }}>{titles[active] || "Calculadora"}</div>
+          <div className="shell-top-d">
+            <button className="shell-collapse" onClick={toggleSide} aria-label={collapsed ? "Mostrar barra lateral" : "Ocultar barra lateral"} aria-pressed={collapsed} title={(collapsed ? "Mostrar" : "Ocultar") + " barra lateral (Ctrl+B)"}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3" /><path d="M9 4v16" /></svg>
+            </button>
+            <div className="hide-mobile" style={{ fontSize: 13, color: C.textDim, fontWeight: 600 }}>{titles[active] || "Calculadora"}</div>
+          </div>
           <div style={{ display: "flex", gap: 7, alignItems: "center" }}>{right}{!user && <UserMenu />}</div>
         </div>
         {children}
