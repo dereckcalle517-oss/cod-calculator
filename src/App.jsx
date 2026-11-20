@@ -5,7 +5,7 @@ import { AppShell } from "./components/Shell";
 import { Ic } from "./components/ui";
 import { Splash } from "./components/Splash";
 import { AuthProvider, useAuth } from "./lib/firebase";
-import { ACCOUNT_EVT, legalFromPath, openPlans, trialLeft, trialUsed } from "./lib/nav";
+import { ACCOUNT_EVT, botFromPath, legalFromPath, openPlans, trialLeft, trialUsed } from "./lib/nav";
 import { TrackingProvider } from "./lib/tracking";
 import { Dashboard } from "./views/Dashboard";
 import { Landing } from "./views/Landing";
@@ -22,13 +22,14 @@ const PlannerView = lazy(() => import("./views/Planner").then(m => ({ default: m
 const Landing1 = lazy(() => import("./views/Landing1").then(m => ({ default: m.Landing1 })));
 const Landing2 = lazy(() => import("./views/Landing2").then(m => ({ default: m.Landing2 })));
 const Landing3 = lazy(() => import("./views/Landing3").then(m => ({ default: m.Landing3 })));
+const CuadreBot = lazy(() => import("./views/CuadreBot").then(m => ({ default: m.CuadreBot })));
 const Landing4 = lazy(() => import("./views/Landing4").then(m => ({ default: m.Landing4 })));
 const SeguimientoView = lazy(() => import("./views/Seguimiento").then(m => ({ default: m.SeguimientoView })));
 
 
 function AppInner() {
   const { user, isPro, loadingAuth, loginWithGoogle } = useAuth();
-  const [view, setView] = useState(() => (legalFromPath() ? "legal" : "landing"));
+  const [view, setView] = useState(() => (legalFromPath() ? "legal" : botFromPath() ? "bot" : "landing"));
   const [legalKind, setLegalKind] = useState(legalFromPath);
   const [routed, setRouted] = useState(false);
   // Al cambiar de pantalla, siempre empezar arriba (sin animación)
@@ -42,7 +43,7 @@ function AppInner() {
   const canPro = isPro || trialDaysLeft > 0;
   useEffect(() => {
     const h = (e) => { setLegalKind(e.detail); setView("legal"); };
-    const pop = () => { const k = legalFromPath(); if (k) { setLegalKind(k); setView("legal"); } else setView(v => (v === "legal" ? "landing" : v)); };
+    const pop = () => { const k = legalFromPath(); if (k) { setLegalKind(k); setView("legal"); } else if (botFromPath()) setView("bot"); else setView(v => (v === "legal" || v === "bot" ? "landing" : v)); };
     window.addEventListener("nx:legal", h); window.addEventListener("popstate", pop);
     return () => { window.removeEventListener("nx:legal", h); window.removeEventListener("popstate", pop); };
   }, []);
@@ -61,6 +62,7 @@ function AppInner() {
       else if (v === "landing1") { setView("landing1"); window.scrollTo(0, 0); }
       else if (v === "landing2") { setView("landing2"); window.scrollTo(0, 0); }
       else if (v === "landing3") { setView("landing3"); window.scrollTo(0, 0); }
+      else if (v === "bot") { try { if (window.location.pathname !== "/bot") window.history.pushState({}, "", "/bot"); } catch {} setView("bot"); window.scrollTo(0, 0); }
       else if (v === "landing4") { setView("landing4"); window.scrollTo(0, 0); }
       else if (v === "track") setView(a.user ? "track" : "landing");
       else if (v === "calc") (a.canPro ? setView("pro") : setView("free"));
@@ -98,6 +100,7 @@ function AppInner() {
   actions.current = { user, canPro, openFinance, openPlanner, upgrade };
   const proTrial = isPro ? 0 : trialDaysLeft;
   if ((view === "pro" || view === "finance" || view === "planner") && !canPro) return <Paywall onUpgrade={upgrade} onStartTrial={startTrial} onHome={goHome} trialAvailable={!trialUsed()} message={payMsg} justPaid={false} />;
+  if (view === "bot") return <CuadreBot onHome={goHome} />;
   if (view === "landing4") return <Landing4 onOpenFree={openFree} onStartTrial={startTrial} onUpgrade={upgrade} onHome={goHome} />;
   if (view === "landing3") return <Landing3 onOpenFree={openFree} onStartTrial={startTrial} onUpgrade={upgrade} onHome={goHome} />;
   if (view === "landing2") return <Landing2 onOpenFree={openFree} onStartTrial={startTrial} onUpgrade={upgrade} onHome={goHome} />;
