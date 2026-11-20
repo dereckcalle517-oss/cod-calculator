@@ -53,7 +53,7 @@
 .cfx .fx-pal{display:flex;flex-direction:column;align-items:center;gap:4px;width:68px;padding:9px 4px;border-radius:12px;border:1px solid var(--line2);background:var(--bg2);color:var(--tc);cursor:pointer;font:inherit;font-size:11px;font-weight:600;transition:border-color .15s,background .15s}
 .cfx .fx-pal span{color:var(--muted)}
 .cfx .fx-pal:hover{border-color:var(--tc);background:var(--tb)}
-.cfx .fx-canvas{flex:1;min-width:0;position:relative}
+.cfx .fx-canvas{flex:1;min-width:0;position:relative;overflow:hidden}
 .cfx .fx-tip{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;background:rgba(18,18,33,.92);border:1px solid var(--line);color:var(--muted);font-size:12px;white-space:nowrap;pointer-events:none}
 .cfx .fx-edge-del{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:5}
 .cfx .fx-side{width:360px;flex-shrink:0;border-left:1px solid var(--line2);background:var(--side);display:flex;flex-direction:column;min-height:0}
@@ -97,14 +97,14 @@
 .cfx .fx-fakebtn{display:flex;align-items:center;justify-content:center;gap:6px;padding:6px;border-radius:9px;border:1px solid rgba(52,211,153,.35);color:#6ee7b7;font-weight:600}
 .cfx .fx-outs{border-top:1px solid var(--line2);padding:6px 0}
 .cfx .fx-out{position:relative;display:flex;align-items:center;justify-content:flex-end;gap:6px;padding:5px 16px 5px 11px;color:var(--muted);font-size:11.5px;font-weight:600;text-align:right}
-.cfx .fx-out.btn{margin:3px 8px;padding:6px 16px 6px 10px;border-radius:9px;background:#232339;border:1px solid rgba(96,165,250,.3);color:#bfdbfe;justify-content:center}
+.cfx .fx-out.fxb{margin:3px 8px;padding:6px 16px 6px 10px;border-radius:9px;background:#232339;border:1px solid rgba(96,165,250,.3);color:#bfdbfe;justify-content:center}
 .cfx .fx-out.to{color:#fbbf24}
 .cfx .fx-out.alt{color:#fca5a5}
 .cfx .fx-pill{font-size:10px;padding:1px 6px;border-radius:999px;background:rgba(34,197,94,.15);color:#86efac}
 .cfx .fx-h{width:14px!important;height:14px!important;border:2px solid #17172a!important;background:#8B5CF6!important}
 .cfx .fx-h.in{left:-7px!important}
 .cfx .fx-h.out{right:-7px!important}
-.cfx .fx-out.btn .fx-h.out{right:-15px!important}
+.cfx .fx-out.fxb .fx-h.out{right:-15px!important}
 .cfx .fx-out.to .fx-h{background:#F59E0B!important}
 .cfx .fx-out.alt .fx-h{background:#F87171!important}
 .cfx .react-flow{--xy-background-color:#0f0f1c;--xy-controls-button-background-color:#1b1b2e;--xy-controls-button-background-color-hover:#26263d;--xy-controls-button-color:#e5e5f0;--xy-controls-button-border-color:#303047;--xy-edge-stroke:#8B5CF6}
@@ -163,3 +163,13 @@
   .cfx .fx-top-r{margin-left:0;width:100%}
   .cfx .fx-top-r .btn:last-child{margin-left:auto}
 }
+
+/* Menú al soltar una flecha en el vacío */
+.cfx .fx-drop{position:absolute;z-index:8;width:222px;max-height:calc(100% - 16px);overflow:auto;padding:6px;border-radius:14px;background:#17172a;border:1px solid var(--line);box-shadow:0 20px 50px -12px rgba(0,0,0,.85);display:flex;flex-direction:column;gap:2px;animation:fxin .12s ease-out}
+@keyframes fxin{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+.cfx .fx-drop-h{display:flex;align-items:center;justify-content:space-between;padding:4px 4px 6px 8px;font-size:12px;font-weight:650;color:var(--muted)}
+.cfx .fx-drop-h .fx-x{width:26px;height:26px;margin:0}
+.cfx .fx-drop-i{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:10px;border:0;background:none;color:var(--text);font:inherit;text-align:left;cursor:pointer}
+.cfx .fx-drop-i:hover,.cfx .fx-drop-i:focus-visible{background:var(--tb)}
+.cfx .fx-drop-i b{display:block;font-size:13px;font-weight:600}
+.cfx .fx-drop-i small{display:block;font-size:11.5px;color:var(--muted);line-height:1.3}
